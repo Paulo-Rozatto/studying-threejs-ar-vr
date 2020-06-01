@@ -1,7 +1,8 @@
+/* eslint-disable indent */
 import * as THREE from '../libs/three.module.js';
 import Stats from '../libs/stats.module.js';
-import { GUI } from '../libs/dat.gui.module.js';
-import { FirstPersonControls } from '../libs/FirstPersonControls.js';
+// import { GUI } from '../libs/dat.gui.module.js';
+import { PointerLockControls } from '../libs/PointerLockControls.js';
 
 function main() {
     const stats = initStats();
@@ -14,12 +15,10 @@ function main() {
     const scene = new THREE.Scene();
 
     const camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 500);
-    const lookAtVec = new THREE.Vector3(0, 2, 0);
+    let lookAtVec = new THREE.Vector3(0, 2, 0);
     camera.position.set(-5, 2, -5);
     camera.lookAt(lookAtVec);
-    // scene.add(camera);
-    // const camControls = new FirstPersonControls(camera, renderer.domElement);
-    // scene.add(camControl);
+    scene.add(camera);
 
     const light = new THREE.DirectionalLight(0xfefefe);
     light.position.set(50, 50, 50);
@@ -35,25 +34,33 @@ function main() {
     ground.rotation.x = -0.5 * Math.PI;
     scene.add(ground);
 
-    // const controls = new function () {
-    //     this.rotation = 0.02;
-    // };
+    const controls = new PointerLockControls(camera, document.body);
 
-    // const gui = new GUI();
+    const blocker = document.getElementById('blocker');
+    const instructions = document.getElementById('instructions');
 
-    // gui.add(camControls, 'lookSpeed', 0.001, 0.01);
+    instructions.addEventListener('click', function () {
 
-    // camControls.lookSpeed = 0.005;
-    // camControls.movementSpeed = 20;
-    // camControls.noFly = true;
-    // camControls.lookVertical = true;
-    // camControls.constrainVertical = true;
-    // camControls.verticalMin = 1.0;
-    // camControls.verticalMax = 2.0;
-    // camControls.lon = -150;
-    // camControls.lat = 120;
+        controls.lock();
 
-    // const clock = new THREE.Clock();
+    }, false);
+
+    controls.addEventListener('lock', function () {
+
+        instructions.style.display = 'none';
+        blocker.style.display = 'none';
+
+    });
+
+    controls.addEventListener('unlock', function () {
+
+        blocker.style.display = 'block';
+        instructions.style.display = '';
+
+    });
+
+    scene.add(controls.getObject());
+
     const speed = 0.5;
     let moveForward = false;
     let moveBackward = false;
@@ -66,59 +73,51 @@ function main() {
     window.addEventListener('keyup', (event) => movementControls(event.keyCode, false));
 
     function movementControls(key, value) {
-        console.log(key, value);
         switch (key) {
-        case 87: // W
-            moveForward = value;
-            break;
-        case 83: // S
-            moveBackward = value;
-            break;
-        case 65: // A
-            moveLeft = value;
-            break;
-        case 68: // D
-            moveRight = value;
-            break;
-        case 32:
-            moveUp = value;
-            break;
-        case 16:
-            moveDown = value;
-        }
-    }
-
-    function movementAnimation() {
-        if(moveForward) {
-            camera.position.x -= Math.sin(camera.rotation.y) * speed;
-            camera.position.z -= -Math.cos(camera.rotation.y) * speed;
-        } 
-        else if(moveBackward) {
-            camera.position.x += Math.sin(camera.rotation.y) * speed;
-            camera.position.z += -Math.cos(camera.rotation.y) * speed;
-        }
-
-        if(moveLeft) {
-            camera.position.x += Math.sin(camera.rotation.y + Math.PI/2) * speed;
-            camera.position.z += -Math.cos(camera.rotation.y + Math.PI/2) * speed;
-        }
-        else if(moveRight) {
-            camera.position.x += Math.sin(camera.rotation.y - Math.PI/2) * speed;
-            camera.position.z += -Math.cos(camera.rotation.y - Math.PI/2) * speed;
-        }
-
-        if(moveUp & camera.position.y <= 20) {
-            camera.position.y += speed;
-        }
-        else if(moveDown && camera.position.y >= 2.0) {
-            camera.position.y -= speed;
+            case 87: // W
+                moveForward = value;
+                break;
+            case 83: // S
+                moveBackward = value;
+                break;
+            case 65: // A
+                moveLeft = value;
+                break;
+            case 68: // D
+                moveRight = value;
+                break;
+            case 32:
+                moveUp = value;
+                break;
+            case 16:
+                moveDown = value;
+                break;
         }
     }
 
     function render() {
         stats.update();
 
-        movementAnimation();
+        if (moveForward) {
+            controls.moveForward(speed);
+        }
+        else if (moveBackward) {
+            controls.moveForward(speed * -1);
+        }
+
+        if (moveRight) {
+            controls.moveRight(speed);
+        }
+        else if (moveLeft) {
+            controls.moveRight(speed * -1);
+        }
+
+        if (moveUp && camera.position.y <= 100) {
+            camera.position.y += speed;
+        }
+        else if (moveDown && camera.position.y >= 2) {
+            camera.position.y -= speed;
+        }
 
         renderer.render(scene, camera);
         requestAnimationFrame(render);
