@@ -15,9 +15,8 @@ function main() {
     const scene = new THREE.Scene();
 
     const camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 500);
-    let lookAtVec = new THREE.Vector3(0, 2, 0);
     camera.position.set(-5, 2, -5);
-    camera.lookAt(lookAtVec);
+    camera.lookAt(new THREE.Vector3(0, 2, 0));
     scene.add(camera);
 
     const light = new THREE.DirectionalLight(0xfefefe);
@@ -27,8 +26,16 @@ function main() {
     const axes = new THREE.AxesHelper(50);
     scene.add(axes);
 
+    const loader = new THREE.TextureLoader();
+    const texture = loader.load('../assets/textures/wood.jpg');
+    texture.wrapS = THREE.MirroredRepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(20, 20);
+
     const planeGeometry = new THREE.PlaneGeometry(100, 100, 5);
-    const planeMaterial = new THREE.MeshLambertMaterial({ color: 0xdfef88 });
+    const planeMaterial = new THREE.MeshLambertMaterial({
+        map: texture
+    });
     const ground = new THREE.Mesh(planeGeometry, planeMaterial);
     ground.position.set(0, 0, 0);
     ground.rotation.x = -0.5 * Math.PI;
