@@ -27,19 +27,46 @@ function main() {
     scene.add(axes);
 
     const loader = new THREE.TextureLoader();
-    const texture = loader.load('../assets/textures/wood.jpg');
-    texture.wrapS = THREE.MirroredRepeatWrapping;
-    texture.wrapT = THREE.RepeatWrapping;
-    texture.repeat.set(20, 20);
+
+    const floor = loader.load('../assets/textures/wood.jpg');
+    floor.wrapS = THREE.MirroredRepeatWrapping;
+    floor.wrapT = THREE.RepeatWrapping;
+    floor.repeat.set(20, 20);
+
+    const whiteWall = loader.load('../assets/textures/white-wall.jpg');
+    whiteWall.wrapS = THREE.MirroredRepeatWrapping;
+    // whiteWall.wrapT = THREE.RepeatWrapping;
+    whiteWall.repeat.set(10, 1);
 
     const planeGeometry = new THREE.PlaneGeometry(100, 100, 5);
     const planeMaterial = new THREE.MeshLambertMaterial({
-        map: texture
+        map: floor
     });
     const ground = new THREE.Mesh(planeGeometry, planeMaterial);
     ground.position.set(0, 0, 0);
     ground.rotation.x = -0.5 * Math.PI;
     scene.add(ground);
+
+    const sideWallGeometry = new THREE.PlaneGeometry(100, 5);
+    const sideWallMaterial = new THREE.MeshBasicMaterial({
+        map: whiteWall
+    });
+    const sideWall = [];
+    for (let i = 0; i < 4; i++) {
+        sideWall.push(new THREE.Mesh(sideWallGeometry, sideWallMaterial));
+    }
+    sideWall[0].position.set(0, 2.5, -50);
+
+    sideWall[1].position.set(0, 2.5, 50);
+    sideWall[1].rotation.y = Math.PI;
+
+    sideWall[2].position.set(-50, 2.5, 0);
+    sideWall[2].rotation.y = Math.PI / 2;
+
+    sideWall[3].position.set(50, 2.5, 0);
+    sideWall[3].rotation.y = Math.PI / -2;
+
+    sideWall.forEach(wall => scene.add(wall));
 
     const controls = new PointerLockControls(camera, document.body);
 
