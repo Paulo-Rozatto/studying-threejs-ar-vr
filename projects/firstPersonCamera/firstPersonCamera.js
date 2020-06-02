@@ -23,8 +23,8 @@ function main() {
     light.position.set(50, 50, 50);
     scene.add(light);
 
-    const axes = new THREE.AxesHelper(25);
-    scene.add(axes);
+    // const axes = new THREE.AxesHelper(25);
+    // scene.add(axes);
 
     const loader = new THREE.TextureLoader();
 
