@@ -23,7 +23,7 @@ function main() {
     light.position.set(50, 50, 50);
     scene.add(light);
 
-    const axes = new THREE.AxesHelper(50);
+    const axes = new THREE.AxesHelper(25);
     scene.add(axes);
 
     const loader = new THREE.TextureLoader();
@@ -38,7 +38,7 @@ function main() {
     // whiteWall.wrapT = THREE.RepeatWrapping;
     whiteWall.repeat.set(10, 1);
 
-    const planeGeometry = new THREE.PlaneGeometry(100, 100, 5);
+    const planeGeometry = new THREE.PlaneGeometry(50, 50, 5);
     const planeMaterial = new THREE.MeshLambertMaterial({
         map: floor
     });
@@ -47,7 +47,7 @@ function main() {
     ground.rotation.x = -0.5 * Math.PI;
     scene.add(ground);
 
-    const sideWallGeometry = new THREE.PlaneGeometry(100, 5);
+    const sideWallGeometry = new THREE.PlaneGeometry(50, 5);
     const sideWallMaterial = new THREE.MeshBasicMaterial({
         map: whiteWall
     });
@@ -55,18 +55,50 @@ function main() {
     for (let i = 0; i < 4; i++) {
         sideWall.push(new THREE.Mesh(sideWallGeometry, sideWallMaterial));
     }
-    sideWall[0].position.set(0, 2.5, -50);
+    sideWall[0].position.set(0, 2.5, -25);
 
-    sideWall[1].position.set(0, 2.5, 50);
+    sideWall[1].position.set(0, 2.5, 25);
     sideWall[1].rotation.y = Math.PI;
 
-    sideWall[2].position.set(-50, 2.5, 0);
+    sideWall[2].position.set(-25, 2.5, 0);
     sideWall[2].rotation.y = Math.PI / 2;
 
-    sideWall[3].position.set(50, 2.5, 0);
+    sideWall[3].position.set(25, 2.5, 0);
     sideWall[3].rotation.y = Math.PI / -2;
 
     sideWall.forEach(wall => scene.add(wall));
+
+    const paintingGeometry = new THREE.PlaneGeometry(4, 3);
+    const paintings = [
+        new THREE.Mesh(paintingGeometry, new THREE.MeshBasicMaterial({ map: loader.load('../assets/paintings/autoretrato.jpg') })),
+        new THREE.Mesh(paintingGeometry, new THREE.MeshBasicMaterial({ map: loader.load('../assets/paintings/starynight.jpg') })),
+        new THREE.Mesh(paintingGeometry, new THREE.MeshBasicMaterial({ map: loader.load('../assets/paintings/indios.jpg') })),
+        new THREE.Mesh(paintingGeometry, new THREE.MeshBasicMaterial({ map: loader.load('../assets/paintings/mantiqueira.jpg') })),
+        new THREE.Mesh(paintingGeometry, new THREE.MeshBasicMaterial({ map: loader.load('../assets/paintings/madona.jpg') })),
+        new THREE.Mesh(paintingGeometry, new THREE.MeshBasicMaterial({ map: loader.load('../assets/paintings/venus.jpg') })),
+        new THREE.Mesh(paintingGeometry, new THREE.MeshBasicMaterial({ map: loader.load('../assets/paintings/barcopapel.jpg') })),
+        new THREE.Mesh(paintingGeometry, new THREE.MeshBasicMaterial({ map: loader.load('../assets/paintings/dragao.jpg') })),
+    ];
+
+    paintings[0].position.set(-12.5, 2.5, -24.9);
+    paintings[1].position.set(12.5, 2.5, -24.9);
+
+    paintings[2].position.set(-12.5, 2.5, 24.9);
+    paintings[3].position.set(12.5, 2.5, 24.9);
+    paintings[2].rotation.y = Math.PI;
+    paintings[3].rotation.y = Math.PI;
+
+    paintings[4].position.set(-24.9, 2.5, -12.5);
+    paintings[5].position.set(-24.9, 2.5, 12.5);
+    paintings[4].rotation.y = Math.PI / 2;
+    paintings[5].rotation.y = Math.PI / 2;
+
+    paintings[6].position.set(24.9, 2.5, -12.5);
+    paintings[7].position.set(24.9, 2.5, 12.5);
+    paintings[6].rotation.y = Math.PI / -2;
+    paintings[7].rotation.y = Math.PI / -2;
+
+    paintings.forEach(p => scene.add(p));
 
     const controls = new PointerLockControls(camera, document.body);
 
@@ -95,7 +127,7 @@ function main() {
 
     scene.add(controls.getObject());
 
-    const speed = 0.5;
+    const speed = 20;
     let moveForward = false;
     let moveBackward = false;
     let moveLeft = false;
@@ -129,29 +161,35 @@ function main() {
         }
     }
 
-    function render() {
-        stats.update();
-
+    function moveAnimate(delta) {
+        console.log(delta);
         if (moveForward) {
-            controls.moveForward(speed);
+            controls.moveForward(speed * delta);
         }
         else if (moveBackward) {
-            controls.moveForward(speed * -1);
+            controls.moveForward(speed * -1 * delta);
         }
 
         if (moveRight) {
-            controls.moveRight(speed);
+            controls.moveRight(speed * delta);
         }
         else if (moveLeft) {
-            controls.moveRight(speed * -1);
+            controls.moveRight(speed * -1 * delta);
         }
 
         if (moveUp && camera.position.y <= 100) {
-            camera.position.y += speed;
+            camera.position.y += speed * delta;
         }
         else if (moveDown && camera.position.y >= 2) {
-            camera.position.y -= speed;
+            camera.position.y -= speed * delta;
         }
+    }
+
+    const clock = new THREE.Clock();
+    function render() {
+        stats.update();
+
+        moveAnimate(clock.getDelta());
 
         renderer.render(scene, camera);
         requestAnimationFrame(render);
