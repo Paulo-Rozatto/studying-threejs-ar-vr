@@ -28,9 +28,7 @@ function main() {
     const ambientLight = new THREE.AmbientLight(0x442222);
     scene.add(ambientLight);
 
-    // const axes = new THREE.AxesHelper(25);
-    // scene.add(axes);
-
+    // Loading all textures
     const loader = new THREE.TextureLoader();
 
     const groundTexture = loader.load('../assets/textures/wood.jpg');
@@ -46,6 +44,10 @@ function main() {
     whiteWallTexture.wrapS = THREE.MirroredRepeatWrapping;
     whiteWallTexture.repeat.set(10, 1);
 
+    const brickWallTexture = loader.load('../assets/textures/brick-wall.jpg');
+
+    // End loading textures
+
     const planeGeometry = new THREE.PlaneGeometry(50, 50, 5);
     const planeMaterial = new THREE.MeshLambertMaterial({
         map: groundTexture
@@ -57,11 +59,11 @@ function main() {
 
     const boxGeometry = new THREE.BoxGeometry(50, 50, 0.5);
     const ground2 = new THREE.Mesh(boxGeometry, planeMaterial);
-    ground2.position.set(57.5, 4.25, 0);
+    ground2.position.set(58, 5, 0);
     ground2.rotation.x = -0.5 * Math.PI;
     scene.add(ground2);
 
-    const rampGeometry = new THREE.PlaneGeometry(10, 10);
+    const rampGeometry = new THREE.PlaneGeometry(11, 10);
     const rampMaterial = new THREE.MeshLambertMaterial({
         map: rampTexture
     });
@@ -77,9 +79,11 @@ function main() {
         map: whiteWallTexture
     });
     const walls = [];
+
     for (let i = 0; i < 3; i++) {
         walls.push(new THREE.Mesh(WallGeometry, wallMaterial));
     }
+
     walls.push(new THREE.Mesh(smallWallGeometry, wallMaterial));
     walls.push(new THREE.Mesh(smallWallGeometry, wallMaterial));
 
@@ -98,6 +102,22 @@ function main() {
     walls[4].rotation.y = Math.PI / -2;
 
     walls.forEach(wall => scene.add(wall));
+
+    const brickWallGeometry = new THREE.PlaneGeometry(8.5, 5);
+    const brickWallMaterial = new THREE.MeshBasicMaterial({
+        map: brickWallTexture
+    });
+    const brickWalls = [];
+
+    brickWalls.push(new THREE.Mesh(brickWallGeometry, brickWallMaterial));
+    brickWalls.push(new THREE.Mesh(brickWallGeometry, brickWallMaterial));
+
+    brickWalls[0].position.set(29, 2.5, -5);
+
+    brickWalls[1].position.set(29, 2.5, 5);
+    brickWalls[1].rotation.y = Math.PI;
+
+    brickWalls.forEach(brickWall => scene.add(brickWall));
 
     const paintingGeometry = new THREE.PlaneGeometry(4, 3);
     const paintings = [
@@ -217,8 +237,7 @@ function main() {
         else if (moveDown && !isIntersectingGround && !isIntersectingRamp) {
             camera.position.y -= speed * delta;
         }
-
-        if (isIntersectingRamp) {
+        else if (isIntersectingRamp) {
             camera.position.y += speed / 2 * delta;
         }
     }
