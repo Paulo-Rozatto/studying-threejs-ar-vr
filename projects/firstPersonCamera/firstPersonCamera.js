@@ -41,7 +41,6 @@ function main() {
     const whiteWall = loader.load('../assets/textures/white-wall.jpg');
     whiteWall.wrapS = THREE.MirroredRepeatWrapping;
     rampTexture.repeat.set(3, 1);
-    // whiteWall.wrapT = THREE.RepeatWrapping;
     whiteWall.repeat.set(10, 1);
 
     const planeGeometry = new THREE.PlaneGeometry(50, 50, 5);
@@ -53,35 +52,43 @@ function main() {
     ground.rotation.x = -0.5 * Math.PI;
     scene.add(ground);
 
-    const rampGeometry = new THREE.PlaneGeometry(10, 12);
-    const rampMaterial = new THREE.MeshLambertMaterial({
+    const rampGeometry = new THREE.PlaneGeometry(10, 10);
+    const rampMaterial = new THREE.MeshBasicMaterial({
         map: rampTexture
     });
     const ramp = new THREE.Mesh(rampGeometry, rampMaterial);
-    ramp.rotation.x = -0.33 * Math.PI;
-    ramp.position.set(0, 2, -19.9);
+    ramp.rotation.x = 1.5 * Math.PI;
+    ramp.rotation.y = -Math.PI / 6;
+    ramp.position.set(28.5, 2, 0);
     scene.add(ramp);
 
-    const sideWallGeometry = new THREE.PlaneGeometry(50, 5);
-    const sideWallMaterial = new THREE.MeshBasicMaterial({
+    const WallGeometry = new THREE.PlaneGeometry(50, 5);
+    const smallWallGeometry = new THREE.PlaneGeometry(20, 5);
+    const wallMaterial = new THREE.MeshBasicMaterial({
         map: whiteWall
     });
-    const sideWall = [];
-    for (let i = 0; i < 4; i++) {
-        sideWall.push(new THREE.Mesh(sideWallGeometry, sideWallMaterial));
+    const walls = [];
+    for (let i = 0; i < 3; i++) {
+        walls.push(new THREE.Mesh(WallGeometry, wallMaterial));
     }
-    sideWall[0].position.set(0, 2.5, -25);
+    walls.push(new THREE.Mesh(smallWallGeometry, wallMaterial));
+    walls.push(new THREE.Mesh(smallWallGeometry, wallMaterial));
 
-    sideWall[1].position.set(0, 2.5, 25);
-    sideWall[1].rotation.y = Math.PI;
+    walls[0].position.set(0, 2.5, -25);
 
-    sideWall[2].position.set(-25, 2.5, 0);
-    sideWall[2].rotation.y = Math.PI / 2;
+    walls[1].position.set(0, 2.5, 25);
+    walls[1].rotation.y = Math.PI;
 
-    sideWall[3].position.set(25, 2.5, 0);
-    sideWall[3].rotation.y = Math.PI / -2;
+    walls[2].position.set(-25, 2.5, 0);
+    walls[2].rotation.y = Math.PI / 2;
 
-    sideWall.forEach(wall => scene.add(wall));
+    walls[3].position.set(25, 2.5, 15);
+    walls[3].rotation.y = Math.PI / -2;
+
+    walls[4].position.set(25, 2.5, -15);
+    walls[4].rotation.y = Math.PI / -2;
+
+    walls.forEach(wall => scene.add(wall));
 
     const paintingGeometry = new THREE.PlaneGeometry(4, 3);
     const paintings = [
