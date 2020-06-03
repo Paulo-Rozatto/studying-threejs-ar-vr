@@ -180,7 +180,7 @@ function main() {
         if (moveUp && camera.position.y <= 100) {
             camera.position.y += speed * delta;
         }
-        else if (moveDown && camera.position.y >= 2) {
+        else if (moveDown && camera.position.y > 2) {
             camera.position.y -= speed * delta;
         }
     }
@@ -189,7 +189,9 @@ function main() {
     function render() {
         stats.update();
 
-        moveAnimate(clock.getDelta());
+        if (controls.isLocked) {
+            moveAnimate(clock.getDelta());
+        }
 
         renderer.render(scene, camera);
         requestAnimationFrame(render);
