@@ -22,8 +22,11 @@ function main() {
     const raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0).normalize(), 0, 2);
 
     const light = new THREE.DirectionalLight(0xfefefe);
-    light.position.set(50, 50, 50);
+    light.position.set(100, 90, 100);
     scene.add(light);
+
+    const ambientLight = new THREE.AmbientLight(0x442222);
+    scene.add(ambientLight);
 
     // const axes = new THREE.AxesHelper(25);
     // scene.add(axes);
@@ -37,11 +40,11 @@ function main() {
 
     const rampTexture = loader.load('../assets/textures/wood2.jpg');
     rampTexture.wrapS = THREE.MirroredRepeatWrapping;
-
-    const whiteWall = loader.load('../assets/textures/white-wall.jpg');
-    whiteWall.wrapS = THREE.MirroredRepeatWrapping;
     rampTexture.repeat.set(3, 1);
-    whiteWall.repeat.set(10, 1);
+
+    const whiteWallTexture = loader.load('../assets/textures/white-wall.jpg');
+    whiteWallTexture.wrapS = THREE.MirroredRepeatWrapping;
+    whiteWallTexture.repeat.set(10, 1);
 
     const planeGeometry = new THREE.PlaneGeometry(50, 50, 5);
     const planeMaterial = new THREE.MeshLambertMaterial({
@@ -52,8 +55,14 @@ function main() {
     ground.rotation.x = -0.5 * Math.PI;
     scene.add(ground);
 
+    const boxGeometry = new THREE.BoxGeometry(50, 50, 0.5);
+    const ground2 = new THREE.Mesh(boxGeometry, planeMaterial);
+    ground2.position.set(57.5, 4.25, 0);
+    ground2.rotation.x = -0.5 * Math.PI;
+    scene.add(ground2);
+
     const rampGeometry = new THREE.PlaneGeometry(10, 10);
-    const rampMaterial = new THREE.MeshBasicMaterial({
+    const rampMaterial = new THREE.MeshLambertMaterial({
         map: rampTexture
     });
     const ramp = new THREE.Mesh(rampGeometry, rampMaterial);
@@ -65,7 +74,7 @@ function main() {
     const WallGeometry = new THREE.PlaneGeometry(50, 5);
     const smallWallGeometry = new THREE.PlaneGeometry(20, 5);
     const wallMaterial = new THREE.MeshBasicMaterial({
-        map: whiteWall
+        map: whiteWallTexture
     });
     const walls = [];
     for (let i = 0; i < 3; i++) {
@@ -185,7 +194,7 @@ function main() {
 
     function moveAnimate(delta) {
         raycaster.ray.origin.copy(controls.getObject().position);
-        const isIntersectingGround = raycaster.intersectObject(ground).length > 0;
+        const isIntersectingGround = raycaster.intersectObjects([ground, ground2]).length > 0;
         const isIntersectingRamp = raycaster.intersectObject(ramp).length > 0;
 
         if (moveForward) {
@@ -205,7 +214,7 @@ function main() {
         if (moveUp && camera.position.y <= 100) {
             camera.position.y += speed * delta;
         }
-        else if (moveDown && !isIntersectingGround) {
+        else if (moveDown && !isIntersectingGround && !isIntersectingRamp) {
             camera.position.y -= speed * delta;
         }
 
