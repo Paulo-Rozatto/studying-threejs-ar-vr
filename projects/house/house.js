@@ -107,7 +107,7 @@ function main() {
     controls.addEventListener('unlock', function () {
 
         blocker.style.display = 'block';
-        instructions.style.display = '';
+        instructions.style.display = 'block';
 
     });
 
