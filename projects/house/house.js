@@ -33,6 +33,9 @@ function main() {
             ground = glb.scene.children[0].children.filter(isGround);
 
             scene.add(glb.scene);
+
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('instructions').style.display = 'block';
         },
         (xhr) => console.log((xhr.loaded / xhr.total * 100) + '% loaded'),
         (error) => console.log(error)
