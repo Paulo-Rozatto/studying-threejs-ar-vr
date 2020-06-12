@@ -1262,7 +1262,7 @@ const LoadScreen = function (renderer, style) {
 
 				for (var p in oA[k]) {
 
-					if (p !== 'type' && typeof m[p] !== 'undefined') {
+					if (p !== 'type' && typeof m !== 'undefined' && typeof m[p] !== 'undefined') {
 
 						if ((p.indexOf('map') > -1 || p.indexOf('Map') > -1) && p !== 'aoMapIntensity') {
 
@@ -1354,7 +1354,8 @@ const LoadScreen = function (renderer, style) {
 
 					}
 
-					assignPropsToMaterial(k, object.material);
+					if (object.material) assignPropsToMaterial(k, object.material);
+					console.log('b', object);
 
 					assignPropsToObject(k, object);
 
@@ -1374,6 +1375,7 @@ const LoadScreen = function (renderer, style) {
 					delete oA[k].geometry;
 					delete oA[k].material;
 
+					console.log('a', material);
 					assignPropsToMaterial(k, material);
 
 					var object = createObjectFromType(k, geometry, material);

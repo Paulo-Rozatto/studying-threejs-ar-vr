@@ -2,186 +2,204 @@
 import * as THREE from '../libs/three.module.js';
 import Stats from '../libs/stats.module.js';
 import { PointerLockControls } from '../libs/PointerLockControls.js';
-import { GLTFLoader } from '../libs/GLTFLoader.js';
+import { LoadScreen } from '../libs/LoadScreen.js';
 
-function main() {
-    const stats = initStats();
-    const canvas = document.querySelector('#output');
+let stats, renderer, scene, camera, light, pointLight, clock;
 
-    const renderer = new THREE.WebGLRenderer({ canvas });
-    renderer.setClearColor(new THREE.Color(0xefefef));
-    renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+let house, controls, raycaster, blocker, instructions, ground = [];
 
-    const scene = new THREE.Scene();
+const movement = {
+    speed: 7,
+    moveForward: false,
+    moveBackward: false,
+    moveLeft: false,
+    moveRight: false,
+    moveUp: false,
+    moveDown: false
+};
 
-    const camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 500);
+
+const ASSETS = {
+    textures: {
+        // wood: {
+        //     path: '../assets/textures/wood.jpg',
+        //     fileSize: 75456
+        // }
+    },
+    materials: {
+        // cubeMaterial: new THREE.MeshPhongMaterial()
+    },
+    geometries: {
+        // cubeGeometry: new THREE.BoxGeometry(3, 3, 3)
+    },
+    objects: {
+        house: {
+            path: '../assets/models/round-house.glb',
+            fileSize: 39242452,
+            onComplete(glb) {
+                console.log('c', glb);
+            }
+        }
+    }
+};
+
+setRenderer();
+
+const ls = new LoadScreen(renderer, { type: 'stepped-circular', progressColor: '#447' })
+    .onComplete(init)
+    .start(ASSETS);
+
+function init() {
+    stats = initStats();
+
+    scene = new THREE.Scene();
+
+    camera = camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 500);
     camera.position.set(13, 1.8, -2);
+    // camera.lookAt(new THREE.Vector3(0, 0, 0));
     scene.add(camera);
 
-    const light = new THREE.DirectionalLight(0xfefefe);
+    light = new THREE.DirectionalLight(0xfefefe);
     light.position.set(50, 80, 50);
     scene.add(light);
 
-    const pointLight = new THREE.PointLight(0xfefefe, 1, 30);
-    scene.add(pointLight);
+    pointLight = new THREE.PointLight(0xfefefe, 1, 30);
+    camera.add(pointLight);
 
-    const glbLoader = new GLTFLoader();
-    glbLoader.load('../assets/models/round-house.glb',
-        (glb) => {
-            /* indentify meshes wich are part of the ground by looking material name */
-            const isGround = (mesh) => /suc|h1|tile|stone/i.test(mesh.material.name);
-            ground = glb.scene.children[0].children.filter(isGround);
+    house = ASSETS.objects.house;
+    let isGround = (mesh) => /suc|h1|tile|stone/i.test(mesh.material.name);
+    ground = house.children[0].children.filter(isGround);
+    scene.add(house);
 
-            scene.add(glb.scene);
+    controls = new PointerLockControls(camera, renderer.domElement);
+    raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0).normalize(), 0, 1.6);
 
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('instructions').style.display = 'block';
-        },
-        (xhr) => console.log((xhr.loaded / xhr.total * 100) + '% loaded'),
-        (error) => console.log(error)
-    );
+    blocker = document.getElementById('blocker');
+    instructions = document.getElementById('instructions');
 
-    const clock = new THREE.Clock();
-    function render() {
-        stats.update();
+    instructions.addEventListener('click', click);
 
-        move(clock.getDelta());
-        pointLight.position.x = controls.getObject().position.x;
-        pointLight.position.z = controls.getObject().position.z;
-        pointLight.position.y = controls.getObject().position.y;
+    controls.addEventListener('lock', lock);
 
-        renderer.render(scene, camera);
-        requestAnimationFrame(render);
-    }
-    requestAnimationFrame(render);
-
-    function initStats() {
-        const stats = new Stats();
-        stats.setMode(0); // 0: fps, 1: ms
-
-        // Align top-left
-        stats.domElement.style.position = 'absolute';
-        stats.domElement.style.left = '0px';
-        stats.domElement.style.top = '0px';
-
-        document.getElementById('stats').appendChild(stats.domElement);
-
-        return stats;
-    }
-
-    resize();
-    function resize() {
-        const width = canvas.clientWidth;
-        const height = canvas.clientHeight;
-
-        renderer.setSize(width, height, false);
-        camera.aspect = width / height;
-        camera.updateProjectionMatrix();
-    }
-    window.onresize = resize;
-
-
-    // CAMERA CONTROL CODE
-    const controls = new PointerLockControls(camera, renderer.domElement);
-
-    const raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0).normalize(), 0, 1.6);
-
-    let ground = [];
-
-    const blocker = document.getElementById('blocker');
-    const instructions = document.getElementById('instructions');
-
-    instructions.addEventListener('click', function () {
-
-        controls.lock();
-
-    }, false);
-
-    controls.addEventListener('lock', function () {
-
-        instructions.style.display = 'none';
-        blocker.style.display = 'none';
-
-    });
-
-    controls.addEventListener('unlock', function () {
-
-        blocker.style.display = 'block';
-        instructions.style.display = 'block';
-
-    });
+    controls.addEventListener('unlock', unlock);
 
     scene.add(controls.getObject());
-
-    let speed = 7;
-    let moveForward = false;
-    let moveBackward = false;
-    let moveLeft = false;
-    let moveRight = false;
-    let moveUp = false;
-    let moveDown = false;
+    unlock();
 
     window.addEventListener('keydown', (event) => movementControls(event.keyCode, true));
     window.addEventListener('keyup', (event) => movementControls(event.keyCode, false));
+    window.addEventListener('resize', onResize);
 
-    function movementControls(key, value) {
-        switch (key) {
-            case 87: // W
-                moveForward = value;
-                break;
-            case 83: // S
-                moveBackward = value;
-                break;
-            case 65: // A
-                moveLeft = value;
-                break;
-            case 68: // D
-                moveRight = value;
-                break;
-            case 32: // Space
-                moveUp = value;
-                break;
-            case 16: // Shift
-                moveDown = value;
-                break;
-        }
-    }
-
-    function move(delta) {
-
-        if (!controls.lock) return;
-        let isIntersectingGround = false;
-
-        raycaster.ray.origin.copy(controls.getObject().position);
-        if (ground.length > 0) {
-            isIntersectingGround = raycaster.intersectObjects(ground).length > 0;
-        }
-
-        if (moveForward) {
-            controls.moveForward(speed * delta);
-        }
-        else if (moveBackward) {
-            controls.moveForward(speed * -1 * delta);
-        }
-
-        if (moveRight) {
-            controls.moveRight(speed * delta);
-        }
-        else if (moveLeft) {
-            controls.moveRight(speed * -1 * delta);
-        }
-
-        if (moveUp) {
-            camera.position.y += speed * delta;
-        }
-        else if (moveDown && !isIntersectingGround) {
-            camera.position.y -= speed * delta;
-        }
-        else if (isIntersectingGround && !moveDown) {
-            camera.position.y += speed / 2 * delta;
-        }
-    }
-    // END OF CAMERA CONTROL CODE
+    clock = new THREE.Clock();
+    ls.remove(animate);
 }
 
-main();
+function click() {
+    controls.lock();
+}
+
+function lock() {
+    instructions.style.display = 'none';
+    blocker.style.display = 'none';
+}
+
+function unlock() {
+    blocker.style.display = 'block';
+    instructions.style.display = 'block';
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+
+    stats.update();
+    move(clock.getDelta());
+
+    renderer.render(scene, camera);
+}
+
+function move(delta) {
+    if (!controls.lock) return;
+    let isIntersectingGround = false;
+
+    raycaster.ray.origin.copy(controls.getObject().position);
+    if (ground.length > 0) {
+        isIntersectingGround = raycaster.intersectObjects(ground).length > 0;
+    }
+
+    if (movement.moveForward) {
+        controls.moveForward(movement.speed * delta);
+    }
+    else if (movement.moveBackward) {
+        controls.moveForward(movement.speed * -1 * delta);
+    }
+
+    if (movement.moveRight) {
+        controls.moveRight(movement.speed * delta);
+    }
+    else if (movement.moveLeft) {
+        controls.moveRight(movement.speed * -1 * delta);
+    }
+
+    if (movement.moveUp) {
+        camera.position.y += movement.speed * delta;
+    }
+    else if (movement.moveDown && !isIntersectingGround) {
+        camera.position.y -= movement.speed * delta;
+    }
+    else if (isIntersectingGround && !movement.moveDown) {
+        camera.position.y += movement.speed / 2 * delta;
+    }
+}
+
+function movementControls(key, value) {
+    switch (key) {
+        case 87: // W
+            movement.moveForward = value;
+            break;
+        case 83: // S
+            movement.moveBackward = value;
+            break;
+        case 65: // A
+            movement.moveLeft = value;
+            break;
+        case 68: // D
+            movement.moveRight = value;
+            break;
+        case 32: // Space
+            movement.moveUp = value;
+            break;
+        case 16: // Shift
+            movement.moveDown = value;
+            break;
+    }
+}
+
+function setRenderer() {
+    renderer = new THREE.WebGLRenderer();
+    renderer.setClearColor(0xfefefe);
+    renderer.setPixelRatio(devicePixelRatio);
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.toneMapping = THREE.ReinhardToneMapping;
+    renderer.toneMappingExposure = 1.5;
+    document.body.appendChild(renderer.domElement);
+}
+
+function initStats() {
+    const stats = new Stats();
+    stats.setMode(0); // 0: fps, 1: ms
+
+    // Align top-left
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.left = '0px';
+    stats.domElement.style.top = '0px';
+
+    document.getElementById('stats').appendChild(stats.domElement);
+
+    return stats;
+}
+
+function onResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
