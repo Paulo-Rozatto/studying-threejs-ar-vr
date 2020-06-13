@@ -1355,7 +1355,6 @@ const LoadScreen = function (renderer, style) {
 					}
 
 					if (object.material) assignPropsToMaterial(k, object.material);
-					console.log('b', object);
 
 					assignPropsToObject(k, object);
 
@@ -1375,7 +1374,6 @@ const LoadScreen = function (renderer, style) {
 					delete oA[k].geometry;
 					delete oA[k].material;
 
-					console.log('a', material);
 					assignPropsToMaterial(k, material);
 
 					var object = createObjectFromType(k, geometry, material);
