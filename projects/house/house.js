@@ -25,20 +25,34 @@ const ASSETS = {
         //     path: '../assets/textures/wood.jpg',
         //     fileSize: 75456
         // }
+        skyBoxMap: {
+            path: '../assets/textures/cloud.jpg',
+            fileSize: 1065362
+        },
     },
     materials: {
-        // cubeMaterial: new THREE.MeshPhongMaterial()
+        skyBoxMaterial: new THREE.MeshBasicMaterial({ side: 1 }),
+        groundMaterial: new THREE.MeshBasicMaterial({ color: 0xDEB887 })
     },
     geometries: {
-        // cubeGeometry: new THREE.BoxGeometry(3, 3, 3)
+        skyBoxGeometry: new THREE.SphereGeometry(600, 50, 50),
+        groundGeometry: new THREE.PlaneGeometry(1000, 1000, 30)
     },
     objects: {
         house: {
             path: '../assets/models/round-house.glb',
-            fileSize: 39242452,
-            onComplete(glb) {
-                console.log('c', glb);
-            }
+            fileSize: 39242452
+        },
+        skyBox: {
+            type: 'mesh',
+            geometry: 'skyBoxGeometry',
+            material: 'skyBoxMaterial',
+            map: 'skyBoxMap'
+        },
+        ground: {
+            type: 'mesh',
+            geometry: 'groundGeometry',
+            material: 'groundMaterial'
         }
     }
 };
@@ -54,9 +68,8 @@ function init() {
 
     scene = new THREE.Scene();
 
-    camera = camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 500);
+    camera = camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 1, 700);
     camera.position.set(13, 1.8, -2);
-    // camera.lookAt(new THREE.Vector3(0, 0, 0));
     scene.add(camera);
 
     light = new THREE.DirectionalLight(0xfefefe);
@@ -66,7 +79,16 @@ function init() {
     pointLight = new THREE.PointLight(0xfefefe, 1, 30);
     camera.add(pointLight);
 
+    let skyBox = ASSETS.objects.skyBox;
+    scene.add(skyBox);
+
+    let floor = ASSETS.objects.ground;
+    floor.rotation.x = -0.5 * Math.PI;
+    floor.position.set(0, 0, 0);
+    scene.add(floor);
+
     house = ASSETS.objects.house;
+    house.position.set(0, 0, 0);
     let isGround = (mesh) => /suc|h1|tile|stone/i.test(mesh.material.name);
     ground = house.children[0].children.filter(isGround);
     scene.add(house);
@@ -170,17 +192,18 @@ function movementControls(key, value) {
             break;
         case 16: // Shift
             movement.moveDown = value;
+            console.log(controls.getObject().position);
             break;
     }
 }
 
 function setRenderer() {
     renderer = new THREE.WebGLRenderer();
-    renderer.setClearColor(0xfefefe);
+    renderer.setClearColor(0x222);
     renderer.setPixelRatio(devicePixelRatio);
     renderer.setSize(innerWidth, innerHeight);
-    renderer.toneMapping = THREE.ReinhardToneMapping;
-    renderer.toneMappingExposure = 1.5;
+    // renderer.toneMapping = THREE.ReinhardToneMapping;
+    // renderer.toneMappingExposure = 1.5;
     document.body.appendChild(renderer.domElement);
 }
 
