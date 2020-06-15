@@ -6,7 +6,7 @@ import { LoadScreen } from '../libs/LoadScreen.js';
 
 let stats, renderer, scene, camera, light, pointLight, clock;
 
-let house, controls, raycaster, blocker, instructions, ground = [];
+let house, controls, raycaster, blocker, instructions, floor = [];
 
 const movement = {
     speed: 7,
@@ -21,18 +21,23 @@ const movement = {
 
 const ASSETS = {
     textures: {
-        // wood: {
-        //     path: '../assets/textures/wood.jpg',
-        //     fileSize: 75456
-        // }
+        groundTexture: {
+            path: '../assets/textures/grass.jpg',
+            fileSize: 1341.909 + 19621.226, // for some reason the house file size is not count in the loader, so I added part of the value here for it to be shown
+            wrapS: THREE.MirroredRepeatWrapping,
+            wrapT: THREE.MirroredRepeatWrapping,
+            onComplete(grass) {
+                grass.repeat.set(100, 100);
+            }
+        },
         skyBoxMap: {
             path: '../assets/textures/cloud.jpg',
-            fileSize: 1065362
-        },
+            fileSize: 1065.362 + 19621.226 // for some reason the house file size is not count in the loader, so I added part of the value here for it to be shown
+        }
     },
     materials: {
         skyBoxMaterial: new THREE.MeshBasicMaterial({ side: 1 }),
-        groundMaterial: new THREE.MeshBasicMaterial({ color: 0xDEB887 })
+        groundMaterial: new THREE.MeshLambertMaterial({ color: 0xDEB887 })
     },
     geometries: {
         skyBoxGeometry: new THREE.SphereGeometry(600, 50, 50),
@@ -41,7 +46,7 @@ const ASSETS = {
     objects: {
         house: {
             path: '../assets/models/round-house.glb',
-            fileSize: 39242452
+            fileSize: 39242.452
         },
         skyBox: {
             type: 'mesh',
@@ -52,7 +57,8 @@ const ASSETS = {
         ground: {
             type: 'mesh',
             geometry: 'groundGeometry',
-            material: 'groundMaterial'
+            material: 'groundMaterial',
+            map: 'groundTexture'
         }
     }
 };
@@ -82,15 +88,16 @@ function init() {
     let skyBox = ASSETS.objects.skyBox;
     scene.add(skyBox);
 
-    let floor = ASSETS.objects.ground;
-    floor.rotation.x = -0.5 * Math.PI;
-    floor.position.set(0, 0, 0);
-    scene.add(floor);
+    let ground = ASSETS.objects.ground;
+    ground.rotation.x = -0.5 * Math.PI;
+    ground.position.set(0, 0, 0);
+    scene.add(ground);
 
     house = ASSETS.objects.house;
     house.position.set(0, 0, 0);
-    let isGround = (mesh) => /suc|h1|tile|stone/i.test(mesh.material.name);
-    ground = house.children[0].children.filter(isGround);
+    let isFloor = (mesh) => /suc|h1|tile|stone/i.test(mesh.material.name);
+    floor = house.children[0].children.filter(isFloor);
+    floor.push(ground);
     scene.add(house);
 
     controls = new PointerLockControls(camera, renderer.domElement);
@@ -144,8 +151,8 @@ function move(delta) {
     let isIntersectingGround = false;
 
     raycaster.ray.origin.copy(controls.getObject().position);
-    if (ground.length > 0) {
-        isIntersectingGround = raycaster.intersectObjects(ground).length > 0;
+    if (floor.length > 0) {
+        isIntersectingGround = raycaster.intersectObjects(floor).length > 0;
     }
 
     if (movement.moveForward) {
