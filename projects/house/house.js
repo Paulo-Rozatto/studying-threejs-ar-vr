@@ -15,7 +15,8 @@ const movement = {
     moveLeft: false,
     moveRight: false,
     moveUp: false,
-    moveDown: false
+    moveDown: false,
+    flyMode: false
 };
 
 
@@ -101,7 +102,7 @@ function init() {
     scene.add(house);
 
     controls = new PointerLockControls(camera, renderer.domElement);
-    raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0).normalize(), 0, 1.6);
+    raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0).normalize(), 0, 1.7);
 
     blocker = document.getElementById('blocker');
     instructions = document.getElementById('instructions');
@@ -152,9 +153,14 @@ function move(delta) {
 
     raycaster.ray.origin.copy(controls.getObject().position);
     if (floor.length > 0) {
-        isIntersectingGround = raycaster.intersectObjects(floor).length > 0;
+        isIntersectingGround = typeof raycaster.intersectObjects(floor)[0] === 'undefined' ? false : raycaster.intersectObjects(floor)[0];
+        console.log(isIntersectingGround.distance);
     }
 
+    if (movement.flyMode && isIntersectingGround) {
+        movement.flyMode = false;
+    }
+    console.log(movement.flyMode);
     if (movement.moveForward) {
         controls.moveForward(movement.speed * delta);
     }
@@ -172,11 +178,13 @@ function move(delta) {
     if (movement.moveUp) {
         camera.position.y += movement.speed * delta;
     }
-    else if (movement.moveDown && !isIntersectingGround) {
-        camera.position.y -= movement.speed * delta;
+    else if (isIntersectingGround) {
+        if (isIntersectingGround.distance < 1.5) {
+            camera.position.y += movement.speed / 2 * delta;
+        }
     }
-    else if (isIntersectingGround && !movement.moveDown) {
-        camera.position.y += movement.speed / 2 * delta;
+    else if ((movement.moveDown || !movement.flyMode) && !isIntersectingGround.distance) {
+        camera.position.y -= movement.speed * delta;
     }
 }
 
@@ -196,10 +204,10 @@ function movementControls(key, value) {
             break;
         case 32: // Space
             movement.moveUp = value;
+            movement.flyMode = true;
             break;
         case 16: // Shift
             movement.moveDown = value;
-            console.log(controls.getObject().position);
             break;
     }
 }
