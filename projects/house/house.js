@@ -16,7 +16,7 @@ const movement = {
     moveRight: false,
     moveUp: false,
     moveDown: false,
-    flyMode: false
+    flyMode: true
 };
 
 
@@ -24,7 +24,7 @@ const ASSETS = {
     textures: {
         groundTexture: {
             path: '../assets/textures/grass.jpg',
-            fileSize: 1341.909 + 19621.226, // for some reason the house file size is not count in the loader, so I added part of the value here for it to be shown
+            fileSize: 1341.909 + 18117.828, // for some reason the house file size is not count in the loader, so I added part of the value here for it to be shown
             wrapS: THREE.MirroredRepeatWrapping,
             wrapT: THREE.MirroredRepeatWrapping,
             onComplete(grass) {
@@ -33,7 +33,7 @@ const ASSETS = {
         },
         skyBoxMap: {
             path: '../assets/textures/cloud.jpg',
-            fileSize: 1065.362 + 19621.226 // for some reason the house file size is not count in the loader, so I added part of the value here for it to be shown
+            fileSize: 1065.362 + 18117.828 // for some reason the house file size is not count in the loader, so I added part of the value here for it to be shown
         }
     },
     materials: {
@@ -46,8 +46,8 @@ const ASSETS = {
     },
     objects: {
         house: {
-            path: '../assets/models/round-house.glb',
-            fileSize: 39242.452
+            path: '../assets/models/house.glb',
+            fileSize: 66016.026,
         },
         skyBox: {
             type: 'mesh',
@@ -76,14 +76,17 @@ function init() {
     scene = new THREE.Scene();
 
     camera = camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 1, 700);
-    camera.position.set(13, 1.8, -2);
+    camera.position.set(-3, 1, 18);
     scene.add(camera);
 
     light = new THREE.DirectionalLight(0xfefefe);
-    light.position.set(50, 80, 50);
+    light.position.set(-60, 80, 45);
     scene.add(light);
 
-    pointLight = new THREE.PointLight(0xfefefe, 1, 30);
+    // let helper = new THREE.DirectionalLightHelper(light);
+    // scene.add(helper);
+
+    pointLight = new THREE.PointLight(0xffffff);
     camera.add(pointLight);
 
     let skyBox = ASSETS.objects.skyBox;
@@ -92,14 +95,14 @@ function init() {
     let ground = ASSETS.objects.ground;
     ground.rotation.x = -0.5 * Math.PI;
     ground.position.set(0, 0, 0);
-    scene.add(ground);
+    // scene.add(ground);
 
     house = ASSETS.objects.house;
-    house.position.set(0, 0, 0);
-    let isFloor = (mesh) => /suc|h1|tile|stone/i.test(mesh.material.name);
-    floor = house.children[0].children.filter(isFloor);
-    floor.push(ground);
+    console.log(house);
+    house.children[8].material = new THREE.MeshPhongMaterial({ color: 0xdcdcdc, transparent: true, opacity: 0.1, side: THREE.DoubleSide });
+    house.children[9].material = new THREE.MeshPhongMaterial({ color: 0x4545df, transparent: true, opacity: 0.4 });
     scene.add(house);
+
 
     controls = new PointerLockControls(camera, renderer.domElement);
     raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0).normalize(), 0, 1.7);
@@ -151,16 +154,14 @@ function move(delta) {
     if (!controls.lock) return;
     let isIntersectingGround = false;
 
-    raycaster.ray.origin.copy(controls.getObject().position);
-    if (floor.length > 0) {
-        isIntersectingGround = typeof raycaster.intersectObjects(floor)[0] === 'undefined' ? false : raycaster.intersectObjects(floor)[0];
-        console.log(isIntersectingGround.distance);
-    }
+    // raycaster.ray.origin.copy(controls.getObject().position);
+    // if (floor.length > 0) {
+    //     isIntersectingGround = typeof raycaster.intersectObjects(floor)[0] === 'undefined' ? false : raycaster.intersectObjects(floor)[0];
+    // }
 
     if (movement.flyMode && isIntersectingGround) {
         movement.flyMode = false;
     }
-    console.log(movement.flyMode);
     if (movement.moveForward) {
         controls.moveForward(movement.speed * delta);
     }
@@ -207,6 +208,7 @@ function movementControls(key, value) {
             movement.flyMode = true;
             break;
         case 16: // Shift
+            console.log(controls.getObject().position);
             movement.moveDown = value;
             break;
     }

@@ -521,9 +521,9 @@ const LoadScreen = function (renderer, style) {
 
 			for (var k in r.objects)
 
-				if (r.objects[k].path && r.objects[k].fileSize)
-
+				if (r.objects[k].path && r.objects[k].fileSize) {
 					loadObject(k);
+				}
 
 	}
 
@@ -724,13 +724,14 @@ const LoadScreen = function (renderer, style) {
 					if (o) {
 
 						for (var k in o) {
+							if (o[k].path !== undefined) {
+								var ext = o[k].path.split('.');
+								ext = ext[ext.length - 1];
 
-							var ext = o.path.split('.');
-							ext = ext[ext.length - 1];
-
-							if (o[k].setMaterials === p && ext === 'obj')
-
-								loadObject(k, m);
+								if (o[k].setMaterials === p && ext === 'obj') {
+									loadObject(k, m);
+								}
+							}
 
 						}
 
@@ -839,7 +840,6 @@ const LoadScreen = function (renderer, style) {
 	}
 
 	function loadObject(p, materialCreator) {
-
 		var d = that.resources.objects[p],
 			a = d.path.split('.'),
 			l = a.length,
@@ -1309,7 +1309,7 @@ const LoadScreen = function (renderer, style) {
 			};
 
 			var assignPropsToObject = function (k, o) {
-
+				;
 				for (var p in oA[k]) {
 
 					if (typeof o[p] !== 'undefined')
@@ -1355,7 +1355,6 @@ const LoadScreen = function (renderer, style) {
 					}
 
 					if (object.material) assignPropsToMaterial(k, object.material);
-
 					assignPropsToObject(k, object);
 
 					if (oA[k].onComplete) oA[k].onComplete(object);
@@ -1377,7 +1376,6 @@ const LoadScreen = function (renderer, style) {
 					assignPropsToMaterial(k, material);
 
 					var object = createObjectFromType(k, geometry, material);
-
 					assignPropsToObject(k, object);
 
 					if (oA[k].onComplete) oA[k].onComplete(object);
@@ -1397,7 +1395,6 @@ const LoadScreen = function (renderer, style) {
 					assignPropsToMaterial(k, oA[k].material);
 
 					var object = createObjectFromType(k, geometry, material);
-
 					assignPropsToObject(k, object);
 
 					if (oA[k].onComplete) oA[k].onComplete(object);
