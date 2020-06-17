@@ -4,7 +4,7 @@ import Stats from '../libs/stats.module.js';
 import { PointerLockControls } from '../libs/PointerLockControls.js';
 import { LoadScreen } from '../libs/LoadScreen.js';
 
-let stats, renderer, scene, camera, light, pointLight, clock;
+let stats, renderer, scene, camera, light, ambientLight, clock;
 
 let house, controls, raycaster, blocker, instructions, floor = [];
 
@@ -22,18 +22,9 @@ const movement = {
 
 const ASSETS = {
     textures: {
-        groundTexture: {
-            path: '../assets/textures/grass.jpg',
-            fileSize: 1341.909 + 18117.828, // for some reason the house file size is not count in the loader, so I added part of the value here for it to be shown
-            wrapS: THREE.MirroredRepeatWrapping,
-            wrapT: THREE.MirroredRepeatWrapping,
-            onComplete(grass) {
-                grass.repeat.set(100, 100);
-            }
-        },
         skyBoxMap: {
             path: '../assets/textures/cloud.jpg',
-            fileSize: 1065.362 + 18117.828 // for some reason the house file size is not count in the loader, so I added part of the value here for it to be shown
+            fileSize: 1065.362 + 9889.984 // for some reason the house file size is not count in the loader, so it's added here to be shown on the loader
         }
     },
     materials: {
@@ -46,8 +37,8 @@ const ASSETS = {
     },
     objects: {
         house: {
-            path: '../assets/models/house.glb',
-            fileSize: 66016.026,
+            path: '../assets/models/modern-house.glb',
+            fileSize: 9889.984,
         },
         skyBox: {
             type: 'mesh',
@@ -80,27 +71,33 @@ function init() {
     scene.add(camera);
 
     light = new THREE.DirectionalLight(0xfefefe);
-    light.position.set(-60, 80, 45);
+    light.position.set(-65, 110, 52);
     scene.add(light);
 
     // let helper = new THREE.DirectionalLightHelper(light);
     // scene.add(helper);
 
-    pointLight = new THREE.PointLight(0xffffff);
-    camera.add(pointLight);
+    ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+    scene.add(ambientLight);
 
     let skyBox = ASSETS.objects.skyBox;
     scene.add(skyBox);
 
-    let ground = ASSETS.objects.ground;
-    ground.rotation.x = -0.5 * Math.PI;
-    ground.position.set(0, 0, 0);
-    // scene.add(ground);
-
     house = ASSETS.objects.house;
-    console.log(house);
-    house.children[8].material = new THREE.MeshPhongMaterial({ color: 0xdcdcdc, transparent: true, opacity: 0.1, side: THREE.DoubleSide });
-    house.children[9].material = new THREE.MeshPhongMaterial({ color: 0x4545df, transparent: true, opacity: 0.4 });
+    // console.log(house);
+
+    //setting transparency for the windows
+    house.children.forEach((object) => {
+        if (/window/i.test(object.name)) {
+            object.children.forEach(mesh => {
+                mesh.material.transparency = true;
+                mesh.material.opacity = 0.5;
+            });
+        }
+    });
+    // setting transparency for the water
+    house.children[21].material.transparency = true;
+    house.children[21].material.opacity = 0.8;
     scene.add(house);
 
 
@@ -208,7 +205,7 @@ function movementControls(key, value) {
             movement.flyMode = true;
             break;
         case 16: // Shift
-            console.log(controls.getObject().position);
+            // console.log(controls.getObject().position);
             movement.moveDown = value;
             break;
     }
