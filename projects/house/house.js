@@ -66,7 +66,7 @@ function init() {
 
     scene = new THREE.Scene();
 
-    camera = camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 1, 700);
+    camera = camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.01, 700);
     camera.position.set(-3, 1, 18);
     scene.add(camera);
 
@@ -86,23 +86,42 @@ function init() {
     house = ASSETS.objects.house;
     // console.log(house);
 
-    //setting transparency for the windows
+    house.scale.set(1.3, 1.3, 1.3);
+
     house.children.forEach((object) => {
+        //setting transparency for the windows
         if (/window/i.test(object.name)) {
             object.children.forEach(mesh => {
                 mesh.material.transparency = true;
                 mesh.material.opacity = 0.5;
             });
         }
+
+        // setting ground to collision
+        if (/ground|stairs|floor/i.test(object.name)) {
+            floor.push(object);
+        }
     });
+
+    // setting colision with balcony
+    floor.push(house.children[68].children[1]);
+    floor.push(house.children[69].children[1]);
+
+    //setting colision with pool
+    floor.push(house.children[70].children[1]);
+
     // setting transparency for the water
     house.children[21].material.transparency = true;
     house.children[21].material.opacity = 0.8;
+
+    house.children[70].children[1].material.transparency = true;
+    house.children[70].children[1].material.opacity = 0.5;
+
     scene.add(house);
 
 
     controls = new PointerLockControls(camera, renderer.domElement);
-    raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0).normalize(), 0, 1.7);
+    raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0).normalize(), 0, 1.5);
 
     blocker = document.getElementById('blocker');
     instructions = document.getElementById('instructions');
@@ -151,10 +170,10 @@ function move(delta) {
     if (!controls.lock) return;
     let isIntersectingGround = false;
 
-    // raycaster.ray.origin.copy(controls.getObject().position);
-    // if (floor.length > 0) {
-    //     isIntersectingGround = typeof raycaster.intersectObjects(floor)[0] === 'undefined' ? false : raycaster.intersectObjects(floor)[0];
-    // }
+    raycaster.ray.origin.copy(controls.getObject().position);
+    if (floor.length > 0) {
+        isIntersectingGround = typeof raycaster.intersectObjects(floor)[0] === 'undefined' ? false : raycaster.intersectObjects(floor)[0];
+    }
 
     if (movement.flyMode && isIntersectingGround) {
         movement.flyMode = false;
@@ -177,7 +196,7 @@ function move(delta) {
         camera.position.y += movement.speed * delta;
     }
     else if (isIntersectingGround) {
-        if (isIntersectingGround.distance < 1.5) {
+        if (isIntersectingGround.distance < 1.4) {
             camera.position.y += movement.speed / 2 * delta;
         }
     }
