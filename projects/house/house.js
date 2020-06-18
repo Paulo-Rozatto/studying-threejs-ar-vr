@@ -168,14 +168,14 @@ function animate() {
 
 function move(delta) {
     if (!controls.lock) return;
-    let isIntersectingGround = false;
+    let groundIntersection = false;
 
     raycaster.ray.origin.copy(controls.getObject().position);
     if (floor.length > 0) {
-        isIntersectingGround = typeof raycaster.intersectObjects(floor)[0] === 'undefined' ? false : raycaster.intersectObjects(floor)[0];
+        groundIntersection = typeof raycaster.intersectObjects(floor)[0] === 'undefined' ? false : raycaster.intersectObjects(floor)[0];
     }
 
-    if (movement.flyMode && isIntersectingGround) {
+    if (movement.flyMode && groundIntersection) {
         movement.flyMode = false;
     }
     if (movement.moveForward) {
@@ -195,12 +195,12 @@ function move(delta) {
     if (movement.moveUp) {
         camera.position.y += movement.speed * delta;
     }
-    else if (isIntersectingGround) {
-        if (isIntersectingGround.distance < 1.4) {
+    else if (groundIntersection) {
+        if (groundIntersection.distance < 1.4) {
             camera.position.y += movement.speed / 2 * delta;
         }
     }
-    else if ((movement.moveDown || !movement.flyMode) && !isIntersectingGround.distance) {
+    else if (movement.moveDown || !movement.flyMode) {
         camera.position.y -= movement.speed * delta;
     }
 }
