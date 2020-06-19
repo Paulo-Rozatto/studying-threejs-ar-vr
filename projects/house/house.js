@@ -16,7 +16,7 @@ const movement = {
     moveRight: false,
     moveUp: false,
     moveDown: false,
-    flyMode: true
+    flyMode: false
 };
 
 
@@ -210,6 +210,7 @@ movementControls.hasReleased = false;
 movementControls.lastKeypressTime = 0;
 
 function movementControls(key, value) {
+    console.log(key);
     switch (key) {
         case 87: // W
             movement.moveForward = value;
@@ -223,20 +224,13 @@ function movementControls(key, value) {
         case 68: // D
             movement.moveRight = value;
             break;
-        case 32: // Space
+        case 70: // F
             if (value) {
-                let keydownTime = new Date();
-
-                if (keydownTime - movementControls.lastKeypressTime < 500 && movementControls.hasReleased) {
-                    movement.flyMode = !movement.flyMode;
-                    camera.position.y += 0.2;
-                }
-                movementControls.lastKeypressTime = keydownTime;
-                movementControls.hasReleased = false;
+                movement.flyMode = !movement.flyMode;
+                camera.position.y += 0.1;
             }
-            else {
-                movementControls.hasReleased = true;
-            }
+            break;
+        case 32: // Space
             movement.moveUp = value;
             break;
         case 16: // Shift
