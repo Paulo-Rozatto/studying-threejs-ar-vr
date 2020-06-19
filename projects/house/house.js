@@ -205,10 +205,6 @@ function move(delta) {
     }
 }
 
-// static variables
-movementControls.hasReleased = false;
-movementControls.lastKeypressTime = 0;
-
 function movementControls(key, value) {
     console.log(key);
     switch (key) {
