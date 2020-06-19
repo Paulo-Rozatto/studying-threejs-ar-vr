@@ -192,7 +192,7 @@ function move(delta) {
         controls.moveRight(movement.speed * -1 * delta);
     }
 
-    if (movement.moveUp) {
+    if (movement.moveUp && movement.flyMode) {
         camera.position.y += movement.speed * delta;
     }
     else if (groundIntersection) {
@@ -204,6 +204,10 @@ function move(delta) {
         camera.position.y -= movement.speed * delta;
     }
 }
+
+// static variables
+movementControls.hasReleased = false;
+movementControls.lastKeypressTime = 0;
 
 function movementControls(key, value) {
     switch (key) {
@@ -220,11 +224,22 @@ function movementControls(key, value) {
             movement.moveRight = value;
             break;
         case 32: // Space
+            if (value) {
+                let keydownTime = new Date();
+
+                if (keydownTime - movementControls.lastKeypressTime < 500 && movementControls.hasReleased) {
+                    movement.flyMode = !movement.flyMode;
+                    camera.position.y += 0.2;
+                }
+                movementControls.lastKeypressTime = keydownTime;
+                movementControls.hasReleased = false;
+            }
+            else {
+                movementControls.hasReleased = true;
+            }
             movement.moveUp = value;
-            movement.flyMode = true;
             break;
         case 16: // Shift
-            // console.log(controls.getObject().position);
             movement.moveDown = value;
             break;
     }
