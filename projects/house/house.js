@@ -101,14 +101,10 @@ function init() {
         if (/ground|stairs|floor/i.test(object.name)) {
             floor.push(object);
         }
+        else if (/balcony|patio/i.test(object.name)) {
+            floor.push(object.children[1]);
+        }
     });
-
-    // setting colision with balcony
-    floor.push(house.children[68].children[1]);
-    floor.push(house.children[69].children[1]);
-
-    //setting colision with pool
-    floor.push(house.children[70].children[1]);
 
     // setting transparency for the water
     house.children[21].material.transparency = true;
@@ -206,7 +202,6 @@ function move(delta) {
 }
 
 function movementControls(key, value) {
-    console.log(key);
     switch (key) {
         case 87: // W
             movement.moveForward = value;
