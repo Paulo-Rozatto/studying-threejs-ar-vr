@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>House AR</title>
+</head>
+
+<body>
+
+    <script src="../libs/three.js"></script>
+    <script src="../libs/ar.js"></script>
+    <script>THREEx.ArToolkitContext.baseURL = "../"</script> <!-- Define o local do contexto -->
+    <script>
+        var arToolkitSource = new THREEx.ArToolkitSource({
+            // to read from the webcam
+            sourceType: 'webcam',
+
+        })
+
+        arToolkitSource.init(function onReady() {
+            // Esse timeout força a interface de AR se redimensionar com base no tempo passado
+            setTimeout(onResize, 1000);
+        });
+    </script>
+</body>
+
+</html>

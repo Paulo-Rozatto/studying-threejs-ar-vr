@@ -2,7 +2,7 @@
 import * as THREE from '../libs/three.module.js';
 import Stats from '../libs/stats.module.js';
 import { PointerLockControls } from '../libs/PointerLockControls.js';
-import { LoadScreen } from '../libs/LoadScreen.js';
+import { LoadScreen } from '../libs/LoadScreen.module.js';
 
 let stats, renderer, scene, camera, light, ambientLight, clock;
 
