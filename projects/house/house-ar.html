@@ -3,27 +3,32 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>House AR</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <title>AR boilerplate</title>
+
+    <style>
+        html,
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
 </head>
 
 <body>
+    <div id="stats"></div>
+    <div id="gui"></div>
 
     <script src="../libs/three.js"></script>
     <script src="../libs/ar.js"></script>
     <script>THREEx.ArToolkitContext.baseURL = "../"</script> <!-- Define o local do contexto -->
-    <script>
-        var arToolkitSource = new THREEx.ArToolkitSource({
-            // to read from the webcam
-            sourceType: 'webcam',
 
-        })
+    <script src="../libs/dat.gui.min.js"></script>
+    <script src="../libs/stats.min.js"></script>
+    <script src="../libs/GLTFLoader.js"></script>
+    <!-- <script src="../libs/LoadScreen.js"></script> -->
 
-        arToolkitSource.init(function onReady() {
-            // Esse timeout força a interface de AR se redimensionar com base no tempo passado
-            setTimeout(onResize, 1000);
-        });
-    </script>
+    <script type="module" src="house-ar.js"></script>
 </body>
 
 </html>
