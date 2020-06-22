@@ -131,8 +131,8 @@ function init() {
     scene.add(controls.getObject());
     unlock();
 
-    window.addEventListener('keydown', (event) => movementControls(event.keyCode, true));
-    window.addEventListener('keyup', (event) => movementControls(event.keyCode, false));
+    window.addEventListener('keydown', (event) => movementControls(event, true), true);
+    window.addEventListener('keyup', (event) => movementControls(event, false));
     window.addEventListener('resize', onResize);
 
     clock = new THREE.Clock();
@@ -201,8 +201,8 @@ function move(delta) {
     }
 }
 
-function movementControls(key, value) {
-    switch (key) {
+function movementControls(event, value) {
+    switch (event.keyCode) {
         case 87: // W
             movement.moveForward = value;
             break;
@@ -223,6 +223,7 @@ function movementControls(key, value) {
             break;
         case 32: // Space
             movement.moveUp = value;
+            event.preventDefault();
             break;
         case 16: // Shift
             movement.moveDown = value;

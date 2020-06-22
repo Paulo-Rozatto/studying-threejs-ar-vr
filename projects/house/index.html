@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>House</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../../css/w3.css">
+    <link rel="stylesheet" href="../../css/style.css">
+    <style>
+        body,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: "Lato", sans-serif;
+        }
+
+        body,
+        html {
+            height: 100%;
+            color: #777;
+            line-height: 1.8;
+        }
+
+        .w3-wide {
+            letter-spacing: 10px;
+        }
+
+        .w3-hover-opacity {
+            cursor: pointer;
+        }
+
+        /* Create a Parallax Effect */
+        .bgimg-1,
+        .bgimg-2,
+        .bgimg-3 {
+            background-attachment: fixed;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+
+        /* First image (Logo. Full height) */
+
+        .bgimg-1 {
+            background-image: url('img/coffe-laptop.jpg');
+            min-height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar (sit on top) -->
+    <div class="w3-top">
+        <div class="w3-bar w3-border-bottom w3-border-light-grey" id="myNavbar">
+            <a class="w3-bar-item w3-button w3-hover-black w3-hide-medium w3-hide-large w3-right"
+                href="javascript:void(0);" onclick="toggleFunction()" title="Toggle Navigation Menu">
+                <i class="fa fa-bars"></i>
+            </a>
+            <a href="../../index.html#home" class="w3-bar-item w3-button">HOME</a>
+            <a href="#Projects" class="w3-bar-item w3-button w3-hide-small"><i class="fa fa-th"></i> PROJECTS</a>
+            <!-- <a href="#about" class="w3-bar-item w3-button w3-hide-small"><i class="fa fa-user"></i> ABOUT</a> -->
+            <!-- <a href="#contact" class="w3-bar-item w3-button w3-hide-small"><i class="fa fa-envelope"></i> CONTACT</a> -->
+        </div>
+
+        <!-- Navbar on small screens -->
+        <div id="navDemo" class="w3-bar-block w3-white w3-hide w3-hide-large w3-hide-medium">
+            <a href="../../index.html#projects" class="w3-bar-item w3-button" onclick="toggleFunction()">Projects</a>
+            <!-- <a href="#about" class="w3-bar-item w3-button" onclick="toggleFunction()">ABOUT</a> -->
+            <!-- <a href="#contact" class="w3-bar-item w3-button" onclick="toggleFunction()">CONTACT</a> -->
+        </div>
+    </div>
+
+    <!-- Page content -->
+    <div class="w3-content w3-padding " style="max-width:1564px ">
+
+        <div class="w3-container w3-padding-32 " id="projects">
+            <h1 class="w3-padding-16 w3-border-bottom w3-border-light-grey">House Project</h1>
+        </div>
+
+        <div class="w3-container" id="about" style="text-align:justify;">
+        </div>
+
+        <div class="w3-container w3-row w3-mobile" style="text-align:center;">
+            <!-- workaround to center iframe -->
+            <div class="w3-col m2 l2 w3-hide-small">
+                <p></p>
+            </div>
+
+            <iframe id="scene" class="w3-col l12" src="house.html" height="600"
+                style="border:2px solid black;"></iframe>
+
+            <script>
+                // iOS iframe auto-resize workaround
+
+                if (/(iPad|iPhone|iPod)/g.test(navigator.userAgent)) {
+
+                    var scene = document.getElementById('scene');
+
+                    scene.style.width = getComputedStyle(scene).width;
+                    scene.style.height = getComputedStyle(scene).height;
+                    scene.setAttribute('scrolling', 'no');
+
+                }
+            </script>
+        </div>
+
+        <!-- <div class="w3-content w3-display-container w3-center w3-cell-row">
+            <div class="w3-container w3-cell">
+                <h3 class="w3-padding-16 w3-border-bottom w3-border-light-grey">Quality of the images</h3>
+                <div class="w3-container w3-row">
+                    <p>
+                        <a id="" href="./src/solar-system-application.html?quality=0" target="_blank">Medium Quality in
+                            fullscreen <br> on a new tab</a>
+                    </p>
+                </div>
+                <div class="w3-container w3-row">
+                    <p>
+                        <a id="" href="./src/solar-system-application.html?quality=1" target="_blank">High Quality in
+                            fullscreen <br> on a new tab</a>
+                        <br><b class="w3-small" style="text-align:center;">* Loading could be longer</b>
+                    </p>
+                </div>
+            </div>
+            <div class="w3-container w3-cell">
+                <h3 class="w3-padding-16 w3-border-bottom w3-border-light-grey">Other Tools</h3>
+                <p style="text-align:center;">
+                    <a id="" href="./src/solar-system-application-AR.html" target="_blank">Augmented Reality in
+                        fullscreen <br> on new tab</a>
+                    <br><b class="w3-small" style="text-align:center;">* Authorization is required to use
+                        the <br> camera and focus on the
+                        <a id="" href="./data/markers/hiro.png" style="color: blue" target="_blank">HIRO</a>
+                        marker</b>
+                </p>
+                <p>
+                    <a id="" href="./src/solar-system-application-VR.html" target="_blank">Virtual Reality in fullscreen
+                        <br> on a new tab</a>
+                    <br><b class="w3-small" style="text-align:center;">* Click on VR Button to active <br>
+                        Virtual Reality on your device</b>
+                </p>
+            </div>
+        </div> -->
+
+        <!-- <div class="w3-container w3-padding-32 ">
+            <h3 class="w3-padding-16 w3-border-bottom w3-border-light-grey">Images in Augmented Reality</h3>
+        </div>
+
+        <div class="w3-content w3-display-container w3-center w3-row ">
+            <img class="slide" src="./img/Solar-System/screenshot1-AR.jpeg" style="border:1px solid black"
+                onclick="openModal(1)">
+            <img class="slide" src="./img/Solar-System/screenshot2-AR.jpeg" style="border:1px solid black"
+                onclick="openModal(2)">
+            <img class="slide" src="./img/Solar-System/screenshot3-AR.jpeg" style="border:1px solid black"
+                onclick="openModal(3)">
+            <img class="slide" src="./img/Solar-System/screenshot4-AR.jpeg" style="border:1px solid black"
+                onclick="openModal(4)">
+            <button id="btn-left " class="w3-button w3-black w3-display-left w3-hide-large "
+                onclick="plusDivs(-1) ">&#10094;</button>
+            <button class="w3-button w3-black w3-display-right w3-hide-large " onclick="plusDivs(1) ">&#10095;</button>
+        </div>
+
+        <div id="modal-slideshow" class="w3-modal w3-black">
+            <div class="w3-content w3-center" style="height: 80%;">
+                <img class="slide-modal w3-display-middle" src="./img/Solar-System/screenshot1-AR.jpeg"
+                    style="height: 100%; border:1px solid black">
+
+                <img class="slide-modal w3-display-middle" src="./img/Solar-System/screenshot2-AR.jpeg"
+                    style="height: 100%; border:1px solid black">
+                <img class="slide-modal w3-display-middle" src="./img/Solar-System/screenshot3-AR.jpeg"
+                    style="height: 100%; border:1px solid black">
+                <img class="slide-modal w3-display-middle" src="./img/Solar-System/screenshot4-AR.jpeg"
+                    style="height: 100%; border:1px solid black">
+                <span class="w3-black w3-text-white w3-opacity w3-display-left w3-btn" onclick="plusModal(-1)">❮</span>
+                <span class="w3-black w3-text-white w3-opacity w3-display-right w3-btn" onclick="plusModal(1)">❯</span>
+            </div>
+
+            <span
+                class="w3-black w3-text-white w3-opacity w3-xxlarge w3-hover-text-grey w3-container w3-display-topright"
+                onclick="closeModal(0)" style="cursor:pointer">×</span>
+        </div>
+
+        <div class="w3-container w3-padding-32 ">
+            <h3 class="w3-padding-16 w3-border-bottom w3-border-light-grey">Images in Virtual Reality</h3>
+        </div>
+
+        <div class="w3-content w3-display-container w3-center w3-row">
+            <img class="slide2" src="./img/Solar-System/screenshot5-VR.png"
+                style="width: 90%; height: auto; border:1px solid black" onclick="openModal2(1)">
+            <!--
+            <img class="slide2" src="./img/Solar-System/screenshot6-VR.jpeg" style="border:1px solid black" onclick="openModal2(2)">
+            <img class="slide2" src="./img/Solar-System/screenshot7-VR.jpeg" style="border:1px solid black" onclick="openModal2(3)">
+            <img class="slide2" src="./img/Solar-System/screenshot8-VR.jpeg" style="border:1px solid black" onclick="openModal2(4)">
+            -->
+        <button id="btn-left " class="w3-button w3-black w3-display-left w3-hide-large "
+            onclick="plusDivs2(-1) ">&#10094;</button>
+        <button class="w3-button w3-black w3-display-right w3-hide-large " onclick="plusDivs2(1) ">&#10095;</button>
+    </div>
+
+    <div id="modal-slideshow-2" class="w3-modal w3-black">
+        <div class="w3-content w3-center" style="height: 80%;">
+            <img class="slide-modal-2 w3-display-middle" src="./img/Solar-System/screenshot5-VR.png"
+                style="height: 100%; border:1px solid black">
+
+            <img class="slide-modal-2 w3-display-middle" src="./img/Solar-System/screenshot6-VR.jpeg"
+                style="height: 100%; border:1px solid black">
+            <img class="slide-modal-2 w3-display-middle" src="./img/Solar-System/screenshot7-VR.jpeg"
+                style="height: 100%; border:1px solid black">
+            <img class="slide-modal-2 w3-display-middle" src="./img/Solar-System/screenshot8-VR.jpeg"
+                style="height: 100%; border:1px solid black">
+
+            <span class="w3-black w3-text-white w3-opacity w3-display-left w3-btn" onclick="plusModal2(-1)">❮</span>
+            <span class="w3-black w3-text-white w3-opacity w3-display-right w3-btn" onclick="plusModal2(1)">❯</span>
+        </div>
+
+        <span class="w3-black w3-text-white w3-opacity w3-xxlarge w3-hover-text-grey w3-container w3-display-topright"
+            onclick="closeModal2()" style="cursor:pointer">×</span>
+    </div> -->
+
+    <!-- End page content -->
+    </div>
+
+    <!-- Footer -->
+    <footer class="w3-center w3-black w3-padding-16 ">
+        <p>Powered by <a href="https://www.w3schools.com/w3css/default.asp " title="W3.CSS" target="_blank "
+                class="w3-hover-text-green ">w3.css</a></p>
+    </footer>
+    <script type="text/javascript" src="../../js/script.js"></script>
+    <script type="text/javascript">
+        // prevent scroll pressing space
+        window.addEventListener('keydown', function (e) {
+            if (e.keyCode == 32) {
+                console.log('s')
+            }
+        });
+
+        // Change style of navbar on scroll
+        window.onscroll = navbarScroll
+
+        function navbarScroll() {
+            var navbar = document.getElementById("myNavbar");
+            if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) {
+                navbar.className = "w3-bar" + " w3-card" + " w3-animate-top" + " w3-white";
+            } else {
+                navbar.className = navbar.className.replace(" w3-card w3-animate-top w3-white", "");
+            }
+        }
+
+        // Used to toggle the menu on small screens when clicking on the menu button
+        function toggleFunction() {
+            var x = document.getElementById("navDemo");
+            if (x.className.indexOf("w3-show") == -1) {
+                x.className += " w3-show";
+            } else {
+                x.className = x.className.replace(" w3-show", "");
+            }
+        }
+
+        // To VR -- MODAL IMAGES
+
+        var slideIndex_02 = 1;
+
+        window.addEventListener('resize', () => {
+            showDivs(slideIndex);
+            showDivs2(slideIndex_02);
+        })
+
+        showDivs2(slideIndex_02);
+
+        function plusDivs2(n) {
+            showDivs2(slideIndex_02 += n);
+        }
+
+        function showDivs2(n) {
+            const slide2 = document.getElementsByClassName("slide2");
+            const display2 = window.innerWidth < 1024 ? 'none' : "inline-block";
+
+            if (n > slide2.length) {
+                slideIndex_02 = 1;
+            }
+            if (n < 1) {
+                slideIndex_02 = slide2.length;
+            }
+            for (let i = 0; i < slide2.length; i++) {
+                slide2[i].style.display = display2;
+            }
+            slide2[slideIndex_02 - 1].style.display = "inline-block";
+        }
+
+        function openModal2(n) {
+            document.getElementById("modal-slideshow-2").style.display = "block";
+            showModal2(slideIndex_02 = n);
+        }
+
+        function closeModal2() {
+            document.getElementById("modal-slideshow-2").style.display = "none";
+        }
+
+        function plusModal2(n) {
+            showModal2(slideIndex_02 += n);
+        }
+
+        function showModal2(n) {
+            const slide2 = document.getElementsByClassName("slide-modal-2");
+
+            if (n > slide2.length) {
+                slideIndex_02 = 1;
+            }
+            if (n < 1) {
+                slideIndex_02 = slide2.length;
+            }
+            for (let i = 0; i < slide2.length; i++) {
+                slide2[i].style.display = "none";
+            }
+            slide2[slideIndex_02 - 1].style.display = "block";
+        }
+    </script>
+</body>
+
+</html>

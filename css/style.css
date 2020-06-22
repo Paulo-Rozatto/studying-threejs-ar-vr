@@ -1,0 +1,35 @@
+.slide {
+    height: 430px;
+    width: auto;
+    display: inline-block;
+    margin: auto;
+    cursor: pointer;
+}
+
+.slide2 {
+    height: 430px;
+    width: auto;
+    display: inline-block;
+    margin: auto;
+    cursor: pointer;
+}
+
+.horizontal {
+    width: 100%;
+    height: auto;
+    display: inline-block;
+    margin: auto;
+    cursor: pointer;
+}
+
+@media only screen and (min-width: 1024px) {
+    .horizontal {
+        width: 40%;
+    }
+}
+
+.badge {
+    margin: auto;
+    height: 50px;
+    width: auto;
+}
