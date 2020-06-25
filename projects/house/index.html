@@ -18,6 +18,17 @@
             color: #777;
             line-height: 1.8;
         }
+
+        .more-modes-container {
+            color: white;
+            text-align: center;
+            font-style: italic;
+            text-shadow: 2px 2px 1px #2a1540;
+        }
+
+        .more-modes-container a {
+            text-decoration: none;
+        }
     </style>
 </head>
 
@@ -25,7 +36,7 @@
 
     <!-- Navbar (sit on top) -->
     <div class="w3-top">
-        <div class="w3-bar w3-border-bottom w3-border-light-grey" id="myNavbar">
+        <div class="w3-bar w3-border-bottom w3-border-light-grey w3-light-grey" id="myNavbar">
             <a class="w3-bar-item w3-button w3-hover-black w3-hide-medium w3-hide-large w3-right"
                 href="javascript:void(0);" onclick="toggleFunction()" title="Toggle Navigation Menu">
                 <i class="fa fa-bars"></i>
@@ -76,59 +87,113 @@
 
                 }
             </script>
-            <div class="w3-row-padding w3-black">
 
-                <div class="w3-col l3 m6 w3-margin-bottom w3-margin-top">
-                    <a href="house.html" target="_">
-                        <div class="w3-display-container" style="background: url('../../img/house.jpg') center;">
-                            <div class="w3-padding" style="width:100%">
-                                <img src="../../img/fullscreen-icon.png" alt="fullscreen" style="width: 64px;" />
-                                <br /> <i style="text-shadow: 2px 2px #2a1540;">Normal Quality</i>
-                            </div>
+        </div>
 
+        <!-- More modes -->
+        <div class="w3-container w3-padding-32 ">
+            <h3 class="w3-padding-16 w3-border-bottom w3-border-light-grey ">More modes</h3>
+        </div>
+        <div class="w3-row-padding more-modes-container">
+
+            <div class="w3-col l3 m6 w3-margin-bottom w3-margin-top">
+                <a href="house.html" target="_">
+                    <div class="w3-display-container" style="background: url('../../img/house.jpg') center;">
+                        <div class="w3-padding" style="width:100%">
+                            <img src="../../img/fullscreen-icon.png" alt="fullscreen" style="width: 64px;" />
+                            <br /> Fullscreen - Medium Quality
                         </div>
-                    </a>
-                </div>
 
-                <div class="w3-col l3 m6 w3-margin-bottom w3-margin-top">
-                    <a href="#">
-                        <div class="w3-display-container" style="background: url('../../img/house.jpg') center;">
-                            <div class="w3-padding" style="width:100%">
-                                <img src="../../img/fullscreen-icon.png" alt="fullscreen" style="width: 64px;" />
-                                <br /> <i style="text-shadow: 2px 2px #2a1540;">High Quality</i>
-                            </div>
+                    </div>
+                </a>
+            </div>
 
+            <div class="w3-col l3 m6 w3-margin-bottom w3-margin-top">
+                <a href="#">
+                    <div class="w3-display-container" style="background: url('../../img/house.jpg') center;">
+                        <div class="w3-padding" style="width:100%">
+                            <img src="../../img/fullscreen-icon.png" alt="fullscreen" style="width: 64px;" />
+                            <br /> <i style="text-shadow: 2px 2px #2a1540;">Fullscreen - High Quality</i>
                         </div>
-                    </a>
-                </div>
 
-                <div class="w3-col l3 m6 w3-margin-bottom w3-margin-top">
-                    <a href="house-ar.html" target="_">
-                        <div class="w3-display-container" style="background: url('../../img/house-ar.jpg') center;">
-                            <div class="w3-padding" style="width:100%">
-                                <img src="../../img/ar-icon.png" alt="fullscreen" style="width: 64px;" />
-                                <br /> <i style="text-shadow: 2px 2px #2a1540;">Augmented Reality</i>
-                            </div>
+                    </div>
+                </a>
+            </div>
 
+            <div class="w3-col l3 m6 w3-margin-bottom w3-margin-top">
+                <a href="house-ar.html" target="_">
+                    <div class="w3-display-container" style="background: url('../../img/house-ar.jpg') center;">
+                        <div class="w3-padding" style="width:100%">
+                            <img src="../../img/ar-icon.png" alt="fullscreen" style="width: 64px;" />
+                            <br /> <i style="text-shadow: 2px 2px #2a1540;">Augmented Reality</i>
                         </div>
-                    </a>
-                </div>
 
-                <div class="w3-col l3 m6 w3-margin-bottom w3-margin-top">
-                    <a href="#">
-                        <div class="w3-display-container" style="background: url('../../img/house-vr.jpg') center;">
-                            <div class="w3-padding" style="width:100%">
-                                <img src="../../img/vr-icon.png" alt="fullscreen" style="width: 64px;" />
-                                <br /> <i style="text-shadow: 2px 2px #2a1540;">Virtual Reality</i>
-                            </div>
+                    </div>
+                </a>
+            </div>
 
+            <div class="w3-col l3 m6 w3-margin-bottom w3-margin-top">
+                <a href="#">
+                    <div class="w3-display-container" style="background: url('../../img/house-vr.jpg') center;">
+                        <div class="w3-padding" style="width:100%">
+                            <img src="../../img/vr-icon.png" alt="fullscreen" style="width: 64px;" />
+                            <br /> <i style="text-shadow: 2px 2px #2a1540;">Virtual Reality</i>
                         </div>
-                    </a>
-                </div>
 
+                    </div>
+                </a>
+            </div>
+
+            <div class="w3-col l3 m6 w3-margin-bottom w3-margin-top">
+                <a href="house.html" target="_">
+                    <div class="w3-display-container" style="background: url('../../img/house.jpg') center;">
+                        <div class="w3-padding" style="width:100%">
+                            <img src="../../img/fullscreen-icon.png" alt="fullscreen" style="width: 64px;" />
+                            <br /> Fullscreen - Medium Quality
+                        </div>
+
+                    </div>
+                </a>
+            </div>
+
+            <div class="w3-col l3 m6 w3-margin-bottom w3-margin-top">
+                <a href="#">
+                    <div class="w3-display-container" style="background: url('../../img/house.jpg') center;">
+                        <div class="w3-padding" style="width:100%">
+                            <img src="../../img/fullscreen-icon.png" alt="fullscreen" style="width: 64px;" />
+                            <br /> <i style="text-shadow: 2px 2px #2a1540;">Fullscreen - High Quality</i>
+                        </div>
+
+                    </div>
+                </a>
+            </div>
+
+            <div class="w3-col l3 m6 w3-margin-bottom w3-margin-top">
+                <a href="house-ar.html" target="_">
+                    <div class="w3-display-container" style="background: url('../../img/house-ar.jpg') center;">
+                        <div class="w3-padding" style="width:100%">
+                            <img src="../../img/ar-icon.png" alt="fullscreen" style="width: 64px;" />
+                            <br /> <i style="text-shadow: 2px 2px #2a1540;">Augmented Reality</i>
+                        </div>
+
+                    </div>
+                </a>
+            </div>
+
+            <div class="w3-col l3 m6 w3-margin-bottom w3-margin-top">
+                <a href="#">
+                    <div class="w3-display-container" style="background: url('../../img/house-vr.jpg') center;">
+                        <div class="w3-padding" style="width:100%">
+                            <img src="../../img/vr-icon.png" alt="fullscreen" style="width: 64px;" />
+                            <br /> <i style="text-shadow: 2px 2px #2a1540;">Virtual Reality</i>
+                        </div>
+
+                    </div>
+                </a>
             </div>
 
         </div>
+        <!-- End of more modes -->
 
         <!-- <div class="w3-content w3-display-container w3-center w3-cell-row">
             <div class="w3-container w3-cell">
@@ -262,7 +327,7 @@
         function navbarScroll() {
             var navbar = document.getElementById("myNavbar");
             if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) {
-                navbar.className = "w3-bar" + " w3-card" + " w3-animate-top" + " w3-white";
+                navbar.className = "w3-bar" + " w3-card" + " w3-animate-top" + " w3-light-grey";
             } else {
                 navbar.className = navbar.className.replace(" w3-card w3-animate-top w3-white", "");
             }
