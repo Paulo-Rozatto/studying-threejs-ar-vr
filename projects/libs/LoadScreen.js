@@ -1334,7 +1334,7 @@ function LoadScreen(renderer, style) {
 
 						object = oOA[k].scene;
 
-					} else if (a[l - 1] === 'gltf') {
+					} else if (a[l - 1] === 'gltf' || a[l - 1] === 'glb') {
 
 						object = typeof oOA[k].scene !== 'undefined' ? oOA[k].scene : oOA[k].scenes[0];
 
@@ -2111,9 +2111,10 @@ function LoadScreen(renderer, style) {
 		LSScene = new THREE.Scene();
 		LSCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 2);
 
-		for (var k in that.resources.objects)
-
+		for (var k in that.resources.objects) {
+			console.log('>', that.resources.objects[k])
 			LSScene.add(that.resources.objects[k]);
+		}
 
 		if (verbose) console.time('Compiling duration');
 

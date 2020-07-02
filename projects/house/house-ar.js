@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-import { LoadScreen } from '../libs/LoadScreen.module.js';
+// import { LoadScreen } from '../libs/LoadScreen.module.js';
 
 let stats, renderer, scene, camera, light, ambientLight;
 
@@ -52,7 +52,7 @@ function init() {
 
     house = ASSETS.objects.house;
 
-    console.log(house);
+    // console.log(house);
     house.scale.set(0.1, 0.1, 0.1);
     // house.scale.set(3, 3, 3);
 
