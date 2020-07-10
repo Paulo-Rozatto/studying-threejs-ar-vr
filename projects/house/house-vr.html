@@ -101,18 +101,18 @@
 
                 // this.el.components['movement-controls'].nextData['fly'] = true;
             },
-            tick: function () {
+            tick: function (time, delta) {
                 let gamepad = navigator.getGamepads()[0];
 
                 if (gamepad) {
-                    let position = this.el.getAttribute('position');
+                    let position = this.el.object3D.position
 
                     if (gamepad.buttons[this.goUp].pressed) {
-                        position.y += 0.1;
+                        position.y += 0.005 * delta;
                         isFlying = true;
                     }
                     else if (gamepad.buttons[this.goDown].pressed && position.y > 0) {
-                        position.y -= 0.1;
+                        position.y -= 0.005 * delta;
                     }
                 }
             }
@@ -126,9 +126,9 @@
                 this.raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0).normalize(), 0, this.height + 0.5);
                 this.pos = new THREE.Vector3(parentPos.x, this.height, parentPos.z);
             },
-            tick: function () {
+            tick: function (time, delta) {
                 if (stairs) {
-                    let parentPos = this.el.parentEl.getAttribute('position')
+                    let parentPos = this.el.parentEl.object3D.position
                     this.pos.x = parentPos.x;
                     this.pos.y = parentPos.y + this.height;
                     this.pos.z = parentPos.z;
@@ -146,17 +146,18 @@
                     else {
                         let intersectFloor = this.raycaster.intersectObjects(floor)[0]
                         if (intersectFloor) {
-                            isFlying = false;
-                            if (intersectFloor.distance < this.height) {
+                            if (intersectFloor.distance <= this.height) {
                                 parentPos.y += (this.height - intersectFloor.distance);
+                                isFlying = false;
                             }
-                            else if (intersectFloor.distance > this.height) {
-                                parentPos.y -= (intersectFloor.distance - this.height);
+                            else if (!isFlying) {
+                                parentPos.y -= 0.005 * delta
                             }
                         }
                         else if (!isFlying) {
                             if (parentPos.y >= -0.6) {
-                                parentPos.y -= 0.1;
+                                console.log(delta)
+                                parentPos.y -= 0.005 * delta
                             }
                         }
                     }
