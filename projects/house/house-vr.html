@@ -118,7 +118,7 @@
             // }
         });
 
-        AFRAME.registerComponent('collision', {
+        AFRAME.registerComponent('camera-collision', {
             init: function () {
                 this.height = this.el.getAttribute('position').y
                 this.parentPos = this.el.parentEl.object3D.position
@@ -156,7 +156,7 @@
                         }
                         else if (!isFlying) {
                             if (this.parentPos.y >= -0.6) {
-                                console.log(delta)
+                                // console.log(delta)
                                 this.parentPos.y -= 0.005 * delta
                             }
                         }
@@ -170,6 +170,8 @@
                 this.gamepad = {};
                 this.move = 6;
                 this.rotation = 0;
+                this.height = 0.5;
+                this.raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0).normalize(), 0, this.height + 0.5);
 
                 this.teleport = new THREE.Mesh(
                     new THREE.BoxGeometry(1, 1, 1),
@@ -201,12 +203,45 @@
 
                     if (this.gamepad.buttons[this.move].pressed) {
                         this.el.object3D.position.x = this.teleport.position.x;
+                        this.el.object3D.position.y = this.teleport.position.y - 0.5;
                         this.el.object3D.position.z = this.teleport.position.z;
                         console.log('teleported', this.el.children[0].object3D)
                     }
 
                     if (this.gamepad.buttons[7].pressed) {
-                        console.log('>', this.el.children[0].object3D.rotation)
+                        console.log(this.teleport.position)
+                    }
+
+                    // collision
+                    if (stairs) { // if stairs object isn't null, the scene has loaded the collidable objects
+                        this.raycaster.ray.origin.copy(this.teleport.position);
+
+                        let intersectStairs = this.raycaster.intersectObject(stairs)[0];
+                        if (intersectStairs) {
+                            if (intersectStairs.distance <= this.height) {
+                                this.teleport.position.y += (this.height - intersectStairs.distance - 0.1);
+                            }
+                            else {
+                                this.teleport.position.y -= (intersectStairs.distance - this.height + 0.1);
+                            }
+                        }
+                        else {
+                            let intersectFloor = this.raycaster.intersectObjects(floor)[0]
+                            if (intersectFloor) {
+                                if (intersectFloor.distance <= this.height) {
+                                    this.teleport.position.y += (this.height - intersectFloor.distance);
+                                }
+                                else {
+                                    this.teleport.position.y -= 0.005 * delta
+                                }
+                            }
+                            else if (this.teleport.position.y >= -0.6) {
+                                this.teleport.position.y -= 0.005 * delta
+                            }
+                            else {
+                                this.teleport.position.y = 0.5;
+                            }
+                        }
                     }
                 }
             }
@@ -217,7 +252,7 @@
 <body>
     <a-scene main_scene id="scene" time light="defaultLightsEnabled: false" renderer="antialias: true; alpha: true">
         <a-entity id="rig" listen-gamepad teleport position="-3 0 18">
-            <a-entity id="camera" camera position="0 1.5 0" look-controls="pointerLockEnabled: true" collision>
+            <a-entity id="camera" camera position="0 1.5 0" look-controls="pointerLockEnabled: true" camera-collision>
             </a-entity>
         </a-entity>
 
