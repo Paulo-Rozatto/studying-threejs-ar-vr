@@ -101,75 +101,122 @@
 
                 // this.el.components['movement-controls'].nextData['fly'] = true;
             },
-            tick: function (time, delta) {
-                let gamepad = navigator.getGamepads()[0];
+            // tick: function (time, delta) {
+            //     let gamepad = navigator.getGamepads()[0];
 
-                if (gamepad) {
-                    let position = this.el.object3D.position
+            //     if (gamepad) {
+            //         let position = this.el.object3D.position
 
-                    if (gamepad.buttons[this.goUp].pressed) {
-                        position.y += 0.005 * delta;
-                        isFlying = true;
-                    }
-                    else if (gamepad.buttons[this.goDown].pressed && position.y > 0) {
-                        position.y -= 0.005 * delta;
-                    }
-                }
-            }
+            //         if (gamepad.buttons[this.goUp].pressed) {
+            //             position.y += 0.005 * delta;
+            //             isFlying = true;
+            //         }
+            //         else if (gamepad.buttons[this.goDown].pressed && position.y > 0) {
+            //             position.y -= 0.005 * delta;
+            //         }
+            //     }
+            // }
         });
 
         AFRAME.registerComponent('collision', {
             init: function () {
                 this.height = this.el.getAttribute('position').y
-                let parentPos = this.el.parentEl.getAttribute('position')
+                this.parentPos = this.el.parentEl.object3D.position
 
                 this.raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0).normalize(), 0, this.height + 0.5);
-                this.pos = new THREE.Vector3(parentPos.x, this.height, parentPos.z);
+                this.pos = new THREE.Vector3(this.parentPos.x, this.height, this.parentPos.z);
             },
             tick: function (time, delta) {
                 if (stairs) {
-                    let parentPos = this.el.parentEl.object3D.position
-                    this.pos.x = parentPos.x;
-                    this.pos.y = parentPos.y + this.height;
-                    this.pos.z = parentPos.z;
+                    this.parentPos = this.el.parentEl.object3D.position
+                    this.pos.x = this.parentPos.x;
+                    this.pos.y = this.parentPos.y + this.height;
+                    this.pos.z = this.parentPos.z;
                     this.raycaster.ray.origin.copy(this.pos);
 
                     let intersectStairs = this.raycaster.intersectObject(stairs)[0];
                     if (intersectStairs) {
                         if (intersectStairs.distance <= this.height) {
-                            parentPos.y += (this.height - intersectStairs.distance - 0.1);
+                            this.parentPos.y += (this.height - intersectStairs.distance - 0.1);
                         }
                         else {
-                            parentPos.y -= (intersectStairs.distance - this.height + 0.1);
+                            this.parentPos.y -= (intersectStairs.distance - this.height + 0.1);
                         }
                     }
                     else {
                         let intersectFloor = this.raycaster.intersectObjects(floor)[0]
                         if (intersectFloor) {
                             if (intersectFloor.distance <= this.height) {
-                                parentPos.y += (this.height - intersectFloor.distance);
+                                this.parentPos.y += (this.height - intersectFloor.distance);
                                 isFlying = false;
                             }
                             else if (!isFlying) {
-                                parentPos.y -= 0.005 * delta
+                                this.parentPos.y -= 0.005 * delta
                             }
                         }
                         else if (!isFlying) {
-                            if (parentPos.y >= -0.6) {
+                            if (this.parentPos.y >= -0.6) {
                                 console.log(delta)
-                                parentPos.y -= 0.005 * delta
+                                this.parentPos.y -= 0.005 * delta
                             }
                         }
                     }
                 }
             }
-        })
+        });
+
+        AFRAME.registerComponent('teleport', {
+            init: function () {
+                this.gamepad = {};
+                this.move = 6;
+                this.rotation = 0;
+
+                this.teleport = new THREE.Mesh(
+                    new THREE.BoxGeometry(1, 1, 1),
+                    new THREE.MeshBasicMaterial({ color: 0xff0000 })
+                );
+
+
+                this.teleport.scale.set(0.5, 0.5, 0.5)
+
+                this.teleport.position.set(-3, 0.5, 16);
+
+                this.el.parentEl.setObject3D('telep', this.teleport);
+            },
+            tick: function (time, delta) {
+                this.gamepad = navigator.getGamepads()[0];
+
+                // console.log(this.gamepad)
+                if (this.gamepad) {
+                    this.rotation = this.el.children[0].object3D.rotation.y
+                    // console.log(this.move, this.gamepad.buttons[this.move]);
+                    if (this.gamepad.axes[0] !== 0) {
+                        this.teleport.position.x += 0.003 * delta * this.gamepad.axes[0] * Math.cos(this.rotation);
+                        this.teleport.position.z += 0.003 * delta * this.gamepad.axes[0] * - Math.sin(this.rotation);
+                    }
+                    if (this.gamepad.axes[1] !== 0) {
+                        this.teleport.position.z += 0.003 * delta * this.gamepad.axes[1] * Math.cos(this.rotation);
+                        this.teleport.position.x += 0.003 * delta * this.gamepad.axes[1] * Math.sin(this.rotation);
+                    }
+
+                    if (this.gamepad.buttons[this.move].pressed) {
+                        this.el.object3D.position.x = this.teleport.position.x;
+                        this.el.object3D.position.z = this.teleport.position.z;
+                        console.log('teleported', this.el.children[0].object3D)
+                    }
+
+                    if (this.gamepad.buttons[7].pressed) {
+                        console.log('>', this.el.children[0].object3D.rotation)
+                    }
+                }
+            }
+        });
     </script>
 </head>
 
 <body>
     <a-scene main_scene id="scene" time light="defaultLightsEnabled: false" renderer="antialias: true; alpha: true">
-        <a-entity id="rig" movement-controls position="-3 0 18" listen-gamepad>
+        <a-entity id="rig" listen-gamepad teleport position="-3 0 18">
             <a-entity id="camera" camera position="0 1.5 0" look-controls="pointerLockEnabled: true" collision>
             </a-entity>
         </a-entity>
