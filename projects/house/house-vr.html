@@ -58,18 +58,13 @@
                         if (/window/i.test(element.name)) {
                             element.children[0].material.transparency = true;
                             element.children[0].material.opacity = 0.7;
-                        }
-
-                        if (/water/i.test(element.name)) {
+                            floor.push(element.children[1])
+                        } else if (/water/i.test(element.name)) {
                             element.material.transparency = true;
                             element.material.opacity = 0.7;
-                        }
-
-                        if (/stairs/i.test(element.name)) {
+                        } else if (/stairs/i.test(element.name)) {
                             stairs = element;
-                        }
-
-                        if (/ground|stairs|floor/i.test(element.name)) {
+                        } else if (/ground|stairs|floor/i.test(element.name)) {
                             floor.push(element);
                         }
                         else if (/balcony|patio/i.test(element.name)) {
@@ -168,78 +163,83 @@
         AFRAME.registerComponent('teleport', {
             init: function () {
                 this.gamepad = {};
-                this.move = 6;
+                this.teleportButton = 4; // mobile index
+                this.velocity = 0.005
                 this.rotation = 0;
-                this.height = 0.5;
-                this.raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0).normalize(), 0, this.height + 0.5);
+                this.height = 0.2;
+                this.raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0).normalize(), 0, 1);
+                this.rayPos = new THREE.Vector3(0, 1, 0);
 
-                this.teleport = new THREE.Mesh(
-                    new THREE.BoxGeometry(1, 1, 1),
-                    new THREE.MeshBasicMaterial({ color: 0xff0000 })
+                let self = this;
+                window.addEventListener("gamepadconnected", function (e) {
+                    console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
+                        e.gamepad.index, e.gamepad.id,
+                        e.gamepad.buttons.length, e.gamepad.axes.length);
+
+
+                    if (e.gamepad.buttons.length === 12) {
+                        // desktop buttons index
+                        self.teleportButton = 6;
+                    }
+                });
+
+                let teleportTexture = new THREE.TextureLoader().load('../assets/textures/teleport.png');
+                this.teleportMark = new THREE.Mesh(
+                    new THREE.CircleGeometry(1, 20),
+                    new THREE.MeshBasicMaterial({ map: teleportTexture, side: THREE.DoubleSide })
                 );
 
+                this.teleportMark.rotation.x = Math.PI * -0.5;
+                this.teleportMark.scale.set(0.5, 0.5, 1)
 
-                this.teleport.scale.set(0.5, 0.5, 0.5)
+                this.teleportMark.position.set(-3, 0.2, 16);
 
-                this.teleport.position.set(-3, 0.5, 16);
-
-                this.el.parentEl.setObject3D('telep', this.teleport);
+                this.el.parentEl.setObject3D('telep', this.teleportMark);
             },
             tick: function (time, delta) {
                 this.gamepad = navigator.getGamepads()[0];
 
-                // console.log(this.gamepad)
                 if (this.gamepad) {
                     this.rotation = this.el.children[0].object3D.rotation.y
-                    // console.log(this.move, this.gamepad.buttons[this.move]);
+
                     if (this.gamepad.axes[0] !== 0) {
-                        this.teleport.position.x += 0.003 * delta * this.gamepad.axes[0] * Math.cos(this.rotation);
-                        this.teleport.position.z += 0.003 * delta * this.gamepad.axes[0] * - Math.sin(this.rotation);
+                        this.teleportMark.position.x += this.velocity * delta * this.gamepad.axes[0] * Math.cos(this.rotation);
+                        this.teleportMark.position.z += this.velocity * delta * this.gamepad.axes[0] * - Math.sin(this.rotation);
                     }
                     if (this.gamepad.axes[1] !== 0) {
-                        this.teleport.position.z += 0.003 * delta * this.gamepad.axes[1] * Math.cos(this.rotation);
-                        this.teleport.position.x += 0.003 * delta * this.gamepad.axes[1] * Math.sin(this.rotation);
+                        this.teleportMark.position.z += this.velocity * delta * this.gamepad.axes[1] * Math.cos(this.rotation);
+                        this.teleportMark.position.x += this.velocity * delta * this.gamepad.axes[1] * Math.sin(this.rotation);
                     }
 
-                    if (this.gamepad.buttons[this.move].pressed) {
-                        this.el.object3D.position.x = this.teleport.position.x;
-                        this.el.object3D.position.y = this.teleport.position.y - 0.5;
-                        this.el.object3D.position.z = this.teleport.position.z;
-                        console.log('teleported', this.el.children[0].object3D)
-                    }
-
-                    if (this.gamepad.buttons[7].pressed) {
-                        console.log(this.teleport.position)
+                    if (this.gamepad.buttons[this.teleportButton].pressed) {
+                        this.el.object3D.position.x = this.teleportMark.position.x;
+                        this.el.object3D.position.y = this.teleportMark.position.y - this.height;
+                        this.el.object3D.position.z = this.teleportMark.position.z;
+                        console.log('teleported')
                     }
 
                     // collision
                     if (stairs) { // if stairs object isn't null, the scene has loaded the collidable objects
-                        this.raycaster.ray.origin.copy(this.teleport.position);
+                        this.rayPos.x = this.teleportMark.position.x;
+                        this.rayPos.y = 1 + this.teleportMark.position.y;
+                        this.rayPos.z = this.teleportMark.position.z;
+
+                        this.raycaster.ray.origin.copy(this.teleportMark.position);
 
                         let intersectStairs = this.raycaster.intersectObject(stairs)[0];
                         if (intersectStairs) {
-                            if (intersectStairs.distance <= this.height) {
-                                this.teleport.position.y += (this.height - intersectStairs.distance - 0.1);
-                            }
-                            else {
-                                this.teleport.position.y -= (intersectStairs.distance - this.height + 0.1);
-                            }
+                            this.teleportMark.position.y += (this.height - intersectStairs.distance);
                         }
                         else {
                             let intersectFloor = this.raycaster.intersectObjects(floor)[0]
                             if (intersectFloor) {
-                                if (intersectFloor.distance <= this.height) {
-                                    this.teleport.position.y += (this.height - intersectFloor.distance);
-                                }
-                                else {
-                                    this.teleport.position.y -= 0.005 * delta
-                                }
+                                this.teleportMark.position.y += (this.height - intersectFloor.distance)
                             }
-                            else if (this.teleport.position.y >= -0.6) {
-                                this.teleport.position.y -= 0.005 * delta
+                            else if (this.teleportMark.position.y >= -0.6) {
+                                this.teleportMark.position.y -= this.velocity * 0.5 * delta
                             }
                             else {
-                                this.teleport.position.y = 0.5;
+                                this.teleportMark.position.y = 0.2;
                             }
                         }
                     }
@@ -251,15 +251,15 @@
 
 <body>
     <a-scene main_scene id="scene" time light="defaultLightsEnabled: false" renderer="antialias: true; alpha: true">
-        <a-entity id="rig" listen-gamepad teleport position="-3 0 18">
-            <a-entity id="camera" camera position="0 1.5 0" look-controls="pointerLockEnabled: true" camera-collision>
-            </a-entity>
-        </a-entity>
-
         <a-assets timeout="60000">
             <a-asset-item id="house" src="../assets/models/modern-house.glb"></a-asset-item>
             <img id="skyBoxMap" src="../assets/textures/cloud.jpg">
         </a-assets>
+
+        <a-entity id="rig" teleport="map: #teleport" position="-3 0 18">
+            <a-entity id="camera" camera position="0 1.5 0" look-controls="pointerLockEnabled: true">
+            </a-entity>
+        </a-entity>
 
         <a-entity light="type: ambient; color: #fff; intensity: 0.3"></a-entity>
         <a-entity light="color: #fff" position="65 110 52"></a-entity>
