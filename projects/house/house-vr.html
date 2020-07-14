@@ -37,7 +37,6 @@
     <!-- Library of Virtual Reality -->
     <script type="text/javascript" charset="UTF-8" src="../libs/aframe-master.js"></script>
     <script type="text/javascript" charset="UTF-8" src="../libs/aframe-extras.js"></script>
-    <script src="../libs/aframe-teleport-controls.js"></script>
     <!-- Details about aframe-extras "controls" here:
         https://github.com/donmccurdy/aframe-extras/tree/master/src/controls
     -->
@@ -141,17 +140,13 @@
                     else {
                         let intersectFloor = this.raycaster.intersectObjects(floor)[0]
                         if (intersectFloor) {
-                            if (intersectFloor.distance <= this.height) {
+                            if (intersectFloor.distance < this.height) {
                                 this.parentPos.y += (this.height - intersectFloor.distance);
                                 isFlying = false;
-                            }
-                            else if (!isFlying) {
-                                this.parentPos.y -= 0.005 * delta
                             }
                         }
                         else if (!isFlying) {
                             if (this.parentPos.y >= -0.6) {
-                                // console.log(delta)
                                 this.parentPos.y -= 0.005 * delta
                             }
                         }
@@ -163,7 +158,7 @@
         AFRAME.registerComponent('teleport', {
             init: function () {
                 this.gamepad = {};
-                this.teleportButton = 4; // mobile index
+                this.teleportButton = -1; // mobile index
                 this.velocity = 0.005
                 this.rotation = 0;
                 this.height = 0.2;
@@ -175,18 +170,15 @@
                     console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
                         e.gamepad.index, e.gamepad.id,
                         e.gamepad.buttons.length, e.gamepad.axes.length);
-
-
-                    if (e.gamepad.buttons.length === 12) {
-                        // desktop buttons index
-                        self.teleportButton = 6;
-                    }
                 });
 
                 let teleportTexture = new THREE.TextureLoader().load('../assets/textures/teleport.png');
                 this.teleportMark = new THREE.Mesh(
                     new THREE.CircleGeometry(1, 20),
-                    new THREE.MeshBasicMaterial({ map: teleportTexture, side: THREE.DoubleSide })
+                    new THREE.MeshBasicMaterial({
+                        map: teleportTexture,
+                        side: THREE.DoubleSide,
+                    })
                 );
 
                 this.teleportMark.rotation.x = Math.PI * -0.5;
@@ -200,6 +192,16 @@
                 this.gamepad = navigator.getGamepads()[0];
 
                 if (this.gamepad) {
+                    if (this.teleportButton === -1) {
+                        for (let i = 0; i < this.gamepad.buttons.length; i++) {
+                            console.log(this.gamepad.buttons[i].pressed);
+                            if (this.gamepad.buttons[i].pressed) {
+                                this.teleportButton = i;
+                                break;
+                            }
+                        }
+                    }
+
                     this.rotation = this.el.children[0].object3D.rotation.y
 
                     if (this.gamepad.axes[0] !== 0) {
@@ -211,7 +213,7 @@
                         this.teleportMark.position.x += this.velocity * delta * this.gamepad.axes[1] * Math.sin(this.rotation);
                     }
 
-                    if (this.gamepad.buttons[this.teleportButton].pressed) {
+                    if (this.teleportButton !== -1 && this.gamepad.buttons[this.teleportButton].pressed) {
                         this.el.object3D.position.x = this.teleportMark.position.x;
                         this.el.object3D.position.y = this.teleportMark.position.y - this.height;
                         this.el.object3D.position.z = this.teleportMark.position.z;
@@ -256,8 +258,8 @@
             <img id="skyBoxMap" src="../assets/textures/cloud.jpg">
         </a-assets>
 
-        <a-entity id="rig" teleport="map: #teleport" position="-3 0 18">
-            <a-entity id="camera" camera position="0 1.5 0" look-controls="pointerLockEnabled: true">
+        <a-entity id="rig" position="-3 0 18" movement-controls="controls: keyboard, touch" teleport>
+            <a-entity id="camera" camera position="0 1.5 0" look-controls="pointerLockEnabled: true" camera-collision>
             </a-entity>
         </a-entity>
 
