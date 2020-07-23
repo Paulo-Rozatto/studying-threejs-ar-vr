@@ -2,6 +2,8 @@ let rendererStats, physicsStats, renderer, scene, camera, light, controls, gui, 
 
 let box, airplane, trajectory, test;
 
+let frustum, cameraViewProjectionMatrix;
+
 Physijs.scripts.worker = '../libs/physijs_worker.js';
 Physijs.scripts.ammo = '../libs/ammo.js';
 
@@ -47,23 +49,38 @@ function init() {
     camera.lookAt(new THREE.Vector3(0, 30, 0));
     scene.add(camera);
 
+    frustum = new THREE.Frustum();
+    cameraViewProjectionMatrix = new THREE.Matrix4();
+
     light = new THREE.DirectionalLight(0xfefefe);
     light.position.set(-100, 100, 10);
     scene.add(light);
 
     controls = new function () {
-        this.velocity = 20;
+        this.velocity_module = 30;
+        this.velocity = 30;
+        this.height = 100;
     };
 
     gui = new dat.GUI();
-    gui.add(controls, 'velocity', 10, 30);
+    gui.add(controls, 'velocity_module', 20, 50).onChange(() => {
+        if (controls.velocity < 0) {
+            controls.velocity = controls.velocity_module * -1;
+        }
+        else {
+            controls.velocity = controls.velocity_module
+        }
+    });
+    gui.add(controls, 'height', 50, 100).onChange(() => {
+        airplane.position.y = controls.height;
+    })
 
     const plane = new Physijs.PlaneMesh(new THREE.PlaneGeometry(300, 300), ASSETS.materials.groundMaterial);
     plane.rotation.x = Math.PI * -0.5;
     scene.add(plane);
 
     airplane = ASSETS.objects.airplane;
-    airplane.position.set(-10, 100, -130);
+    airplane.position.set(0, controls.height, -150);
     airplane.rotation.y = Math.PI * 0.5
     airplane.scale.set(0.25, 0.25, 0.25)
     scene.add(airplane);
@@ -104,6 +121,18 @@ function animate() {
     requestAnimationFrame(animate);
 
     airplane.position.z += controls.velocity * clock.getDelta();
+
+    camera.updateMatrixWorld();
+    camera.matrixWorldInverse.getInverse(camera.matrixWorld);
+    cameraViewProjectionMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+    frustum.setFromProjectionMatrix(cameraViewProjectionMatrix);
+
+    if (!frustum.intersectsObject(airplane.children[0].children[0])) {
+        if ((airplane.position.z > 0 && controls.velocity > 0) || (airplane.position.z < 0 && controls.velocity < 0)) {
+            airplane.rotation.y += controls.velocity > 0 ? Math.PI : -Math.PI;
+            controls.velocity *= -1;
+        }
+    }
     if (box.isReleased) drawTrajectory();
 
     rendererStats.update();
