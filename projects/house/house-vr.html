@@ -155,12 +155,24 @@
         });
 
         AFRAME.registerComponent('teleport', {
+            schema: {
+                curveType: { default: 'parabolic', oneOf: ['parabolic', 'line'] },
+                curveWidth: { default: 0.01 },
+                curveSegments: { type: 'number', default: 30 },
+                teleporterColor: { type: 'color', default: '#7744AA' },
+                collisionObjects: { type: 'array' },
+                shootSpeed: { type: 'number', default: 3 },
+                shootAngle: { type: 'number', default: Math.PI / 6 },
+            },
+
             init: function () {
                 this.gamepad = null;
                 this.obj = this.el.object3D;
                 this.objPos = new THREE.Vector3();
-                this.camera = document.querySelector('#camera');
                 this.canTeleport = true;
+                this.path;
+                this.ProjectileCurve;
+                this.collisionObjects = this.data.collisionObjects || this.el.sceneEl.object3D.children.filter(e => e.type === 'Mesh');
                 this.raycaster = new THREE.Raycaster();
                 this.direction = new THREE.Vector3();
                 this.rayDirection = new THREE.Vector3();
@@ -180,7 +192,6 @@
 
                 window.addEventListener("keydown", (e) => {
                     if (e.keyCode == 32) this.teleport();
-                    // else this.camera.object3D.position.y *= -1;
                 });
 
                 window.addEventListener('touchstart', (e) => {
@@ -188,7 +199,7 @@
                 })
 
                 let material = new THREE.MeshBasicMaterial({
-                    color: 0x7744AA,
+                    color: new THREE.Color(this.data.teleporterColor),
                     side: THREE.DoubleSide,
                 });
 
@@ -197,89 +208,86 @@
                 this.objPos.copy(this.obj.position);
                 this.objPos.y += 1.4;
 
-                // let tubeGeometry = new THREE.TubeBufferGeometry(new THREE.LineCurve3(this.objPos, this.teleportMark.position), 1, 0.01, 5, false);
-                // this.tube = new THREE.Mesh(tubeGeometry, material);
+                this.ProjectileCurve = this.ProjectileCurve();
 
-                // // this.el.sceneEl.setObject3D('tube', this.tube)
-
-                this.curve = this.ProjectileCurve();
-                this.path = new this.curve(this.objPos, 3 + camera.object3D.rotation.x * 5, Math.PI / 6, Math.PI / 2 + camera.object3D.rotation.y)
+                if (this.data.curveType === 'parabolic') {
+                    this.path = new this.ProjectileCurve(
+                        this.objPos,
+                        this.data.shootSpeed + camera.object3D.rotation.x * 5,
+                        this.data.shootAngle,
+                        Math.PI / 2 + camera.object3D.rotation.y
+                    );
+                } else if (this.data.curveType === 'line') {
+                    this.path = new THREE.LineCurve3(this.objPos, this.obj.position)
+                }
 
                 this.telepRay = new THREE.Mesh(
-                    new THREE.TubeBufferGeometry(this.path, 30, 0.01, 4, false),
+                    new THREE.TubeBufferGeometry(this.path, this.data.curveSegments, this.data.curveWidth, 4, false),
                     material
                 )
-                this.time = this.quadratic(this.path.g / 2, this.path.vy, this.path.p0.y).x2
-                // console.log(this.path.getPoint(this.time));
 
                 this.teleportMark = new THREE.Mesh(
                     new THREE.CylinderGeometry(0.5, 0.5, 0.2, 20, 1, true),
                     material
                 );
 
-                this.el.parentEl.setObject3D('telep', this.teleportMark);
+                this.el.parentEl.setObject3D('telepMark', this.teleportMark);
 
                 this.el.sceneEl.setObject3D('telepRay', this.telepRay);
-                this.test = true;
             },
             tick: function (time, delta) {
                 this.gamepad = navigator.getGamepads()[0];
 
-                // camera.object3D.getWorldDirection(this.direction);
-                // this.direction.multiplyScalar(-1);
-                // if (this.direction.y > -0.2) {
-                //     this.direction.y = -0.2;
-                // }
-
                 this.objPos.copy(this.obj.position);
                 this.objPos.y += 1.4;
 
-                this.path = new this.curve(this.objPos, 3 + camera.object3D.rotation.x * 5, Math.PI / 6, Math.PI / 2 + camera.object3D.rotation.y)
-                this.telepRay.geometry = new THREE.TubeBufferGeometry(this.path, 30, 0.01, 4, false);
-                this.telepRay.geometry.needsupdate = true;
+                if (this.data.curveType === 'parabolic') {
+                    this.path = new this.ProjectileCurve(
+                        this.objPos,
+                        this.data.shootSpeed + camera.object3D.rotation.x * 5,
+                        this.data.shootAngle,
+                        Math.PI / 2 + camera.object3D.rotation.y
+                    );
 
-                if (this.test) {
-                    // this.test = false;
-                    // console.log(floor);
-                    this.time = this.quadratic(this.path.g / 2, this.path.vy, this.path.p0.y).x2 / this.telepRay.geometry.parameters.tubularSegments;
-                    for (let i = 0; i < this.telepRay.geometry.parameters.tubularSegments * 2; i++) {
+                    this.time = this.quadraticTime(this.path.g / 2, this.path.vy, this.path.p0.y) / this.data.curveSegments;
+
+                    for (let i = 0; i < this.data.curveSegments * 2; i++) {
                         this.p1 = i === 0 ? this.path.getPoint(this.time * i++) : this.p2;
                         this.p2 = this.path.getPoint(this.time * i);
 
                         this.raycaster.far = this.p1.distanceTo(this.p2);
                         this.raycaster.set(this.p1, this.direction.subVectors(this.p2, this.p1).normalize());
-                        this.intersection = this.raycaster.intersectObjects(floor);
+                        this.intersection = this.raycaster.intersectObjects(this.data.collisionObjects);
 
-                        // console.log(this.intersection[0])
-                        // console.log({ p1: this.p1, p2: this.p2 });
                         if (this.intersection[0]) {
-                            // console.log('colided')
                             this.teleportMark.position.copy(this.intersection[0].point);
                             this.teleportMark.position.y += 0.15;
                             break;
                         }
-
-                        // let helper = new THREE.ArrowHelper(this.raycaster.ray.direction, this.p1, this.p1.distanceTo(this.p2), 0xff0000);
-                        // this.el.sceneEl.setObject3D('help' + i, helper);
                     }
 
+                } else if (this.data.curveType === 'line') {
+                    this.path = new THREE.LineCurve3(this.objPos, this.teleportMark.position)
+
+                    camera.object3D.getWorldDirection(this.direction);
+                    this.direction.multiplyScalar(-1);
+                    if (this.direction.y > -0.2) {
+                        this.direction.y = -0.2;
+                    }
+
+                    this.raycaster.far = 9
+                    this.raycaster.set(this.objPos, this.direction);
+
+                    this.intersection = this.raycaster.intersectObjects(this.data.collisionObjects);
+
+                    if (this.intersection[0]) {
+                        this.teleportMark.position.copy(this.intersection[0].point);
+                        this.teleportMark.position.y += 0.15;
+                    }
                 }
 
-                // this.raycaster.far = 9
-                // this.raycaster.set(this.objPos, this.direction);
-                // this.intersection = this.raycaster.intersectObjects(floor);
-
-                // if (this.intersection[0] && this.intersection[0].face.normal.x == 0 && this.intersection[0].face.normal.z == 0) {
-                //     this.teleportMark.position.copy(this.intersection[0].point);
-                //     this.teleportMark.position.y += 0.15;
-                // }
-
-                // this.tube.geometry = new THREE.TubeBufferGeometry(new THREE.LineCurve3(this.objPos, this.teleportMark.position), 1, 0.01, 5, false);
-                // this.tube.geometry.needsupdate = true;
-
-
-
-                // this.teleportMark.position.copy(this.path.getPoint(this.quadratic(this.path.g / 2, this.path.vy, this.path.p0.y).x2));
+                this.telepRay.geometry = new THREE.TubeBufferGeometry(this.path, this.data.curveSegments, this.data.curveWidth, 4, false);
+                this.telepRay.geometry.needsupdate = true;
 
                 if (!this.gamepad) return;
 
@@ -297,98 +305,6 @@
                     setTimeout(() => { this.canTeleport = true }, 500);
                     console.log('teleported')
                 }
-            },
-            curve: function (p0, p, v, theta) {
-                let group = new THREE.Group();
-                let material = new THREE.LineBasicMaterial({ color: 0xff0000, linewidth: 5 });
-                let size = 10;
-                let points = [];
-
-                // x-axis: p = p0 + vt
-                // y-axis: p = p0 + vt + gt^2 * 0.5
-                let vxz = v * Math.cos(theta);
-                let vy = v * Math.sin(theta);
-                let vx = vxz * Math.cos(theta)
-                let vz = vxz * Math.cos(theta)
-                // console.log({ v, vy });
-                let time = this.quadratic(-4.9, vy, p0.y).x2 / size;
-                let t;
-                // console.log({ time });
-                let x = -2.5, y, z = 0;
-                for (let i = 0; i < size; i++) {
-                    // points = [];
-                    t = time * i;
-
-                    x = p0.x + vx * t;
-                    z = p0.z - vz * t;
-                    y = p0.y + (vy * t) + (- 4.9 * (t * t));
-                    points.push(new THREE.Vector3(x, y, z));
-                    // console.log({ x, y, z });
-
-                    i++;
-                    t = time * i;
-
-                    x = p0.x + vx * t;
-                    z = p0.z - vz * t;
-                    y = p0.y + (vy * t) + (- 4.9 * (t * t));
-                    points.push(new THREE.Vector3(x, y, z));
-                    // console.log({ x, y, t });
-                    // points.push(p);
-                    // console.log(points);
-
-
-                }
-                // let tubeGeometry = new THREE.TubeBufferGeometry(points, 1, 0.01, 5, false);
-                // let tube = new THREE.Mesh(tubeGeometry, new THREE.MeshBasicMaterial({ color: 0x0000ff }))
-                group.add(new THREE.Line(
-                    new THREE.BufferGeometry().setFromPoints(points),
-                    material
-                ))
-                // group.position.set(-3, 3, 15);
-                // console.log(group)
-                // return group;
-
-                this.el.sceneEl.setObject3D('li', group);
-
-                // -----------------------------------------
-                function ProjectileCurve(p0, velocity, verticalAngle, horizontalAngle, gravity, scale) {
-                    THREE.Curve.call(this);
-
-                    if (p0 === undefined || velocity === undefined || verticalAngle === undefined || horizontalAngle === undefined) {
-                        return null;
-                    }
-
-                    let vhorizontal = velocity * Math.cos(verticalAngle);
-
-                    this.p0 = p0;
-                    this.vy = velocity * Math.sin(verticalAngle);
-                    this.vx = velocity * Math.cos(horizontalAngle);
-                    this.vz = velocity * Math.sin(horizontalAngle);
-                    this.g = (gravity === undefined) ? -9.8 : gravity;
-                    this.scale = (scale === undefined) ? 1 : scale;
-
-                    if (this.g > 0) this.g *= -1;
-                    p0.x += 0.05;
-                    // p0.y += 0.1;
-
-                }
-                ProjectileCurve.prototype = Object.create(THREE.Curve.prototype);
-                ProjectileCurve.prototype.constructor = ProjectileCurve;
-
-                ProjectileCurve.prototype.getPoint = function (t) {
-                    let x = this.p0.x + this.vx * t * this.scale;
-                    let y = this.p0.y + ((this.vy * t) + (this.g * 0.5 * (t * t))) * this.scale;
-                    let z = this.p0.z - this.vz * t * this.scale;
-                    return new THREE.Vector3(x, y, z);
-
-                };
-
-                var path = new ProjectileCurve(p0, 5, 1.07, Math.PI / 2, -9.8, 1);
-                var geometry = new THREE.TubeBufferGeometry(path, 30, 0.01, 4, false);
-                var materia = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-                var mesh = new THREE.Mesh(geometry, materia);
-                // this.el.sceneEl.setObject3D('hey', mesh);
-                return ProjectileCurve
             },
             ProjectileCurve: function () {
                 function ProjectileCurve(p0, velocity, verticalAngle, horizontalAngle, gravity, scale) {
@@ -424,29 +340,36 @@
 
                 return ProjectileCurve
             },
-            quadratic: function (a, b, c) {
+            quadraticTime: function (a, b, c) {
+                // This uses the quadratic formula to solve for time in a linear motion with constant aceleration
+                // It returns null when the result is negative once negative time doesn't make sense
+                // ax^2 + bx + c = 0
+
                 let delta = (b * b) - 4 * a * c;
-                if (delta < 0) return -1;
+
+                if (delta < 0) return null;
+
+                let x;
 
                 if (delta === 0) {
-                    return -b / 2 * a;
+                    x = -b / 2 * a;
+                    return x >= 0 ? x : null;
                 }
 
-                let x1, x2;
+                x = (-b - Math.sqrt(delta)) / (2 * a);
+                if (x > 0) return x;
 
-                x1 = (-b + Math.sqrt(delta)) / (2 * a);
-                x2 = (-b - Math.sqrt(delta)) / (2 * a);
-                // console.log({ a, b, c, delta, sqrt: Math.sqrt(delta), x1, x2 })
-                return { x1, x2 };
+                x = (-b + Math.sqrt(delta)) / (2 * a);
+                if (x > 0) return x;
 
-
+                return null;
             }
         });
 
-        AFRAME.registerComponent('listener', {
+        AFRAME.registerComponent('setteleport', {
             init: function () {
-                window.addEventListener('controllerconnected', () => console.log('hi'))
-                window.addEventListener('buttonchanged', () => console.log('hey'))
+                let rig = document.getElementById('rig');
+                rig.setAttribute('teleport', { collisionObjects: floor })
             }
         })
     </script>
@@ -460,17 +383,10 @@
             <img id="skyBoxMap" src="../assets/textures/cloud.jpg">
         </a-assets>
 
-        <a-entity id="rig" position="-3 0 18" wasd-controls teleport>
+        <a-entity id="rig" position="-3 0 18" wasd-controls setteleport>
             <a-entity id="camera" camera position="0 1.5 0" look-controls="pointerLockEnabled: true">
             </a-entity>
         </a-entity>
-
-        <!-- <a-entity id="cameraRig">
-            <a-entity id="head" camera position="0 1.5 0" wasd-controls look-controls gamepad-controls></a-entity>
-            <a-entity id="left-hand" teleport-controls="cameraRig: #cameraRig; teleportOrigin: #head;"></a-entity>
-            <a-entity id="right-hand" teleport-controls="cameraRig: #cameraRig; teleportOrigin: #head;"></a-entity>
-        </a-entity> -->
-
 
         <a-entity light="type: ambient; color: #fff; intensity: 0.3"></a-entity>
         <a-entity light="color: #fff" position="65 110 52"></a-entity>
