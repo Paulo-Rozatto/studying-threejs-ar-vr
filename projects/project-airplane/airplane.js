@@ -12,22 +12,38 @@ const ASSETS = {
         wood: {
             path: '../assets/textures/wood.jpg',
             fileSize: 7545.6 + 4200
+        },
+        skyBoxMap: {
+            path: '../assets/textures/cloud.jpg',
+            fileSize: 1065.362
+        },
+        grass: {
+            path: '../assets/textures/grass.jpg',
+            fileSize: 1065.362
         }
     },
     materials: {
         cubeMaterial: new THREE.MeshPhongMaterial(),
         lineMaterial: new THREE.LineBasicMaterial({ color: 0xff0000, linewidth: 2 }),
-        groundMaterial: new THREE.MeshBasicMaterial({ color: 0x77FF99 })
+        groundMaterial: new THREE.MeshBasicMaterial({ color: 0x77FF99 }),
+        skyBoxMaterial: new THREE.MeshBasicMaterial({ side: 1 })
     },
     geometries: {
         cubeGeometry: new THREE.BoxGeometry(3, 3, 3),
-        test: new THREE.BufferGeometry()
+        test: new THREE.BufferGeometry(),
+        skyBoxGeometry: new THREE.SphereGeometry(600, 50, 50),
     },
     objects: {
         airplane: {
             path: '../assets/models/airplane.glb',
             fileSize: 4200
-        }
+        },
+        skyBox: {
+            type: 'mesh',
+            geometry: 'skyBoxGeometry',
+            material: 'skyBoxMaterial',
+            map: 'skyBoxMap'
+        },
     }
 };
 
@@ -44,7 +60,7 @@ function init() {
     scene.setGravity(new THREE.Vector3(0, -10, 0));
     scene.addEventListener('update', simulate)
 
-    camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 1, 200);
+    camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 1, 700);
     camera.position.set(-80, 1, 0);
     camera.lookAt(new THREE.Vector3(0, 30, 0));
     scene.add(camera);
@@ -76,8 +92,12 @@ function init() {
     })
 
     const plane = new Physijs.PlaneMesh(new THREE.PlaneGeometry(300, 300), ASSETS.materials.groundMaterial);
+    // plane.material.map = ASSETS.textures.grass;
     plane.rotation.x = Math.PI * -0.5;
     scene.add(plane);
+
+    let skyBox = ASSETS.objects.skyBox;
+    scene.add(skyBox);
 
     airplane = ASSETS.objects.airplane;
     airplane.position.set(0, controls.height, -150);
