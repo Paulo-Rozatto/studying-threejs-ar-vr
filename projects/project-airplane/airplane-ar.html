@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <title>AR - Airplane</title>
+
+    <style>
+        html,
+        body {
+            margin: 0;
+            /* height: 100%; */
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="stats"></div>
+    <div id="gui"></div>
+
+    <script src="../libs/three.js"></script>
+    <script src="../libs/ar.js"></script>
+    <script>THREEx.ArToolkitContext.baseURL = "../"</script> <!-- Define o local do contexto -->
+
+    <script src="../libs/dat.gui.min.js"></script>
+    <script src="../libs/stats.min.js"></script>
+    <script src="../libs/GLTFLoader.js"></script>
+    <script src="../libs/LoadScreen.js"></script>
+    <script src="../libs/physi.js"></script>
+
+    <script src="airplane-ar.js"></script>
+</body>
+
+</html>
