@@ -169,7 +169,6 @@
                 this.gamepad = null;
                 this.obj = this.el.object3D;
                 this.objPos = new THREE.Vector3();
-                this.canTeleport = true;
                 this.path;
                 this.ProjectileCurve;
                 this.collisionObjects = this.data.collisionObjects || this.el.sceneEl.object3D.children.filter(e => e.type === 'Mesh');
@@ -181,21 +180,19 @@
                 this.p1;
                 this.p2;
 
-                let self = this
-                window.addEventListener("gamepadconnected", function (e) {
-                    console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
-                        e.gamepad.index, e.gamepad.id,
-                        e.gamepad.buttons.length, e.gamepad.axes.length);
-
-                    self.canTeleport = true;
-                });
-
                 window.addEventListener("keydown", (e) => {
+                    if (e.keyCode == 32) this.toggleTeleport(true);
+                });
+                window.addEventListener("keyup", (e) => {
                     if (e.keyCode == 32) this.teleport();
                 });
 
                 window.addEventListener('touchstart', (e) => {
-                    this.teleport();
+                    this.toggleTeleport(true);
+                })
+
+                window.addEventListener('touchend', (e) => {
+                    this.teleport()
                 })
 
                 let material = new THREE.MeshBasicMaterial({
@@ -226,85 +223,91 @@
                     material
                 )
 
-                this.teleportMark = new THREE.Mesh(
+                this.telepTarget = new THREE.Mesh(
                     new THREE.CylinderGeometry(0.5, 0.5, 0.2, 20, 1, true),
                     material
                 );
 
-                this.el.parentEl.setObject3D('telepMark', this.teleportMark);
-
+                this.el.parentEl.setObject3D('telepMark', this.telepTarget);
                 this.el.sceneEl.setObject3D('telepRay', this.telepRay);
+
+                this.toggleTeleport(false);
             },
             tick: function (time, delta) {
-                this.gamepad = navigator.getGamepads()[0];
+                if (this.telepRay.visible) {
+                    this.objPos.copy(this.obj.position);
+                    this.objPos.y += 1.4;
 
-                this.objPos.copy(this.obj.position);
-                this.objPos.y += 1.4;
+                    if (this.data.curveType === 'parabolic') {
+                        this.path = new this.ProjectileCurve(
+                            this.objPos,
+                            this.data.shootSpeed + camera.object3D.rotation.x * 5,
+                            this.data.shootAngle,
+                            Math.PI / 2 + camera.object3D.rotation.y
+                        );
 
-                if (this.data.curveType === 'parabolic') {
-                    this.path = new this.ProjectileCurve(
-                        this.objPos,
-                        this.data.shootSpeed + camera.object3D.rotation.x * 5,
-                        this.data.shootAngle,
-                        Math.PI / 2 + camera.object3D.rotation.y
-                    );
+                        this.time = this.quadraticTime(this.path.g / 2, this.path.vy, this.path.p0.y) / this.data.curveSegments;
 
-                    this.time = this.quadraticTime(this.path.g / 2, this.path.vy, this.path.p0.y) / this.data.curveSegments;
+                        for (let i = 0; i < this.data.curveSegments * 2; i++) {
+                            this.p1 = i === 0 ? this.path.getPoint(this.time * i++) : this.p2;
+                            this.p2 = this.path.getPoint(this.time * i);
 
-                    for (let i = 0; i < this.data.curveSegments * 2; i++) {
-                        this.p1 = i === 0 ? this.path.getPoint(this.time * i++) : this.p2;
-                        this.p2 = this.path.getPoint(this.time * i);
+                            this.raycaster.far = this.p1.distanceTo(this.p2);
+                            this.raycaster.set(this.p1, this.direction.subVectors(this.p2, this.p1).normalize());
+                            this.intersection = this.raycaster.intersectObjects(this.data.collisionObjects);
 
-                        this.raycaster.far = this.p1.distanceTo(this.p2);
-                        this.raycaster.set(this.p1, this.direction.subVectors(this.p2, this.p1).normalize());
+                            if (this.intersection[0]) {
+                                this.telepTarget.position.copy(this.intersection[0].point);
+                                this.telepTarget.position.y += 0.15;
+                                break;
+                            }
+                        }
+
+                    } else if (this.data.curveType === 'line') {
+                        this.path = new THREE.LineCurve3(this.objPos, this.telepTarget.position)
+
+                        camera.object3D.getWorldDirection(this.direction);
+                        this.direction.multiplyScalar(-1);
+                        if (this.direction.y > -0.2) {
+                            this.direction.y = -0.2;
+                        }
+
+                        this.raycaster.far = 9
+                        this.raycaster.set(this.objPos, this.direction);
+
                         this.intersection = this.raycaster.intersectObjects(this.data.collisionObjects);
 
                         if (this.intersection[0]) {
-                            this.teleportMark.position.copy(this.intersection[0].point);
-                            this.teleportMark.position.y += 0.15;
-                            break;
+                            this.telepTarget.position.copy(this.intersection[0].point);
+                            this.telepTarget.position.y += 0.15;
                         }
                     }
 
-                } else if (this.data.curveType === 'line') {
-                    this.path = new THREE.LineCurve3(this.objPos, this.teleportMark.position)
-
-                    camera.object3D.getWorldDirection(this.direction);
-                    this.direction.multiplyScalar(-1);
-                    if (this.direction.y > -0.2) {
-                        this.direction.y = -0.2;
-                    }
-
-                    this.raycaster.far = 9
-                    this.raycaster.set(this.objPos, this.direction);
-
-                    this.intersection = this.raycaster.intersectObjects(this.data.collisionObjects);
-
-                    if (this.intersection[0]) {
-                        this.teleportMark.position.copy(this.intersection[0].point);
-                        this.teleportMark.position.y += 0.15;
-                    }
+                    this.telepRay.geometry = new THREE.TubeBufferGeometry(this.path, this.data.curveSegments, this.data.curveWidth, 4, false);
+                    this.telepRay.geometry.needsupdate = true;
                 }
 
-                this.telepRay.geometry = new THREE.TubeBufferGeometry(this.path, this.data.curveSegments, this.data.curveWidth, 4, false);
-                this.telepRay.geometry.needsupdate = true;
+                this.gamepad = navigator.getGamepads()[0];
 
                 if (!this.gamepad) return;
 
                 if (this.gamepad.buttons.some(btn => btn.pressed)) {
+                    this.toggleTeleport(true);
+                }
+                else if (this.telepRay.visible) {
                     this.teleport();
                 }
 
             },
+            toggleTeleport: function (option) {
+                this.telepRay.visible = option;
+                this.telepTarget.visible = option;
+            },
             teleport: function () {
-                if (this.canTeleport) {
-                    this.obj.position.x = this.teleportMark.position.x;
-                    this.obj.position.y = this.teleportMark.position.y;
-                    this.obj.position.z = this.teleportMark.position.z;
-                    this.canTeleport = false;
-                    setTimeout(() => { this.canTeleport = true }, 500);
-                    console.log('teleported')
-                }
+                this.obj.position.x = this.telepTarget.position.x;
+                this.obj.position.y = this.telepTarget.position.y;
+                this.obj.position.z = this.telepTarget.position.z;
+                this.toggleTeleport(false);
             },
             ProjectileCurve: function () {
                 function ProjectileCurve(p0, velocity, verticalAngle, horizontalAngle, gravity, scale) {
@@ -383,7 +386,7 @@
             <img id="skyBoxMap" src="../assets/textures/cloud.jpg">
         </a-assets>
 
-        <a-entity id="rig" position="-3 0 18" wasd-controls setteleport>
+        <a-entity id="rig" position="-3 0 18" setteleport>
             <a-entity id="camera" camera position="0 1.5 0" look-controls="pointerLockEnabled: true">
             </a-entity>
         </a-entity>
