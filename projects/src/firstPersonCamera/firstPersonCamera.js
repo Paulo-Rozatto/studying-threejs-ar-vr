@@ -1,8 +1,8 @@
 /* eslint-disable indent */
-import * as THREE from '../libs/three.module.js';
-import Stats from '../libs/stats.module.js';
+import * as THREE from '../../libs/three.module.js';
+import Stats from '../../libs/stats.module.js';
 // import { GUI } from '../libs/dat.gui.module.js';
-import { PointerLockControls } from '../libs/PointerLockControls.js';
+import { PointerLockControls } from '../../libs/PointerLockControls.js';
 
 function main() {
     const stats = initStats();
@@ -31,20 +31,20 @@ function main() {
     // Loading all textures
     const loader = new THREE.TextureLoader();
 
-    const groundTexture = loader.load('../assets/textures/wood.jpg');
+    const groundTexture = loader.load('../../assets/textures/wood.jpg');
     groundTexture.wrapS = THREE.MirroredRepeatWrapping;
     groundTexture.wrapT = THREE.RepeatWrapping;
     groundTexture.repeat.set(20, 20);
 
-    const rampTexture = loader.load('../assets/textures/wood2.jpg');
+    const rampTexture = loader.load('../../assets/textures/wood2.jpg');
     rampTexture.wrapS = THREE.MirroredRepeatWrapping;
     rampTexture.repeat.set(3, 1);
 
-    const whiteWallTexture = loader.load('../assets/textures/white-wall.jpg');
+    const whiteWallTexture = loader.load('../../assets/textures/white-wall.jpg');
     whiteWallTexture.wrapS = THREE.MirroredRepeatWrapping;
     whiteWallTexture.repeat.set(10, 1);
 
-    const brickWallTexture = loader.load('../assets/textures/brick-wall.jpg');
+    const brickWallTexture = loader.load('../../assets/textures/brick-wall.jpg');
 
     // End loading textures
 
@@ -121,14 +121,14 @@ function main() {
 
     const paintingGeometry = new THREE.PlaneGeometry(4, 3);
     const paintings = [
-        new THREE.Mesh(paintingGeometry, new THREE.MeshBasicMaterial({ map: loader.load('../assets/paintings/autoretrato.jpg') })),
-        new THREE.Mesh(paintingGeometry, new THREE.MeshBasicMaterial({ map: loader.load('../assets/paintings/starynight.jpg') })),
-        new THREE.Mesh(paintingGeometry, new THREE.MeshBasicMaterial({ map: loader.load('../assets/paintings/indios.jpg') })),
-        new THREE.Mesh(paintingGeometry, new THREE.MeshBasicMaterial({ map: loader.load('../assets/paintings/mantiqueira.jpg') })),
-        new THREE.Mesh(paintingGeometry, new THREE.MeshBasicMaterial({ map: loader.load('../assets/paintings/madona.jpg') })),
-        new THREE.Mesh(paintingGeometry, new THREE.MeshBasicMaterial({ map: loader.load('../assets/paintings/venus.jpg') })),
-        new THREE.Mesh(paintingGeometry, new THREE.MeshBasicMaterial({ map: loader.load('../assets/paintings/barcopapel.jpg') })),
-        new THREE.Mesh(paintingGeometry, new THREE.MeshBasicMaterial({ map: loader.load('../assets/paintings/dragao.jpg') })),
+        new THREE.Mesh(paintingGeometry, new THREE.MeshBasicMaterial({ map: loader.load('../../assets/paintings/autoretrato.jpg') })),
+        new THREE.Mesh(paintingGeometry, new THREE.MeshBasicMaterial({ map: loader.load('../../assets/paintings/starynight.jpg') })),
+        new THREE.Mesh(paintingGeometry, new THREE.MeshBasicMaterial({ map: loader.load('../../assets/paintings/indios.jpg') })),
+        new THREE.Mesh(paintingGeometry, new THREE.MeshBasicMaterial({ map: loader.load('../../assets/paintings/mantiqueira.jpg') })),
+        new THREE.Mesh(paintingGeometry, new THREE.MeshBasicMaterial({ map: loader.load('../../assets/paintings/madona.jpg') })),
+        new THREE.Mesh(paintingGeometry, new THREE.MeshBasicMaterial({ map: loader.load('../../assets/paintings/venus.jpg') })),
+        new THREE.Mesh(paintingGeometry, new THREE.MeshBasicMaterial({ map: loader.load('../../assets/paintings/barcopapel.jpg') })),
+        new THREE.Mesh(paintingGeometry, new THREE.MeshBasicMaterial({ map: loader.load('../../assets/paintings/dragao.jpg') })),
     ];
 
     paintings[0].position.set(-12.5, 2.5, -24.9);

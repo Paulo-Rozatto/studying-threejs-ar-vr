@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-// import { LoadScreen } from '../libs/LoadScreen.module.js';
+// import { LoadScreen } from '../../libs/LoadScreen.module.js';
 
 let stats, renderer, scene, camera, light, ambientLight;
 
@@ -11,13 +11,13 @@ let house;
 const ASSETS = {
     textures: {
         helper: {
-            path: '../assets/textures/loader-helper.jpg', // the loader only shows the size of textures, this helper make it show the model size
+            path: '../../assets/textures/loader-helper.jpg', // the loader only shows the size of textures, this helper make it show the model size
             fileSize: 9936.936
         }
     },
     objects: {
         house: {
-            path: '../assets/models/modern-house-noground.glb',
+            path: '../../assets/models/modern-house-noground.glb',
             fileSize: 9889.984,
         }
     }

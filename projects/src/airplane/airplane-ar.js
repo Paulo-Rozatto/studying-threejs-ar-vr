@@ -5,13 +5,13 @@ let box, plane, airplane, trajectory;
 
 let frustum, cameraViewProjectionMatrix;
 
-Physijs.scripts.worker = '../libs/physijs_worker.js';
+Physijs.scripts.worker = '../../libs/physijs_worker.js';
 Physijs.scripts.ammo = '../libs/ammo.js';
 
 const ASSETS = {
     textures: {
         wood: {
-            path: '../assets/textures/wood.jpg',
+            path: '../../assets/textures/wood.jpg',
             fileSize: 7545.6 + 4200
         }
     },
@@ -25,7 +25,7 @@ const ASSETS = {
     },
     objects: {
         airplane: {
-            path: '../assets/models/airplane.glb',
+            path: '../../assets/models/airplane.glb',
             fileSize: 4200
         }
     }

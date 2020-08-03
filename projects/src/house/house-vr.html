@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>House VR</title>
-    <link rel="stylesheet" href="../../css/w3.css">
+    <link rel="stylesheet" href="../../../css/w3.css">
     <style>
         body {
             margin: 0;
@@ -35,9 +35,9 @@
     </style>
 
     <!-- Library of Virtual Reality -->
-    <script type="text/javascript" charset="UTF-8" src="../libs/aframe-master.js"></script>
-    <script type="text/javascript" charset="UTF-8" src="../libs/aframe-extras.js"></script>
-    <script src="../libs/aframe-teleport-controls1.js"></script>
+    <script type="text/javascript" charset="UTF-8" src="../../libs/aframe-master.js"></script>
+    <script type="text/javascript" charset="UTF-8" src="../../libs/aframe-extras.js"></script>
+    <script src="../../libs/aframe-teleport-controls1.js"></script>
 
     <script>
         let stairs = [], floor = [], isFlying = false;
@@ -382,8 +382,8 @@
     <a-scene main_scene id="scene" blocker time light="defaultLightsEnabled: false"
         renderer="antialias: true; alpha: true">
         <a-assets timeout="60000">
-            <a-asset-item id="house" src="../assets/models/modern-house.glb"></a-asset-item>
-            <img id="skyBoxMap" src="../assets/textures/cloud.jpg">
+            <a-asset-item id="house" src="../../assets/models/modern-house.glb"></a-asset-item>
+            <img id="skyBoxMap" src="../../assets/textures/cloud.jpg">
         </a-assets>
 
         <a-entity id="rig" position="-3 0 18" setteleport>

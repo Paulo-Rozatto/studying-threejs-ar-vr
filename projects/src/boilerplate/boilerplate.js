@@ -1,6 +1,6 @@
-import * as THREE from '../libs/three.module.js';
-import Stats from '../libs/stats.module.js';
-import { GUI } from '../libs/dat.gui.module.js';
+import * as THREE from '../../libs/three.module.js';
+import Stats from '../../libs/stats.module.js';
+import { GUI } from '../../libs/dat.gui.module.js';
 
 function main() {
     const stats = initStats();

@@ -4,21 +4,21 @@ let box, airplane, trajectory, test;
 
 let frustum, cameraViewProjectionMatrix;
 
-Physijs.scripts.worker = '../libs/physijs_worker.js';
+Physijs.scripts.worker = '../../libs/physijs_worker.js';
 Physijs.scripts.ammo = '../libs/ammo.js';
 
 const ASSETS = {
     textures: {
         wood: {
-            path: '../assets/textures/wood.jpg',
+            path: '../../assets/textures/wood.jpg',
             fileSize: 7545.6 + 4200
         },
         skyBoxMap: {
-            path: '../assets/textures/cloud.jpg',
+            path: '../../assets/textures/cloud.jpg',
             fileSize: 1065.362
         },
         grass: {
-            path: '../assets/textures/grass.jpg',
+            path: '../../assets/textures/grass.jpg',
             fileSize: 1065.362
         }
     },
@@ -35,7 +35,7 @@ const ASSETS = {
     },
     objects: {
         airplane: {
-            path: '../assets/models/airplane.glb',
+            path: '../../assets/models/airplane.glb',
             fileSize: 4200
         },
         skyBox: {

@@ -9,7 +9,7 @@ let cube;
 const ASSETS = {
     textures: {
         wood: {
-            path: '../assets/textures/wood.jpg',
+            path: '../../assets/textures/wood.jpg',
             fileSize: 75.456
         }
     },

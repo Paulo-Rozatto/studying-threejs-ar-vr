@@ -1,8 +1,8 @@
 /* eslint-disable indent */
-import * as THREE from '../libs/three.module.js';
-import Stats from '../libs/stats.module.js';
-import { PointerLockControls } from '../libs/PointerLockControls.js';
-import { LoadScreen } from '../libs/LoadScreen.module.js';
+import * as THREE from '../../libs/three.module.js';
+import Stats from '../../libs/stats.module.js';
+import { PointerLockControls } from '../../libs/PointerLockControls.js';
+import { LoadScreen } from '../../libs/LoadScreen.module.js';
 
 let stats, renderer, scene, camera, light, ambientLight, clock;
 
@@ -23,7 +23,7 @@ const movement = {
 const ASSETS = {
     textures: {
         skyBoxMap: {
-            path: '../assets/textures/cloud.jpg',
+            path: '../../assets/textures/cloud.jpg',
             fileSize: 1065.362 + 9889.984 // for some reason the house file size is not count in the loader, so it's added here to be shown on the loader
         }
     },
@@ -37,7 +37,7 @@ const ASSETS = {
     },
     objects: {
         house: {
-            path: '../assets/models/modern-house.glb',
+            path: '../../assets/models/modern-house.glb',
             fileSize: 9889.984,
         },
         skyBox: {

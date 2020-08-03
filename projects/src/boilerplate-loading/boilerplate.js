@@ -1,7 +1,7 @@
-import * as THREE from '../libs/three.module.js';
-import Stats from '../libs/stats.module.js';
-import { GUI } from '../libs/dat.gui.module.js';
-import { LoadScreen } from '../libs/LoadScreen.module.js';
+import * as THREE from '../../libs/three.module.js';
+import Stats from '../../libs/stats.module.js';
+import { GUI } from '../../libs/dat.gui.module.js';
+import { LoadScreen } from '../../libs/LoadScreen.module.js';
 
 let stats, renderer, scene, camera, light, controls, gui;
 
@@ -11,7 +11,7 @@ let cube;
 const ASSETS = {
     textures: {
         wood: {
-            path: '../assets/textures/wood.jpg',
+            path: '../../assets/textures/wood.jpg',
             fileSize: 75456
         }
     },
