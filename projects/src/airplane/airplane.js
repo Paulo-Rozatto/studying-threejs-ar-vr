@@ -1,6 +1,6 @@
 let rendererStats, physicsStats, renderer, scene, camera, light, controls, gui, clock;
 
-let box, airplane, trajectory, test;
+let box, airplane, trajectory, TrajectoryPath;
 
 let frustum, cameraViewProjectionMatrix;
 
@@ -18,19 +18,18 @@ const ASSETS = {
             fileSize: 1065.362
         },
         grass: {
-            path: '../../assets/textures/grass.jpg',
+            path: '../../assets/textures/grass.png',
             fileSize: 1065.362
         }
     },
     materials: {
         cubeMaterial: new THREE.MeshPhongMaterial(),
         lineMaterial: new THREE.LineBasicMaterial({ color: 0xff0000, linewidth: 2 }),
-        groundMaterial: new THREE.MeshBasicMaterial({ color: 0x77FF99 }),
+        groundMaterial: new THREE.MeshStandardMaterial({ color: 0x77FF99, }),
         skyBoxMaterial: new THREE.MeshBasicMaterial({ side: 1 })
     },
     geometries: {
         cubeGeometry: new THREE.BoxGeometry(3, 3, 3),
-        test: new THREE.BufferGeometry(),
         skyBoxGeometry: new THREE.SphereGeometry(600, 50, 50),
     },
     objects: {
@@ -91,8 +90,21 @@ function init() {
         airplane.position.y = controls.height;
     })
 
-    const plane = new Physijs.PlaneMesh(new THREE.PlaneGeometry(300, 300), ASSETS.materials.groundMaterial);
-    // plane.material.map = ASSETS.textures.grass;
+    let planeMaterial = new Physijs.createMaterial(
+        ASSETS.materials.groundMaterial,
+        0.8,
+        0.1
+    );
+
+    const plane = new Physijs.PlaneMesh(
+        new THREE.PlaneGeometry(300, 300),
+        planeMaterial
+    );
+    let grass = ASSETS.textures.grass;
+    grass.wrapS = THREE.RepeatWrapping;
+    grass.wrapT = THREE.RepeatWrapping;
+    grass.repeat.set(15, 15);
+    plane.material.map = grass;
     plane.rotation.x = Math.PI * -0.5;
     scene.add(plane);
 
@@ -105,26 +117,28 @@ function init() {
     airplane.scale.set(0.25, 0.25, 0.25)
     scene.add(airplane);
 
+    let cubeMaterial = new Physijs.createMaterial(
+        ASSETS.materials.cubeMaterial,
+        0.8,
+        0.1
+    );
+
     box = new Physijs.BoxMesh(
         ASSETS.geometries.cubeGeometry,
-        ASSETS.materials.cubeMaterial
+        cubeMaterial
     );
     box.material.map = ASSETS.textures.wood;
-    box.prevPosition = new THREE.Vector3()
-    box.canBeReleased = true;
-    box.isReleased = false
-    console.log(box);
-    box.addEventListener('collision', () => {
-        box.canBeReleased = true;
-        box.isReleased = false;
-        scene.remove(box);
-    })
 
-    trajectory = new THREE.Group();
-    trajectory.name = "line";
-    scene.add(trajectory)
+    TrajectoryPath = ProjectileCurve();
 
-    test = new THREE.BufferGeometry();
+    let path = new TrajectoryPath(new THREE.Vector3(0, -1, 0), 0, 0, 0, 0);
+
+    trajectory = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(path.getPoints(1)),
+        ASSETS.materials.lineMaterial,
+    );
+    scene.add(trajectory);
+    // trajectory.visible = false;
 
     clock = new THREE.Clock();
 
@@ -149,12 +163,10 @@ function animate() {
 
     if (!frustum.intersectsObject(airplane.children[0].children[0])) {
         if ((airplane.position.z > 0 && controls.velocity > 0) || (airplane.position.z < 0 && controls.velocity < 0)) {
-            airplane.rotation.y += controls.velocity > 0 ? Math.PI : -Math.PI;
+            airplane.rotation.y += controls.velocity > 0 ? Math.PI : -1 * Math.PI;
             controls.velocity *= -1;
         }
     }
-    if (box.isReleased) drawTrajectory();
-
     rendererStats.update();
     renderer.render(scene, camera);
 }
@@ -165,24 +177,84 @@ function simulate() {
 }
 
 function releaseBox() {
-    if (box.canBeReleased) {
-        box.prevPosition.copy(airplane.position);
-        box.position.copy(airplane.position);
-        trajectory.children = [];
-        box.canBeReleased = false
-        box.isReleased = true
-        scene.add(box);
-        box.setLinearVelocity(new THREE.Vector3(0, 0, controls.velocity));
-    }
+    box.position.copy(airplane.position);
+    scene.add(box);
+    box.setLinearVelocity(new THREE.Vector3(0, 0, controls.velocity));
+    drawTrajectory();
 }
 
 function drawTrajectory() {
-    let line = new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints([box.prevPosition, box.position]),
-        ASSETS.materials.lineMaterial
-    )
-    trajectory.add(line);
-    box.prevPosition.copy(box.position);
+    let path = new TrajectoryPath(
+        airplane.position,
+        controls.velocity_module,
+        0,
+        -airplane.rotation.y,
+        9.8,
+        10
+    );
+    path = path.getPoints(30)
+    trajectory.geometry = new THREE.BufferGeometry().setFromPoints(path);
+    // trajectory.geometry.setDrawRange(0, 30);
+    trajectory.geometry.needsupdate = true;
+}
+
+function ProjectileCurve() {
+    function ProjectileCurve(p0, velocity, verticalAngle, horizontalAngle, gravity, scale) {
+        THREE.Curve.call(this);
+
+        if (p0 === undefined || velocity === undefined || verticalAngle === undefined || horizontalAngle === undefined) {
+            return null;
+        }
+
+        let vhorizontal = velocity * Math.cos(verticalAngle);
+
+        this.p0 = p0;
+        this.vy = velocity * Math.sin(verticalAngle);
+        this.vx = velocity * Math.cos(horizontalAngle);
+        this.vz = velocity * Math.sin(horizontalAngle);
+        this.g = (gravity === undefined) ? -9.8 : gravity;
+        this.scale = (scale === undefined) ? 1 : scale;
+
+        if (this.g > 0) this.g *= -1;
+    }
+    ProjectileCurve.prototype = Object.create(THREE.Curve.prototype);
+    ProjectileCurve.prototype.constructor = ProjectileCurve;
+
+    ProjectileCurve.prototype.getPoint = function (t) {
+        t *= this.scale;
+        let x = this.p0.x + this.vx * t;
+        let y = this.p0.y + ((this.vy * t) + (this.g * 0.5 * (t * t)));
+        let z = this.p0.z - this.vz * t;
+        return new THREE.Vector3(x, y, z);
+
+    };
+
+    return ProjectileCurve
+}
+
+function quadraticTime(a, b, c) {
+    // This uses the quadratic formula to solve for time in a linear motion with constant aceleration
+    // It returns null when the result is negative once negative time doesn't make sense
+    // ax^2 + bx + c = 0
+
+    let delta = (b * b) - 4 * a * c;
+
+    if (delta < 0) return null;
+
+    let x;
+
+    if (delta === 0) {
+        x = -b / 2 * a;
+        return x >= 0 ? x : null;
+    }
+
+    x = (-b - Math.sqrt(delta)) / (2 * a);
+    if (x > 0) return x;
+
+    x = (-b + Math.sqrt(delta)) / (2 * a);
+    if (x > 0) return x;
+
+    return null;
 }
 
 function setRenderer() {
