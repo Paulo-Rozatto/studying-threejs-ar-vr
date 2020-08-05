@@ -71,9 +71,6 @@ function init() {
     light.position.set(0, 200, 200);
     scene.add(light);
 
-    var spotLightHelper = new THREE.DirectionalLightHelper(light);
-    scene.add(spotLightHelper);
-
     controls = new function () {
         this.velocity_module = 30;
         this.velocity = 30;

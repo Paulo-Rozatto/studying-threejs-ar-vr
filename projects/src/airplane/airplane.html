@@ -13,6 +13,19 @@
             height: 100%;
             overflow: hidden;
         }
+
+        #explanation {
+            position: absolute;
+            margin-left: auto;
+            margin-right: auto;
+            left: 5%;
+            right: 5%;
+            bottom: 5px;
+            background-color: rgba(220, 220, 220, 0.7);
+            padding: 3px;
+            text-align: center;
+            border: rgb(120, 120, 120) solid 5px;
+        }
     </style>
 </head>
 
@@ -21,6 +34,14 @@
     <div id="physijs-stats"></div>
     <div id="gui"></div>
 
+    <div id="explanation">
+        The motion along the x-axis and y-axis are independent, thus they have different formulas.
+        $$ x = {x}_{0} + v_xt.$$
+        $$ y={y}_{0}+{v}_{0y}t-\frac{1}{2}{\mathrm{gt}}^{2}\\ .$$
+    </div>
+
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../libs/three.js"></script>
     <script src="../../libs/dat.gui.min.js"></script>
     <script src="../../libs/stats.min.js"></script>
