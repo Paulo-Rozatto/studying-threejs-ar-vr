@@ -2112,7 +2112,6 @@ function LoadScreen(renderer, style) {
 		LSCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 2);
 
 		for (var k in that.resources.objects) {
-			console.log('>', that.resources.objects[k])
 			LSScene.add(that.resources.objects[k]);
 		}
 

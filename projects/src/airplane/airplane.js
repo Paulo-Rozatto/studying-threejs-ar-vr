@@ -1,6 +1,6 @@
 let rendererStats, physicsStats, renderer, scene, camera, light, controls, gui, clock;
 
-let box, airplane, trajectory, TrajectoryPath;
+let box, airplane, airplaneRange, trajectory, TrajectoryPath;
 
 let frustum, cameraViewProjectionMatrix;
 
@@ -24,7 +24,7 @@ const ASSETS = {
     },
     materials: {
         cubeMaterial: new THREE.MeshPhongMaterial(),
-        lineMaterial: new THREE.LineBasicMaterial({ color: 0xff0000, linewidth: 2 }),
+        lineMaterial: new THREE.LineBasicMaterial({ color: 0xff0000, linewidth: 4 }),
         groundMaterial: new THREE.MeshStandardMaterial({ color: 0x77FF99, }),
         skyBoxMaterial: new THREE.MeshBasicMaterial({ side: 1 })
     },
@@ -56,25 +56,29 @@ function init() {
     initStats();
 
     scene = new Physijs.Scene();
-    scene.setGravity(new THREE.Vector3(0, -10, 0));
+    scene.setGravity(new THREE.Vector3(0, -9.8, 0));
     scene.addEventListener('update', simulate)
 
     camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 1, 700);
-    camera.position.set(-80, 1.6, 0);
+    camera.position.set(0, 1.6, 80);
     camera.lookAt(new THREE.Vector3(0, 30, 0));
+    cameraViewProjectionMatrix = new THREE.Matrix4();
     scene.add(camera);
 
     frustum = new THREE.Frustum();
-    cameraViewProjectionMatrix = new THREE.Matrix4();
 
     light = new THREE.DirectionalLight(0xfefefe);
-    light.position.set(-100, 100, 10);
+    light.position.set(0, 200, 200);
     scene.add(light);
+
+    var spotLightHelper = new THREE.DirectionalLightHelper(light);
+    scene.add(spotLightHelper);
 
     controls = new function () {
         this.velocity_module = 30;
         this.velocity = 30;
         this.height = 100;
+        this.switch_camera = false;
     };
 
     gui = new dat.GUI();
@@ -89,6 +93,16 @@ function init() {
     gui.add(controls, 'height', 50, 100).onChange(() => {
         airplane.position.y = controls.height;
     })
+    gui.add(controls, 'switch_camera').onChange(() => {
+        if (!controls.switch_camera) {
+            camera.position.set(0, 1.6, 80);
+            camera.lookAt(new THREE.Vector3(0, 30, 0));
+        }
+        else {
+            camera.position.copy(airplane.position);
+            camera.lookAt(new THREE.Vector3(0, -1, 0))
+        }
+    });
 
     let planeMaterial = new Physijs.createMaterial(
         ASSETS.materials.groundMaterial,
@@ -96,24 +110,23 @@ function init() {
         0.1
     );
 
-    const plane = new Physijs.PlaneMesh(
-        new THREE.PlaneGeometry(300, 300),
-        planeMaterial
-    );
     let grass = ASSETS.textures.grass;
     grass.wrapS = THREE.RepeatWrapping;
     grass.wrapT = THREE.RepeatWrapping;
     grass.repeat.set(15, 15);
-    plane.material.map = grass;
-    plane.rotation.x = Math.PI * -0.5;
-    scene.add(plane);
+
+    const ground = new Physijs.PlaneMesh(new THREE.PlaneGeometry(800, 800), planeMaterial);
+    ground.material.map = grass;
+    ground.rotation.x = Math.PI * -0.5;
+    scene.add(ground);
 
     let skyBox = ASSETS.objects.skyBox;
     scene.add(skyBox);
 
+    airplaneRange = 150;
     airplane = ASSETS.objects.airplane;
-    airplane.position.set(0, controls.height, -150);
-    airplane.rotation.y = Math.PI * 0.5
+    airplane.position.set(-150, controls.height, 0);
+    airplane.rotation.y = Math.PI;
     airplane.scale.set(0.25, 0.25, 0.25)
     scene.add(airplane);
 
@@ -152,20 +165,32 @@ function init() {
     });
 }
 
+let test = new THREE.Vector3(0, -1, 0);
 function animate() {
     requestAnimationFrame(animate);
 
-    airplane.position.z += controls.velocity * clock.getDelta();
+    airplane.position.x += controls.velocity * clock.getDelta();
 
-    camera.updateMatrixWorld();
-    camera.matrixWorldInverse.getInverse(camera.matrixWorld);
-    cameraViewProjectionMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
-    frustum.setFromProjectionMatrix(cameraViewProjectionMatrix);
+    if (controls.switch_camera) {
+        camera.position.copy(airplane.position);
+        camera.lookAt(airplane.position.x, 0, 0);
 
-    if (!frustum.intersectsObject(airplane.children[0].children[0])) {
-        if ((airplane.position.z > 0 && controls.velocity > 0) || (airplane.position.z < 0 && controls.velocity < 0)) {
-            airplane.rotation.y += controls.velocity > 0 ? Math.PI : -1 * Math.PI;
+        if (airplane.position.x > airplaneRange || airplane.position.x < -airplaneRange) {
+            airplane.rotation.y += controls.velocity > 0 ? Math.PI : - Math.PI;
             controls.velocity *= -1;
+        }
+    }
+    else {
+        camera.updateMatrixWorld();
+        camera.matrixWorldInverse.getInverse(camera.matrixWorld);
+        cameraViewProjectionMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+        frustum.setFromProjectionMatrix(cameraViewProjectionMatrix);
+
+        if (!frustum.intersectsObject(airplane.children[0].children[0])) {
+            if ((airplane.position.x > 0 && controls.velocity > 0) || (airplane.position.x < 0 && controls.velocity < 0)) {
+                airplane.rotation.y += controls.velocity > 0 ? Math.PI : -1 * Math.PI;
+                controls.velocity *= -1;
+            }
         }
     }
     rendererStats.update();
@@ -181,22 +206,22 @@ function releaseBox() {
     box.position.copy(airplane.position);
     box.__dirtyPosition = true
     box.setAngularVelocity(new THREE.Vector3(0, 0, 0));
-    box.setLinearVelocity(new THREE.Vector3(0, 0, controls.velocity));
+    box.setLinearVelocity(new THREE.Vector3(controls.velocity, 0, 0));
     drawTrajectory();
+
 }
 
 function drawTrajectory() {
     let path = new TrajectoryPath(
         airplane.position,
-        controls.velocity_module,
+        controls.velocity,
+        airplane.rotation.y,
         0,
-        -airplane.rotation.y,
         9.8,
         10
     );
     path = path.getPoints(30)
     trajectory.geometry = new THREE.BufferGeometry().setFromPoints(path);
-    // trajectory.geometry.setDrawRange(0, 30);
     trajectory.geometry.needsupdate = true;
 }
 
