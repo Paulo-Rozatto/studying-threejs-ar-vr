@@ -9,9 +9,9 @@ Physijs.scripts.ammo = '../libs/ammo.js';
 
 const ASSETS = {
     textures: {
-        wood: {
-            path: '../../assets/textures/wood.jpg',
-            fileSize: 7545.6 + 4200
+        crate: {
+            path: '../../assets/textures/crate.png',
+            fileSize: 119.437 + 4200
         },
         skyBoxMap: {
             path: '../../assets/textures/cloud.jpg',
@@ -19,7 +19,7 @@ const ASSETS = {
         },
         grass: {
             path: '../../assets/textures/grass.png',
-            fileSize: 1065.362
+            fileSize: 836.528
         }
     },
     materials: {
@@ -60,7 +60,7 @@ function init() {
     scene.addEventListener('update', simulate)
 
     camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 1, 700);
-    camera.position.set(-80, 1, 0);
+    camera.position.set(-80, 1.6, 0);
     camera.lookAt(new THREE.Vector3(0, 30, 0));
     scene.add(camera);
 
@@ -127,7 +127,9 @@ function init() {
         ASSETS.geometries.cubeGeometry,
         cubeMaterial
     );
-    box.material.map = ASSETS.textures.wood;
+    box.material.map = ASSETS.textures.crate;
+    box.position.set(-90, 1.5, 0);
+    scene.add(box);
 
     TrajectoryPath = ProjectileCurve();
 
@@ -138,7 +140,6 @@ function init() {
         ASSETS.materials.lineMaterial,
     );
     scene.add(trajectory);
-    // trajectory.visible = false;
 
     clock = new THREE.Clock();
 
@@ -178,7 +179,8 @@ function simulate() {
 
 function releaseBox() {
     box.position.copy(airplane.position);
-    scene.add(box);
+    box.__dirtyPosition = true
+    box.setAngularVelocity(new THREE.Vector3(0, 0, 0));
     box.setLinearVelocity(new THREE.Vector3(0, 0, controls.velocity));
     drawTrajectory();
 }
