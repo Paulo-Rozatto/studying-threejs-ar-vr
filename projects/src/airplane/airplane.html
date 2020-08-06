@@ -26,6 +26,19 @@
             text-align: center;
             border: rgb(120, 120, 120) solid 5px;
         }
+
+        #vars {
+            position: absolute;
+            top: 30%;
+            bottom: 30%;
+            left: 2px;
+            list-style-type: none;
+        }
+
+        #vars li {
+            font-size: 1.5em;
+            background-color: rgba(220, 220, 220, 0.7);
+        }
     </style>
 </head>
 
@@ -33,6 +46,12 @@
     <div id="three-stats"></div>
     <div id="physijs-stats"></div>
     <div id="gui"></div>
+
+    <ul id="vars">
+        <li id="x">X: -</li>
+        <li id="y">Y: -</li>
+        <li id="t">T: -</li>
+    </ul>
 
     <div id="explanation">
         The motion along the x-axis and y-axis are independent, thus they have different formulas.

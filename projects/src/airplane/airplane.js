@@ -1,6 +1,6 @@
 let rendererStats, physicsStats, renderer, scene, camera, light, controls, gui, clock;
 
-let box, airplane, airplaneRange, trajectory, TrajectoryPath;
+let box, airplane, airplaneRange, trajectory, TrajectoryPath, lookDirection, x, y, t, time, totalTime;
 
 let frustum, cameraViewProjectionMatrix;
 
@@ -120,6 +120,7 @@ function init() {
     let skyBox = ASSETS.objects.skyBox;
     scene.add(skyBox);
 
+    lookDirection = new THREE.Vector3(0, -1, 0);
     airplaneRange = 150;
     airplane = ASSETS.objects.airplane;
     airplane.position.set(-150, controls.height, 0);
@@ -127,18 +128,15 @@ function init() {
     airplane.scale.set(0.25, 0.25, 0.25)
     scene.add(airplane);
 
-    let cubeMaterial = new Physijs.createMaterial(
-        ASSETS.materials.cubeMaterial,
-        0.8,
-        0.1
-    );
-
+    let cubeMaterial = new Physijs.createMaterial(ASSETS.materials.cubeMaterial, 0.8, 0.1);
     box = new Physijs.BoxMesh(
         ASSETS.geometries.cubeGeometry,
         cubeMaterial
     );
+    box.isReleased = false;
     box.material.map = ASSETS.textures.crate;
-    box.position.set(-90, 1.5, 0);
+    box.position.set(0, 1.5, 85); // is not visible to the camera
+    box.addEventListener('collision', () => { box.isReleased = false }, false);
     scene.add(box);
 
     TrajectoryPath = ProjectileCurve();
@@ -151,6 +149,12 @@ function init() {
     );
     scene.add(trajectory);
 
+    x = document.getElementById('x');
+    y = document.getElementById('y');
+    t = document.getElementById('t');
+
+    console.log(t);
+
     clock = new THREE.Clock();
 
     window.addEventListener('resize', onResize);
@@ -162,7 +166,7 @@ function init() {
     });
 }
 
-let test = new THREE.Vector3(0, -1, 0);
+let simuClock = new THREE.Clock();
 function animate() {
     requestAnimationFrame(animate);
 
@@ -194,17 +198,40 @@ function animate() {
     renderer.render(scene, camera);
 }
 
+let xPos, xTotalDis, xDis, yDis; //position and displacement
 function simulate() {
     physicsStats.update();
     scene.simulate();
+    let delta = simuClock.getDelta()
+    if (time !== totalTime) {
+        xDis = Math.abs((box.position.x - xPos));
+        if (xDis > xTotalDis - 1.6) xDis = xTotalDis;
+
+        yDis = controls.height - box.position.y + 1.5;
+        if (yDis > controls.height - 0.5) yDis = controls.height;
+
+        time += delta;
+        if (time > totalTime) time = totalTime;
+        t.innerHTML = 'T: ' + time.toFixed(2) + 's';
+        x.innerHTML = 'X: ' + xDis.toFixed(2) + 'm';
+        y.innerHTML = 'Y: ' + yDis.toFixed(2) + 'm';
+    }
 }
 
 function releaseBox() {
     box.position.copy(airplane.position);
+    xPos = box.position.x;
     box.__dirtyPosition = true
     box.setAngularVelocity(new THREE.Vector3(0, 0, 0));
     box.setLinearVelocity(new THREE.Vector3(controls.velocity, 0, 0));
+    box.isReleased = true;
     drawTrajectory();
+
+    totalTime = quadraticTime(-4.9, 0, controls.height)
+    let aux = totalTime
+    time = 0;
+    xTotalDis = controls.velocity_module * parseFloat(aux.toFixed(2));
+    console.log(xTotalDis);
 
 }
 
