@@ -29,7 +29,7 @@ const ASSETS = {
         skyBoxMaterial: new THREE.MeshBasicMaterial({ side: 1 })
     },
     geometries: {
-        cubeGeometry: new THREE.BoxGeometry(3, 3, 3),
+        cubeGeometry: new THREE.BoxGeometry(2.5, 2.5, 2.5),
         skyBoxGeometry: new THREE.SphereGeometry(600, 50, 50),
     },
     objects: {
@@ -124,8 +124,8 @@ function init() {
     airplaneRange = 150;
     airplane = ASSETS.objects.airplane;
     airplane.position.set(-150, controls.height, 0);
-    airplane.rotation.y = Math.PI;
-    airplane.scale.set(0.25, 0.25, 0.25)
+    airplane.rotation.y = Math.PI * 0.5;
+    airplane.scale.set(0.15, 0.15, 0.15)
     scene.add(airplane);
 
     let cubeMaterial = new Physijs.createMaterial(ASSETS.materials.cubeMaterial, 0.8, 0.1);
@@ -187,7 +187,7 @@ function animate() {
         cameraViewProjectionMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
         frustum.setFromProjectionMatrix(cameraViewProjectionMatrix);
 
-        if (!frustum.intersectsObject(airplane.children[0].children[0])) {
+        if (!frustum.intersectsObject(airplane.children[0])) {
             if ((airplane.position.x > 0 && controls.velocity > 0) || (airplane.position.x < 0 && controls.velocity < 0)) {
                 airplane.rotation.y += controls.velocity > 0 ? Math.PI : -1 * Math.PI;
                 controls.velocity *= -1;
@@ -239,7 +239,7 @@ function drawTrajectory() {
     let path = new TrajectoryPath(
         airplane.position,
         controls.velocity,
-        airplane.rotation.y,
+        airplane.rotation.y * 2,
         0,
         9.8,
         10

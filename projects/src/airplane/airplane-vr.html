@@ -19,7 +19,7 @@
 
                 if (this.obj.position.x > 300 || this.obj.position.x < -300) {
                     this.velocity *= -1;
-                    this.obj.rotation.y = this.obj.rotation.y > 0 ? 0 : Math.PI;
+                    this.obj.rotation.y *= -1;
                 }
             }
         })
@@ -27,7 +27,7 @@
 </head>
 
 <body>
-    <a-scene id="scene" physics>
+    <a-scene id="scene" stats>
         <a-assets timeout="60000">
             <a-asset-item id="airplaneModel" src="../../assets/models/airplane.glb"></a-asset-item>
             <img id="skyBoxMap" src="../../assets/textures/cloud.jpg">
@@ -38,10 +38,10 @@
         <a-entity light="color: #fff" position="65 110 52"></a-entity>
 
         <a-sky id="skyBox" material="src: #skyBoxMap"></a-sky>
-        <a-plane id="ground" material="src: #grass; repeat: 50, 50" position="0 0 0" rotation="-90 0 0" width="400"
-            height="400">
+        <a-plane id="ground" material="src: #grass; repeat: 50, 50" position="0 0 0" rotation="-90 0 0" width="200"
+            height="200">
         </a-plane>
-        <a-entity id="airplane" gltf-model="#airplaneModel" position="0 200 -100" rotation="0 180 0"
+        <a-entity id="airplane" gltf-model="#airplaneModel" position="0 200 -100" rotation="0 90 0"
             scale="0.25 0.25 0.25" move>
         </a-entity>
 
