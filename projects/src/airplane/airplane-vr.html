@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Airplane VR</title>
+
+    <script type="text/javascript" charset="UTF-8" src="../../libs/aframe-master.js"></script>
+    <!-- <script type="text/javascript" charset="UTF-8" src="../../libs/aframe-extras.js"></script> -->
+    <script>
+        AFRAME.registerComponent('move', {
+            init: function () {
+                this.obj = this.el.object3D;
+                this.velocity = 50;
+            },
+            tick: function (time, delta) {
+                this.obj.position.x += this.velocity * (delta * 0.001);
+
+                if (this.obj.position.x > 300 || this.obj.position.x < -300) {
+                    this.velocity *= -1;
+                    this.obj.rotation.y = this.obj.rotation.y > 0 ? 0 : Math.PI;
+                }
+            }
+        })
+    </script>
+</head>
+
+<body>
+    <a-scene id="scene" physics>
+        <a-assets timeout="60000">
+            <a-asset-item id="airplaneModel" src="../../assets/models/airplane.glb"></a-asset-item>
+            <img id="skyBoxMap" src="../../assets/textures/cloud.jpg">
+            <img id="grass" src="../../assets/textures/grass.png">
+        </a-assets>
+
+        <a-entity light="type: ambient; color: #fff; intensity: 0.1"></a-entity>
+        <a-entity light="color: #fff" position="65 110 52"></a-entity>
+
+        <a-sky id="skyBox" material="src: #skyBoxMap"></a-sky>
+        <a-plane id="ground" material="src: #grass; repeat: 50, 50" position="0 0 0" rotation="-90 0 0" width="400"
+            height="400">
+        </a-plane>
+        <a-entity id="airplane" gltf-model="#airplaneModel" position="0 200 -100" rotation="0 180 0"
+            scale="0.25 0.25 0.25" move>
+        </a-entity>
+
+        <a-entity id="rig" position="-3 0 18">
+            <a-entity id="camera" camera position="0 1.5 0" look-controls>
+            </a-entity>
+        </a-entity>
+
+    </a-scene>>
+</body>
+
+</html>
