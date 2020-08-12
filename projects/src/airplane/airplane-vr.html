@@ -7,45 +7,160 @@
     <title>Airplane VR</title>
 
     <script type="text/javascript" charset="UTF-8" src="../../libs/aframe-master.js"></script>
-    <!-- <script type="text/javascript" charset="UTF-8" src="../../libs/aframe-extras.js"></script> -->
+    <script type="text/javascript" charset="UTF-8" src="../../libs/aframe-physics-system.js"></script>
     <script>
         AFRAME.registerComponent('move', {
             init: function () {
+                this.gamepad;
                 this.obj = this.el.object3D;
                 this.velocity = 50;
+                this.crate = this.el.sceneEl.querySelector('#crate');
+                this.TrajectoryPath = this.ProjectileCurve();
+                this.path;
+                this.trajectory;
+                this.material = new THREE.MeshBasicMaterial({ color: 0xff0000 })
+
+                this.el.setAttribute('velocity', { x: this.velocity, y: 0, z: 0 });
+
+                this.path = new this.TrajectoryPath(new THREE.Vector3(0, -1, 0), 0, 0, 0, 0);
+                this.trajectory = new THREE.Line(
+                    new THREE.BufferGeometry().setFromPoints(this.path.getPoints(1)),
+                    this.material
+                );
+                this.el.sceneEl.setObject3D('trajectory', this.trajectory);
+
+                window.addEventListener('keydown', (e) => {
+                    if (e.keyCode === 32) {
+                        this.dropBox();
+                    }
+                });
+
+                const self = this;
+                this.crate.addEventListener('collide', () => {
+                    self.crate.setAttribute('velocity', { x: 0, y: 0, z: 0 });
+                })
             },
             tick: function (time, delta) {
-                this.obj.position.x += this.velocity * (delta * 0.001);
-
                 if (this.obj.position.x > 300 || this.obj.position.x < -300) {
                     this.velocity *= -1;
                     this.obj.rotation.y *= -1;
+                    this.obj.position.x = this.obj.position.x > 0 ? 300 : -300;
+                    this.el.setAttribute('velocity', { x: this.velocity, y: 0, z: 0 });
                 }
+
+                this.gamepad = navigator.getGamepads()[0];
+
+                if (!this.gamepad) return;
+
+                if (this.gamepad.buttons.some(btn => btn.pressed)) {
+                    this.dropBox();
+                }
+            },
+            dropBox: function () {
+                this.crate.body.position.set(this.obj.position.x, this.obj.position.y, this.obj.position.z)
+                this.crate.body.angularVelocity.set(0, 0, 0);
+                this.crate.body.velocity.set(this.velocity, 0, 0);
+
+                this.path = new this.TrajectoryPath(
+                    this.obj.position,
+                    this.velocity,
+                    this.obj.rotation.y * 2,
+                    0,
+                    9.8,
+                    10
+                );
+                this.path = this.path.getPoints(30)
+                this.trajectory.geometry = new THREE.BufferGeometry().setFromPoints(this.path);
+                this.trajectory.geometry.needsupdate = true;
+            },
+            ProjectileCurve: function () {
+                function ProjectileCurve(p0, velocity, verticalAngle, horizontalAngle, gravity, scale) {
+                    THREE.Curve.call(this);
+
+                    if (p0 === undefined || velocity === undefined || verticalAngle === undefined || horizontalAngle === undefined) {
+                        return null;
+                    }
+
+                    let vhorizontal = velocity * Math.cos(verticalAngle);
+
+                    this.p0 = p0;
+                    this.vy = velocity * Math.sin(verticalAngle);
+                    this.vx = velocity * Math.cos(horizontalAngle);
+                    this.vz = velocity * Math.sin(horizontalAngle);
+                    this.g = (gravity === undefined) ? -9.8 : gravity;
+                    this.scale = (scale === undefined) ? 1 : scale;
+
+                    if (this.g > 0) this.g *= -1;
+                }
+                ProjectileCurve.prototype = Object.create(THREE.Curve.prototype);
+                ProjectileCurve.prototype.constructor = ProjectileCurve;
+
+                ProjectileCurve.prototype.getPoint = function (t) {
+                    t *= this.scale;
+                    let x = this.p0.x + this.vx * t;
+                    let y = this.p0.y + ((this.vy * t) + (this.g * 0.5 * (t * t)));
+                    let z = this.p0.z - this.vz * t;
+                    return new THREE.Vector3(x, y, z);
+
+                };
+
+                return ProjectileCurve
+            },
+            quadraticTime: function (a, b, c) {
+                // This uses the quadratic formula to solve for time in a linear motion with constant aceleration
+                // It returns null when the result is negative once negative time doesn't make sense
+                // ax^2 + bx + c = 0
+
+                let delta = (b * b) - 4 * a * c;
+
+                if (delta < 0) return null;
+
+                let x;
+
+                if (delta === 0) {
+                    x = -b / 2 * a;
+                    return x >= 0 ? x : null;
+                }
+
+                x = (-b - Math.sqrt(delta)) / (2 * a);
+                if (x > 0) return x;
+
+                x = (-b + Math.sqrt(delta)) / (2 * a);
+                if (x > 0) return x;
+
+                return null;
             }
-        })
+        });
     </script>
 </head>
 
 <body>
-    <a-scene id="scene" stats>
+    <a-scene id="scene" physics="friction: 0.8; restitution: 0.1" stats>
         <a-assets timeout="60000">
             <a-asset-item id="airplaneModel" src="../../assets/models/airplane.glb"></a-asset-item>
             <img id="skyBoxMap" src="../../assets/textures/cloud.jpg">
             <img id="grass" src="../../assets/textures/grass.png">
+            <img id="crateTexture" src="../../assets/textures/crate.png">
         </a-assets>
 
         <a-entity light="type: ambient; color: #fff; intensity: 0.1"></a-entity>
         <a-entity light="color: #fff" position="65 110 52"></a-entity>
 
-        <a-sky id="skyBox" material="src: #skyBoxMap"></a-sky>
-        <a-plane id="ground" material="src: #grass; repeat: 50, 50" position="0 0 0" rotation="-90 0 0" width="200"
-            height="200">
+        <a-sky id="skyBox" material="src: #skyBoxMap" radius="700"></a-sky>
+
+        <a-plane id="ground" material="src: #grass; repeat: 140, 60" position="0 0 0" rotation="-90 0 0" width="1400"
+            height="500" static-body>
         </a-plane>
-        <a-entity id="airplane" gltf-model="#airplaneModel" position="0 200 -100" rotation="0 90 0"
-            scale="0.25 0.25 0.25" move>
+
+        <a-box id="crate" src="#crateTexture" height="3" width="3" depth="3" position="-15 1.5 200"
+            dynamic-body="linearDamping: 0; angularDamping: 0.01;">
+        </a-box>
+
+        <a-entity id="airplane" gltf-model="#airplaneModel" position="0 200 -70" rotation="0 90 0"
+            scale="0.25 0.25 0.25" move body="type: dynamic; mass: 0; shape: none;">
         </a-entity>
 
-        <a-entity id="rig" position="-3 0 18">
+        <a-entity id="rig" position="-3 0 200">
             <a-entity id="camera" camera position="0 1.5 0" look-controls>
             </a-entity>
         </a-entity>
