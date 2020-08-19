@@ -39,12 +39,15 @@
                 window.addEventListener('click', () => {
                     this.obj.position.copy(this.airplane.position);
                     controls.crate_isReleased = true;
-                    controls.crate_velocity = controls.velocity * controls.orientation;
+                    controls.crate_vz = controls.vz * controls.orientation;
+                    controls.crate_vx = controls.vx * controls.orientation;
                 }, false);
 
                 window.addEventListener("deviceorientation", (e) => {
                     deviceRotation = (e.alpha * Math.PI / 180) - Math.PI * 0.5;
-                }, true);
+                    controls.vz = controls.velocity * Math.cos(deviceRotation);
+                    controls.vx = controls.velocity * Math.sin(deviceRotation)
+                }, false);
             },
         });
         AFRAME.registerComponent('move', {
@@ -52,10 +55,13 @@
                 this.obj = this.el.object3D;
                 this.crate = document.querySelector('#crate').object3D;
                 this.rotation = Math.PI;
+                this.interval;
             },
             tick: function (time, delta) {
-                this.obj.position.z += controls.velocity * delta * 0.001 * controls.orientation * Math.cos(deviceRotation);
-                this.obj.position.x += controls.velocity * delta * 0.001 * controls.orientation * Math.sin(deviceRotation);
+                this.interval = delta * 0.001 // converting delta to seconds
+
+                this.obj.position.z += controls.vz * this.interval * controls.orientation;
+                this.obj.position.x += controls.vx * this.interval * controls.orientation;
                 this.obj.rotation.y = this.rotation + deviceRotation;
 
                 if (this.obj.position.z > controls.range) {
@@ -79,10 +85,10 @@
                     this.obj.position.x = -controls.range;
                 }
 
-                if (this.crate.position.y > 0) {
-                    this.crate.position.y -= 0.98 * delta * 0.001;
-                    this.crate.position.z += controls.crate_velocity * delta * 0.001 * Math.cos(deviceRotation);
-                    this.crate.position.z += controls.crate_velocity * delta * 0.001 * Math.sin(deviceRotation);
+                if (controls.crate_isReleased && this.crate.position.y > 0) {
+                    this.crate.position.y -= 0.98 * this.interval;
+                    this.crate.position.z += controls.crate_vz * this.interval;
+                    this.crate.position.x += controls.crate_vx * this.interval;
                 }
             }
         });
@@ -91,7 +97,8 @@
 
 <body style='margin : 0px; overflow: hidden;'>
 
-    <a-scene id="scene" embedded arjs='sourceType: webcam;' renderer="logarithmicDepthBuffer: true">
+    <a-scene id="scene" vr-mode-ui="enabled: false" embedded arjs='sourceType: webcam;'
+        renderer="logarithmicDepthBuffer: true">
         <a-assets timeout="60000">
             <a-asset-item id="airplaneModel" src="../../assets/models/airplane.glb"></a-asset-item>
             <img id="crateTexture" src="../../assets/textures/crate.png">
@@ -99,8 +106,8 @@
         </a-assets>
 
         <a-marker preset='hiro' id="hiro">
-            <a-entity id="airplane" gltf-model="#airplaneModel" position="0 1 0" rotation="0 0 0" scale="0.01 0.01 0.01"
-                move>
+            <a-entity id="airplane" gltf-model="#airplaneModel" position="0 1.5 0" rotation="0 0 0"
+                scale="0.01 0.01 0.01" move>
             </a-entity>
             <a-box id="crate" src="#crateTexture" height="0.1" width="0.1" depth="0.1" position="0 0 0" visible="true"
                 aabb-collider="objects: #target" listener>
@@ -117,15 +124,25 @@
 
     <script>
         const controls = new function () {
-            this.velocity = 0.2;
+            this.height = 1.5;
+            this.velocity = 2;
+            this.vx = 0;
+            this.vz = this.velocity;
             this.range = 3;
             this.orientation = -1;
-            this.crate_velocity;
+            this.crate_vx;
+            this.crate_vz;
             this.crate_isReleased = false;
         }
 
         const gui = new dat.GUI();
-        gui.add(controls, 'velocity', 0.2, 2);
+        gui.add(controls, 'height', 1, 3).onChange(() => {
+            document.querySelector("#airplane").object3D.position.y = controls.height;
+        });
+        gui.add(controls, 'velocity', 1, 3).onChange(() => {
+            controls.vz = controls.velocity * Math.cos(deviceRotation);
+            controls.vx = controls.velocity * Math.sin(deviceRotation)
+        });
         gui.add(controls, 'range', 1, 5);
     </script>
 </body>
