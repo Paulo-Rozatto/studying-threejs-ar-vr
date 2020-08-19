@@ -6,7 +6,7 @@ let box, plane, airplane, trajectory;
 let frustum, cameraViewProjectionMatrix;
 
 Physijs.scripts.worker = '../../libs/physijs_worker.js';
-Physijs.scripts.ammo = '../libs/ammo.js';
+Physijs.scripts.ammo = 'ammo.js';
 
 const ASSETS = {
     textures: {
@@ -142,11 +142,13 @@ function init() {
         camera.projectionMatrix.copy(arToolkitContext.getProjectionMatrix()); // copy projection matrix to camera
     });
 
-    markerControls = new THREEx.ArMarkerControls(arToolkitContext, camera, {
-        type: 'pattern',
-        patternUrl: THREEx.ArToolkitContext.baseURL + 'data/patt.hiro',
-        changeMatrixMode: 'cameraTransformMatrix'  // as we control the camera, set changeMatrixMode: 'cameraTransformMatrix'
-    });
+    markerControls = [
+        new THREEx.ArMarkerControls(arToolkitContext, camera, {
+            type: 'pattern',
+            patternUrl: THREEx.ArToolkitContext.baseURL + 'data/patt.hiro',
+            changeMatrixMode: 'cameraTransformMatrix'  // as we control the camera, set changeMatrixMode: 'cameraTransformMatrix'
+        })
+    ];
 
     scene.visible = false;
 
@@ -176,7 +178,7 @@ function animate() {
     cameraViewProjectionMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
     frustum.setFromProjectionMatrix(cameraViewProjectionMatrix);
 
-    if (!frustum.intersectsObject(airplane.children[0].children[0])) {
+    if (!frustum.intersectsObject(airplane.children[0])) {
         if ((airplane.position.z > 0 && controls.velocity > 0) || (airplane.position.z < 0 && controls.velocity < 0)) {
             airplane.rotation.y += controls.velocity > 0 ? Math.PI : -Math.PI;
             controls.velocity *= -1;

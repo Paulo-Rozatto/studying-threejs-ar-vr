@@ -10,27 +10,125 @@
         html,
         body {
             margin: 0;
-            /* height: 100%; */
             overflow: hidden;
         }
     </style>
+
+    <script src="../../libs/aframe-master.js"></script>
+    <script src="../../libs/aframe-ar.js"></script>
+    <script src="../../libs/aframe-aabb-collider-component.min.js"></script>
+    <script src="../../libs/dat.gui.min.js"></script>
+
+    <script>
+        let deviceRotation = 0;
+
+        AFRAME.registerComponent('listener', {
+            init: function () {
+                this.airplane = document.querySelector('#airplane').object3D;
+                this.target = document.querySelector('#target').object3D;
+                this.obj = this.el.object3D;
+
+                this.el.addEventListener('hitstart', () => {
+                    if (controls.crate_isReleased) {
+                        this.target.scale.set(1.1, 1.1, 1.1);
+                        setTimeout(() => this.target.scale.set(1, 1, 1), 250);
+                        controls.crate_isReleased = false;
+                    }
+                }, false);
+
+                window.addEventListener('click', () => {
+                    this.obj.position.copy(this.airplane.position);
+                    controls.crate_isReleased = true;
+                    controls.crate_velocity = controls.velocity * controls.orientation;
+                }, false);
+
+                window.addEventListener("deviceorientation", (e) => {
+                    deviceRotation = (e.alpha * Math.PI / 180) - Math.PI * 0.5;
+                }, true);
+            },
+        });
+        AFRAME.registerComponent('move', {
+            init: function () {
+                this.obj = this.el.object3D;
+                this.crate = document.querySelector('#crate').object3D;
+                this.rotation = Math.PI;
+            },
+            tick: function (time, delta) {
+                this.obj.position.z += controls.velocity * delta * 0.001 * controls.orientation * Math.cos(deviceRotation);
+                this.obj.position.x += controls.velocity * delta * 0.001 * controls.orientation * Math.sin(deviceRotation);
+                this.obj.rotation.y = this.rotation + deviceRotation;
+
+                if (this.obj.position.z > controls.range) {
+                    controls.orientation *= -1;
+                    this.rotation = Math.PI;
+                    this.obj.position.z = controls.range;
+                } else if (this.obj.position.x > controls.range) {
+                    controls.orientation *= -1;
+                    this.rotation = Math.PI;
+                    this.obj.position.x = controls.range;
+                }
+
+                if (this.obj.position.z < -controls.range) {
+                    controls.orientation *= -1;
+                    this.rotation = 0;
+                    this.obj.position.z = -controls.range;
+                }
+                else if (this.obj.position.x < -controls.range) {
+                    controls.orientation *= -1;
+                    this.rotation = 0;
+                    this.obj.position.x = -controls.range;
+                }
+
+                if (this.crate.position.y > 0) {
+                    this.crate.position.y -= 0.98 * delta * 0.001;
+                    this.crate.position.z += controls.crate_velocity * delta * 0.001 * Math.cos(deviceRotation);
+                    this.crate.position.z += controls.crate_velocity * delta * 0.001 * Math.sin(deviceRotation);
+                }
+            }
+        });
+    </script>
 </head>
 
-<body>
-    <div id="stats"></div>
-    <div id="gui"></div>
+<body style='margin : 0px; overflow: hidden;'>
 
-    <script src="../../libs/three.js"></script>
-    <script src="../../libs/ar.js"></script>
-    <script>THREEx.ArToolkitContext.baseURL = "../../"</script> <!-- Define o local do contexto -->
+    <a-scene id="scene" embedded arjs='sourceType: webcam;' renderer="logarithmicDepthBuffer: true">
+        <a-assets timeout="60000">
+            <a-asset-item id="airplaneModel" src="../../assets/models/airplane.glb"></a-asset-item>
+            <img id="crateTexture" src="../../assets/textures/crate.png">
+            <img id="targetTexture" src="../../assets/textures/target.png">
+        </a-assets>
 
-    <script src="../../libs/dat.gui.min.js"></script>
-    <script src="../../libs/stats.min.js"></script>
-    <script src="../../libs/GLTFLoader.js"></script>
-    <script src="../../libs/LoadScreen.js"></script>
-    <script src="../../libs/physi.js"></script>
+        <a-marker preset='hiro' id="hiro">
+            <a-entity id="airplane" gltf-model="#airplaneModel" position="0 1 0" rotation="0 0 0" scale="0.01 0.01 0.01"
+                move>
+            </a-entity>
+            <a-box id="crate" src="#crateTexture" height="0.1" width="0.1" depth="0.1" position="0 0 0" visible="true"
+                aabb-collider="objects: #target" listener>
+            </a-box>
+        </a-marker>
 
-    <script src="airplane-ar.js"></script>
+        <a-marker preset='kanji' id="kanji">
+            <a-circle id="target" src="#targetTexture" material="transparent: true" radius="0.3" rotation="-90 0 0">
+            </a-circle>
+        </a-marker>
+
+        <a-entity id="camera" camera></a-entity>
+    </a-scene>
+
+    <script>
+        const controls = new function () {
+            this.velocity = 0.2;
+            this.range = 3;
+            this.orientation = -1;
+            this.crate_velocity;
+            this.crate_isReleased = false;
+        }
+
+        const gui = new dat.GUI();
+        gui.add(controls, 'velocity', 0.2, 2);
+        gui.add(controls, 'range', 1, 5);
+    </script>
 </body>
+
 
 </html>
