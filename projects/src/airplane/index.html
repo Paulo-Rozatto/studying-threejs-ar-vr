@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Aiplane</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../../../css/w3.css">
+    <link rel="stylesheet" href="../../../css/style.css">
+    <style>
+        body {
+            font-family: "Lato", sans-serif;
+        }
+
+        body,
+        html {
+            height: 100%;
+            color: #777;
+            line-height: 1.8;
+        }
+
+        .more-modes-container {
+            color: white;
+            text-align: center;
+            font-style: italic;
+            text-shadow: 2px 2px 1px #2a1540;
+        }
+
+        .more-modes-container a {
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar (sit on top) -->
+    <div class="w3-top">
+        <div class="w3-bar w3-border-bottom w3-border-light-grey w3-light-grey" id="myNavbar">
+            <a class="w3-bar-item w3-button w3-hover-black w3-hide-medium w3-hide-large w3-right"
+                href="javascript:void(0);" onclick="toggleFunction()" title="Toggle Navigation Menu">
+                <i class="fa fa-bars"></i>
+            </a>
+            <a href="../../../index.html#home" class="w3-bar-item w3-button">HOME</a>
+            <a href="../../../index.html#projects" class="w3-bar-item w3-button w3-hide-small"><i class="fa fa-th"></i>
+                PROJECTS</a>
+            <!-- <a href="#about" class="w3-bar-item w3-button w3-hide-small"><i class="fa fa-user"></i> ABOUT</a> -->
+            <!-- <a href="#contact" class="w3-bar-item w3-button w3-hide-small"><i class="fa fa-envelope"></i> CONTACT</a> -->
+        </div>
+
+        <!-- Navbar on small screens -->
+        <div id="navDemo" class="w3-bar-block w3-white w3-hide w3-hide-large w3-hide-medium">
+            <a href="../../../index.html#projects" class="w3-bar-item w3-button" onclick="toggleFunction()">Projects</a>
+            <!-- <a href="#about" class="w3-bar-item w3-button" onclick="toggleFunction()">ABOUT</a> -->
+            <!-- <a href="#contact" class="w3-bar-item w3-button" onclick="toggleFunction()">CONTACT</a> -->
+        </div>
+    </div>
+
+    <!-- Page content -->
+    <div class="w3-content w3-padding " style="max-width:1564px ">
+
+        <div class="w3-container w3-padding-32 " id="projects">
+            <h1 class="w3-padding-16 w3-border-bottom w3-border-light-grey">Airplane Project</h1>
+        </div>
+
+        <div class="w3-container" id="about" style="text-align:justify;">
+        </div>
+
+        <div class="w3-container w3-row w3-mobile" style="text-align:center;">
+            <!-- workaround to center iframe -->
+            <div class="w3-col m2 l2 w3-hide-small">
+                <p></p>
+            </div>
+
+            <iframe id="scene" class="w3-col l12" src="airplane.html" height="520"
+                style="border:2px solid black;"></iframe>
+
+            <script>
+                // iOS iframe auto-resize workaround
+
+                if (/(iPad|iPhone|iPod)/g.test(navigator.userAgent)) {
+
+                    var scene = document.getElementById('scene');
+
+                    scene.style.width = getComputedStyle(scene).width;
+                    scene.style.height = getComputedStyle(scene).height;
+                    scene.setAttribute('scrolling', 'no');
+
+                }
+            </script>
+
+        </div>
+
+        <!-- More modes -->
+        <div class="w3-container w3-padding-32 ">
+            <h3 class="w3-padding-16 w3-border-bottom w3-border-light-grey ">More modes</h3>
+        </div>
+        <div class="w3-row-padding more-modes-container">
+
+            <div class="w3-col l3 m6 w3-margin-bottom w3-margin-top">
+                <a href="airplane.html" target="_">
+                    <div class="w3-display-container" style="background: url('img/blur.jpg') center;">
+                        <div class="w3-padding" style="width:100%">
+                            <img src="../../assets/icons/fullscreen-icon.png" alt="fullscreen" style="width: 64px;" />
+                            <br /> Fullscreen
+                        </div>
+
+                    </div>
+                </a>
+            </div>
+
+            <div class="w3-col l3 m6 w3-margin-bottom w3-margin-top">
+                <a href="airplane-ar.html" target="_">
+                    <div class="w3-display-container" style="background: url('img/blur.jpg') center;">
+                        <div class="w3-padding" style="width:100%">
+                            <img src="../../assets/icons/ar-icon.png" alt="fullscreen" style="width: 64px;" />
+                            <br /> <i style="text-shadow: 2px 2px #2a1540;">Augmented Reality</i>
+                        </div>
+
+                    </div>
+                </a>
+            </div>
+
+            <div class="w3-col l3 m6 w3-margin-bottom w3-margin-top">
+                <a href="airplane-vr.html" target="_blank">
+                    <div class="w3-display-container" style="background: url('img/blur-vr.jpg') center;">
+                        <div class="w3-padding" style="width:100%">
+                            <img src="../../assets/icons/vr-icon.png" alt="fullscreen" style="width: 64px;" />
+                            <br /> <i style="text-shadow: 2px 2px #2a1540;">Virtual Reality</i>
+                        </div>
+
+                    </div>
+                </a>
+            </div>
+        </div>
+        <!-- End of more modes -->
+
+        <!-- End page content -->
+    </div>
+
+    <!-- Footer -->
+    <footer class="w3-center w3-black w3-padding-16 ">
+        <p>Powered by <a href="https://www.w3schools.com/w3css/default.asp " title="W3.CSS" target="_blank "
+                class="w3-hover-text-green ">w3.css</a></p>
+    </footer>
+    <script type="text/javascript" src="../../../js/script.js"></script>
+    <script type="text/javascript">
+        // prevent scroll pressing space
+        window.addEventListener('keydown', function (e) {
+            if (e.keyCode == 32) {
+                console.log('s')
+            }
+        });
+
+        // Change style of navbar on scroll
+        window.onscroll = navbarScroll
+
+        function navbarScroll() {
+            var navbar = document.getElementById("myNavbar");
+            if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) {
+                navbar.className = "w3-bar" + " w3-card" + " w3-animate-top" + " w3-light-grey";
+            } else {
+                navbar.className = navbar.className.replace(" w3-card w3-animate-top w3-white", "");
+            }
+        }
+
+        // Used to toggle the menu on small screens when clicking on the menu button
+        function toggleFunction() {
+            var x = document.getElementById("navDemo");
+            if (x.className.indexOf("w3-show") == -1) {
+                x.className += " w3-show";
+            } else {
+                x.className = x.className.replace(" w3-show", "");
+            }
+        }
+
+        // To VR -- MODAL IMAGES
+
+        var slideIndex_02 = 1;
+
+        window.addEventListener('resize', () => {
+            showDivs(slideIndex);
+            showDivs2(slideIndex_02);
+        })
+
+        showDivs2(slideIndex_02);
+
+        function plusDivs2(n) {
+            showDivs2(slideIndex_02 += n);
+        }
+
+        function showDivs2(n) {
+            const slide2 = document.getElementsByClassName("slide2");
+            const display2 = window.innerWidth < 1024 ? 'none' : "inline-block";
+
+            if (n > slide2.length) {
+                slideIndex_02 = 1;
+            }
+            if (n < 1) {
+                slideIndex_02 = slide2.length;
+            }
+            for (let i = 0; i < slide2.length; i++) {
+                slide2[i].style.display = display2;
+            }
+            slide2[slideIndex_02 - 1].style.display = "inline-block";
+        }
+
+        function openModal2(n) {
+            document.getElementById("modal-slideshow-2").style.display = "block";
+            showModal2(slideIndex_02 = n);
+        }
+
+        function closeModal2() {
+            document.getElementById("modal-slideshow-2").style.display = "none";
+        }
+
+        function plusModal2(n) {
+            showModal2(slideIndex_02 += n);
+        }
+
+        function showModal2(n) {
+            const slide2 = document.getElementsByClassName("slide-modal-2");
+
+            if (n > slide2.length) {
+                slideIndex_02 = 1;
+            }
+            if (n < 1) {
+                slideIndex_02 = slide2.length;
+            }
+            for (let i = 0; i < slide2.length; i++) {
+                slide2[i].style.display = "none";
+            }
+            slide2[slideIndex_02 - 1].style.display = "block";
+        }
+    </script>
+</body>
+
+</html>
