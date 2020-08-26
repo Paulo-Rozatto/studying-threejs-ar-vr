@@ -12,7 +12,69 @@
             margin: 0;
             overflow: hidden;
         }
+
+        #bar {
+            display: none;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            z-index: 1;
+            background-color: #fff;
+        }
+
+        #bar div {
+            display: inline-block;
+            width: 20%;
+            padding: 1%;
+            font-size: 0.8em;
+        }
+
+        #start {
+            cursor: pointer;
+            font-weight: bold;
+            border-left: 1px solid #ddd;
+            user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+        }
+
+        #chances {
+            display: none;
+            position: absolute;
+            top: 3px;
+            left: 0;
+            right: 0;
+            margin: 0 auto;
+            width: 150px;
+            font-size: 1.2em;
+            text-align: center;
+            color: #777;
+            background-color: rgba(255, 255, 255, 0.5);
+            padding: 1%;
+        }
+
+        #report {
+            display: none;
+            position: absolute;
+            top: 30%;
+            left: 0;
+            right: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #777;
+            background-color: rgba(255, 255, 255, 0.5);
+            padding-top: 5%;
+            padding-bottom: 5%;
+            cursor: pointer;
+        }
     </style>
+    <!-- <link rel="stylesheet" href="../../../css/w3.css"> -->
 
     <script src="../../libs/aframe-master.js"></script>
     <script src="../../libs/aframe-ar.js"></script>
@@ -20,6 +82,47 @@
     <script src="../../libs/dat.gui.min.js"></script>
 
     <script>
+        let height = 15;
+        let velocity = 10;
+        let distance = 0;
+        let simulate = false;
+        let chances = 3;
+        let newGame = false;
+        let correctDistance;
+
+        function start() {
+            let airplane = document.querySelector("#airplane").object3D;
+            let crate = document.querySelector("#crate").object3D;
+            let chancesLabel = document.getElementById("chances");
+
+            crate.visible = true;
+            crate.position.y = height * 0.1;
+            crate.position.z = 1.5;
+            airplane.visible = true;
+            airplane.position.z = height * 0.1;
+            simulate = true;
+
+            correctDistance = velocity * quadraticTime(-4.9, 0, height);
+
+            if (newGame) {
+                let heightLabel = document.getElementById("height");
+                let velocityLabel = document.getElementById('velocity');
+                let reportLabel = document.getElementById("report");
+
+
+                heightLabel.innerHTML = "Height: " + height + ".0m"
+                velocityLabel.innerHTML = "Velocity: " + velocity + ".0m/s"
+                reportLabel.style.display = "none";
+                chancesLabel.innerHTML = "Chances: " + chances;
+
+                newGame = false;
+            }
+            else {
+                chances--;
+                chancesLabel.innerHTML = "Chances: " + chances;
+            }
+        }
+
         AFRAME.registerComponent('simulator', {
             init: function () {
                 this.airplane = document.querySelector('#airplane').object3D;
@@ -29,73 +132,95 @@
                 this.marker1 = document.querySelector('#hiro').object3D;
                 this.marker2 = document.querySelector('#kanji').object3D;
 
-                this.velocity = 2;
+                this.distaceLabel = document.getElementById("distance");
+                this.heightLabel = document.getElementById("height");
+                this.velocityLabel = document.getElementById('velocity');
+                this.chancesLabel = document.getElementById("chances");
+                this.reportLabel = document.getElementById("report");
+
+                this.velocity;
                 this.delta;
                 this.distance;
                 this.time = 0;
+                this.correctDistance;
+
+
+                this.randomizeValues();
+                this.heightLabel.innerHTML = "Height: " + height + ".0m"
+                this.velocityLabel.innerHTML = "Velocity: " + velocity + ".0m/s"
+
+                setTimeout(() => {
+                    document.getElementById("bar").style.display = "block";
+                    document.getElementById("chances").style.display = "block";
+                }, 1000)
             },
             tick: function (tickTime, tickDelta) {
                 if (this.marker1.visible && this.marker2.visible) {
                     this.distance = this.marker1.position.distanceTo(this.marker2.position);
-                    controls.distance = this.distance * 10;
-                }
+                    distance = this.distance * 10;
 
-                if (controls.simulate) {
-                    this.airplane.visible = true;
+                    this.distaceLabel.innerHTML = "Distance: " + distance.toFixed(2) + 'm';
+                }
+                this.chancesLabel.innerHTML = `${this.crate.position.y}`;
+
+                if (simulate) {
+                    // if (this.airplane.position.z <= -1.5) {
+                    //     simulate = false;
+                    //     return;
+                    // }
+                    // console.log(correctDistance, this.crate.position.z);
 
                     this.delta = tickDelta * 0.001 // ms to s
 
                     this.airplane.position.z += this.velocity * this.delta * -1;
                     this.crate.position.z = this.airplane.position.z;
 
-                    if (this.airplane.position.z <= 0) {
-                        this.crate.position.y = 1.5 + (-0.49 * (this.time * this.time));
+                    // if (this.crate.position.z < (correctDistance * -0.1)) {
+                    //     this.crate.position.z = correctDistance * -0.1;
+                    //     // simulate = false;
+                    // }
+                    // else {
+                    //     this.crate.position.z = this.airplane.position.z;
+                    // }
+
+
+                    if (this.airplane.position.z <= 0) { // point of realse crate
                         this.time += this.delta;
+                        this.crate.position.y = height * 0.1 + (-0.49 * (this.time * this.time));
+                        // if (this.crate.position.y < 0) this.crate.position.y = 0;
 
                         if (this.crate.position.y <= 0) {
-                            controls.simulate = false;
-                            console.log(this.time);
+                            if (this.target.getWorldPosition().distanceTo(this.crate.getWorldPosition()) <= 0.15) {
+                                this.reportLabel.innerHTML = `You hit the target! The correct distance was ${correctDistance.toFixed(1)}m. <br/> Click here to play again!`
+                                this.reportLabel.style.display = "block";
+                                // chances = 3
+                                this.randomizeValues();
+                                newGame = true;
+
+                            }
+                            else if (chances === 0) {
+                                this.reportLabel.innerHTML = `Game over! The correct distance was ${correctDistance.toFixed(1)}m. <br/> Click here to play again!`
+                                this.reportLabel.style.display = "block";
+                                // chances = 3
+                                this.randomizeValues();
+                                newGame = true;
+                            }
                             this.time = 0;
+                            simulate = false;
                         };
                     }
 
                 }
-            }
+            },
+            randomizeValues: function () {
+                height = (10 + Math.floor((11) * Math.random()));
+                velocity = (10 + Math.floor((11) * Math.random()));
+
+                this.velocity = velocity * 0.1;
+                this.airplane.position.y = height * 0.1;
+            },
         });
-    </script>
-</head>
 
-<body>
-    <a-scene id="scene" vr-mode-ui="enabled: false" embedded arjs='sourceType: webcam;'
-        renderer="logarithmicDepthBuffer: true">
-        <a-assets timeout="60000">
-            <a-asset-item id="airplaneModel" src="../../assets/models/airplane.glb"></a-asset-item>
-            <img id="crateTexture" src="../../assets/textures/crate.png" />
-            <img id="targetTexture" src="../../assets/textures/target.png" />
-            <img id="arrowTexture" src="../../assets/textures/arrow.png" />
-        </a-assets>
-
-        <a-marker id="hiro" preset="hiro" name="">
-            <a-entity id="airplane" gltf-model="#airplaneModel" position="0 1.5 0" rotation="0 180 0"
-                scale="0.01 0.01 0.01" visible="false">
-            </a-entity>
-            <a-box id="crate" src="#crateTexture" height="0.1" width="0.1" depth="0.1" position="0 1.5 0"
-                visible="false" aabb-collider="objects: #target">
-            </a-box>
-            <a-plane id="arrow" src="#arrowTexture" material="transparent: true" height="0.5" width="0.5"
-                rotation="-90 0 0"></a-plane>
-        </a-marker>
-
-        <a-marker preset='kanji' id="kanji">
-            <a-circle id="target" src="#targetTexture" material="transparent: true" radius="0.3" rotation="-90 0 0">
-            </a-circle>
-        </a-marker>
-
-        <a-entity id="camera" camera></a-entity>
-        <a-entity simulator></a-entity>
-    </a-scene>
-
-    <script>
         function quadraticTime(a, b, c) {
             // This uses the quadratic formula to solve for time in a linear motion with constant aceleration
             // It returns null when the result is negative once negative time doesn't make sense
@@ -120,31 +245,50 @@
 
             return null;
         }
-        const controls = new function () {
-            this.height = 15;
-            this.velocity = 20;
-            this.distance = 0;
-            this.simulate = false;
-            this.startSimulation = function () {
-                let airplane = document.querySelector("#airplane").object3D;
-                let crate = document.querySelector("#crate").object3D;
-
-                crate.visible = true;
-                crate.position.y = 1.5;
-                airplane.visible = true;
-                airplane.position.z = 1.5;
-                this.simulate = true;
-
-                console.log(quadraticTime(-0.49, 0, 1.5))
-            }
-        }
-
-        const gui = new dat.GUI();
-        gui.add(controls, 'height').name('height (m)').listen();
-        gui.add(controls, 'velocity').name('velocity (m/s)').listen();
-        gui.add(controls, 'distance').name('distance (m)').listen();
-        gui.add(controls, 'startSimulation').name('Start simulation');
     </script>
+</head>
+
+<body>
+    <div id="bar">
+        <div id="height">Height: __._m</div>
+        <div id="velocity">Velocity: __._m/s</div>
+        <div id="distance"> Distance: __._m</div>
+        <div id="start" onclick="start()">Start Simulation</div>
+    </div>
+
+    <div id="chances">Chances: 3</div>
+
+    <div id="report" onclick="start()"></div>
+
+    <a-scene id="scene" vr-mode-ui="enabled: false" embedded arjs renderer="logarithmicDepthBuffer: true">
+        <a-assets timeout="60000">
+            <a-asset-item id="airplaneModel" src="../../assets/models/airplane.glb"></a-asset-item>
+            <img id="crateTexture" src="../../assets/textures/crate.png" />
+            <img id="targetTexture" src="../../assets/textures/target.png" />
+            <img id="arrowTexture" src="../../assets/textures/arrow.png" />
+        </a-assets>
+
+        <a-marker id="hiro" preset="hiro" name="">
+            <a-entity id="airplane" gltf-model="#airplaneModel" position="0 1.5 0" rotation="0 180 0"
+                scale="0.01 0.01 0.01" visible="false">
+            </a-entity>
+            <a-box id="crate" src="#crateTexture" height="0.05" width="0.05" depth="0.05" position="0 1.5 0"
+                visible="false" aabb-collider="objects: #target">
+            </a-box>
+            <a-plane id="arrow" src="#arrowTexture" material="transparent: true" height="0.5" width="0.5"
+                rotation="-90 0 0"></a-plane>
+        </a-marker>
+
+        <a-marker preset='kanji' id="kanji">
+            <a-circle id="target" src="#targetTexture" material="transparent: true" radius="0.07" rotation="-90 0 0">
+            </a-circle>
+        </a-marker>
+
+        <a-entity id="camera" camera></a-entity>
+        <a-entity simulator></a-entity>
+    </a-scene>
+
+
 </body>
 
 
