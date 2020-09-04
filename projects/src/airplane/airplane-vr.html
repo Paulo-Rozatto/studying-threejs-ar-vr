@@ -6,8 +6,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Airplane VR</title>
 
+    <style>
+        #info {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            width: 80%;
+            transform: translateY(-50%);
+            margin: auto;
+            padding-left: 5px;
+            background-color: rgba(255, 255, 255, 0.7);
+            font-size: 1.2em;
+            color: #444;
+            z-index: 1;
+        }
+
+        @media only screen and (min-width: 768px) {
+            #info {
+                text-align: center;
+            }
+        }
+    </style>
+
     <script type="text/javascript" charset="UTF-8" src="../../libs/aframe-master.js"></script>
     <script type="text/javascript" charset="UTF-8" src="../../libs/aframe-physics-system.js"></script>
+    <script type="text/javascript" charset="UTF-8" src="../../libs/aframe-button-controls.js"></script>
+
     <script>
         AFRAME.registerComponent('move', {
             init: function () {
@@ -18,7 +44,7 @@
                 this.TrajectoryPath = this.ProjectileCurve();
                 this.path;
                 this.trajectory;
-                this.material = new THREE.MeshBasicMaterial({ color: 0xff0000 })
+                this.material = new THREE.LineBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.5 })
 
                 this.el.setAttribute('velocity', { x: this.velocity, y: 0, z: 0 });
 
@@ -36,9 +62,17 @@
                 });
 
                 const self = this;
+                let controlsEl = document.querySelector('[button-controls]');
+                controlsEl.addEventListener('buttondown', function (evt) {
+                    self.dropBox();
+                });
+
                 this.crate.addEventListener('collide', () => {
                     self.crate.setAttribute('velocity', { x: 0, y: 0, z: 0 });
-                })
+                    // if (self.crate.object3D.visible) self.crate.components.sound.playSound();
+                });
+
+                this.el.components.sound.playSound();
             },
             tick: function (time, delta) {
                 if (this.obj.position.x > 300 || this.obj.position.x < -300) {
@@ -57,6 +91,7 @@
                 }
             },
             dropBox: function () {
+                this.crate.object3D.visible = true;
                 this.crate.body.position.set(this.obj.position.x, this.obj.position.y, this.obj.position.z)
                 this.crate.body.angularVelocity.set(0, 0, 0);
                 this.crate.body.velocity.set(this.velocity, 0, 0);
@@ -105,45 +140,42 @@
                 };
 
                 return ProjectileCurve
-            },
-            quadraticTime: function (a, b, c) {
-                // This uses the quadratic formula to solve for time in a linear motion with constant aceleration
-                // It returns null when the result is negative once negative time doesn't make sense
-                // ax^2 + bx + c = 0
-
-                let delta = (b * b) - 4 * a * c;
-
-                if (delta < 0) return null;
-
-                let x;
-
-                if (delta === 0) {
-                    x = -b / 2 * a;
-                    return x >= 0 ? x : null;
-                }
-
-                x = (-b - Math.sqrt(delta)) / (2 * a);
-                if (x > 0) return x;
-
-                x = (-b + Math.sqrt(delta)) / (2 * a);
-                if (x > 0) return x;
-
-                return null;
             }
         });
+
+        AFRAME.registerComponent('showinfo', {
+            init: function () {
+                document.getElementById('info').style.display = 'block';
+            }
+        })
     </script>
 </head>
 
 <body>
+    <div id="info">
+        <h2>Instructions: </h2>
+        <p><b>Google Cardboard:</b> press the button to release the crate</p>
+        <p><b>Joystick:</b> Press any button to release the crate</p>
+        <p><b>Keyboard:</b> Press space to release the crate</p>
+        <p><b>VR Mode:</b> Click in the VR button in the bottom right corner;</p>
+    </div>
+
     <a-scene id="scene" physics="friction: 0.8; restitution: 0.1" stats>
-        <a-assets timeout="60000">
+        <a-assets timeout="3000">
             <a-asset-item id="airplaneModel" src="../../assets/models/airplane.glb"></a-asset-item>
             <img id="skyBoxMap" src="../../assets/textures/cloud.jpg">
             <img id="grass" src="../../assets/textures/grass.png">
             <img id="crateTexture" src="../../assets/textures/crate.png">
+
+            <!-- Huggy13ear https://freesound.org/s/138957/-->
+            <audio id="airplaneSound" src="../../assets/sounds/airplane.wav"></audio>
+            <!-- <audio id="crateSound" src="../../assets/sounds/dropped-wood.wav"></audio> -->
         </a-assets>
 
-        <a-entity light="type: ambient; color: #fff; intensity: 0.1"></a-entity>
+        <a-entity showinfo button-controls></a-entity>
+
+        <a-entity light=" type: ambient; color: #fff; intensity: 0.1">
+        </a-entity>
         <a-entity light="color: #fff" position="65 110 52"></a-entity>
 
         <a-sky id="skyBox" material="src: #skyBoxMap" radius="700"></a-sky>
@@ -152,20 +184,32 @@
             height="500" static-body>
         </a-plane>
 
-        <a-box id="crate" src="#crateTexture" height="3" width="3" depth="3" position="-15 1.5 200"
+        <!-- <a-box id="crate" src="#crateTexture" height="4" width="4" depth="4" position="-3 3 190" visible="false"
+            dynamic-body="linearDamping: 0; angularDamping: 0.01;"
+            sound="src: #crateSound; poolSize: 2; refDistance: 50; volume: 3;">
+        </a-box> -->
+        <a-box id="crate" src="#crateTexture" height="4" width="4" depth="4" position="-3 3 190" visible="false"
             dynamic-body="linearDamping: 0; angularDamping: 0.01;">
         </a-box>
 
         <a-entity id="airplane" gltf-model="#airplaneModel" position="0 200 -70" rotation="0 90 0"
-            scale="0.25 0.25 0.25" move body="type: dynamic; mass: 0; shape: none;">
+            scale="0.25 0.25 0.25" body="type: dynamic; mass: 0; shape: none;"
+            sound="src: #airplaneSound; loop: true;volume: 5; refDistance: 50; rolloffFactor: 1; distanceModel: exponential"
+            move>
         </a-entity>
+        <!-- <a-entity id="airplane" gltf-model="#airplaneModel" position="0 200 -70" rotation="0 90 0"
+            scale="0.25 0.25 0.25" body="type: dynamic; mass: 0; shape: none;"
+            sound="src: #airplaneSound; on: click; autoplay: true; loop: true;volume: 5; refDistance: 50; rolloffFactor: 1; distanceModel: exponential"
+            move>
+        </a-entity> -->
+        <!-- <a-sound src="src: url(../../assets/sounds/airplane.wav)" autoplay="true" position="-3 2 200"></a-sound> -->
 
         <a-entity id="rig" position="-3 0 200">
             <a-entity id="camera" camera position="0 1.5 0" look-controls>
             </a-entity>
         </a-entity>
 
-    </a-scene>>
+    </a-scene>
 </body>
 
 </html>
