@@ -99,10 +99,12 @@
             crate.position.y = height * 0.1;
             crate.position.z = 1.5;
             airplane.visible = true;
-            airplane.position.z = height * 0.1;
+            airplane.position.y = height * 0.1;
+            airplane.position.z = 1.5;
             simulate = true;
 
             correctDistance = velocity * quadraticTime(-4.9, 0, height);
+            document.getElementById("start").innerHTML = correctDistance.toFixed(1);
 
             if (newGame) {
                 let heightLabel = document.getElementById("height");
@@ -138,11 +140,13 @@
                 this.chancesLabel = document.getElementById("chances");
                 this.reportLabel = document.getElementById("report");
 
-                this.velocity;
                 this.delta;
-                this.distance;
                 this.time = 0;
-                this.correctDistance;
+                this.isFalling = true;
+                this.limiter = 0;
+
+                correctDistance = 20 * quadraticTime(-4.9, 0, 20);
+                document.getElementById("start").innerHTML = correctDistance.toFixed(1);
 
 
                 this.randomizeValues();
@@ -155,14 +159,17 @@
                 }, 1000)
             },
             tick: function (tickTime, tickDelta) {
-                if (this.marker1.visible && this.marker2.visible) {
+
+                this.limiter += tickDelta;
+                if (this.limiter > 200 && this.marker1.visible && this.marker2.visible) {
+                    console.log(this.limiter)
                     this.distance = this.marker1.position.distanceTo(this.marker2.position);
                     distance = this.distance * 10;
 
                     this.distaceLabel.innerHTML = "Distance: " + distance.toFixed(2) + 'm';
+                    this.limiter = 0;
                 }
-                this.chancesLabel.innerHTML = `${this.crate.position.y}`;
-
+                this.chancesLabel.innerHTML = `${distance}`;
                 if (simulate) {
                     // if (this.airplane.position.z <= -1.5) {
                     //     simulate = false;
@@ -173,7 +180,13 @@
                     this.delta = tickDelta * 0.001 // ms to s
 
                     this.airplane.position.z += this.velocity * this.delta * -1;
-                    this.crate.position.z = this.airplane.position.z;
+                    if (this.airplane.position.z < -4.1) {
+                        simulate = false;
+                        this.crate.visible = false;
+                    }
+
+                    if (this.isFalling)
+                        this.crate.position.z = this.airplane.position.z;
 
                     // if (this.crate.position.z < (correctDistance * -0.1)) {
                     //     this.crate.position.z = correctDistance * -0.1;
@@ -184,16 +197,16 @@
                     // }
 
 
-                    if (this.airplane.position.z <= 0) { // point of realse crate
+                    if (this.isFalling && this.airplane.position.z <= 0) { // point of realse crate
                         this.time += this.delta;
                         this.crate.position.y = height * 0.1 + (-0.49 * (this.time * this.time));
                         // if (this.crate.position.y < 0) this.crate.position.y = 0;
 
                         if (this.crate.position.y <= 0) {
-                            if (this.target.getWorldPosition().distanceTo(this.crate.getWorldPosition()) <= 0.15) {
+                            if (Math.abs(distance - correctDistance) <= 1.5) {
                                 this.reportLabel.innerHTML = `You hit the target! The correct distance was ${correctDistance.toFixed(1)}m. <br/> Click here to play again!`
                                 this.reportLabel.style.display = "block";
-                                // chances = 3
+                                chances = 3
                                 this.randomizeValues();
                                 newGame = true;
 
@@ -201,12 +214,18 @@
                             else if (chances === 0) {
                                 this.reportLabel.innerHTML = `Game over! The correct distance was ${correctDistance.toFixed(1)}m. <br/> Click here to play again!`
                                 this.reportLabel.style.display = "block";
-                                // chances = 3
+                                chances = 3
                                 this.randomizeValues();
                                 newGame = true;
                             }
                             this.time = 0;
-                            simulate = false;
+                            // simulate = false;
+                            this.isFalling = false;
+
+                            // let self = this;
+                            // setTimeout(function () {
+                            //     self.crate.visible = false;
+                            // }, 1000)
                         };
                     }
 
@@ -280,7 +299,7 @@
         </a-marker>
 
         <a-marker preset='kanji' id="kanji">
-            <a-circle id="target" src="#targetTexture" material="transparent: true" radius="0.07" rotation="-90 0 0">
+            <a-circle id="target" src="#targetTexture" material="transparent: true" radius="0.1" rotation="-90 0 0">
             </a-circle>
         </a-marker>
 
