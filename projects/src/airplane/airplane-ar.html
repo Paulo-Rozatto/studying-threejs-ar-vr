@@ -53,7 +53,7 @@
             font-size: 1.2em;
             text-align: center;
             color: #777;
-            background-color: rgba(255, 255, 255, 0.5);
+            background-color: rgba(255, 255, 255, 0.7);
             padding: 1%;
         }
 
@@ -68,18 +68,16 @@
             font-size: 1.2em;
             font-weight: bold;
             color: #777;
-            background-color: rgba(255, 255, 255, 0.5);
+            background-color: rgba(255, 255, 255, 0.7);
             padding-top: 5%;
             padding-bottom: 5%;
             cursor: pointer;
+            z-index: 1;
         }
     </style>
-    <!-- <link rel="stylesheet" href="../../../css/w3.css"> -->
 
     <script src="../../libs/aframe-master.js"></script>
     <script src="../../libs/aframe-ar.js"></script>
-    <script src="../../libs/aframe-aabb-collider-component.min.js"></script>
-    <script src="../../libs/dat.gui.min.js"></script>
 
     <script>
         let height = 15;
@@ -95,16 +93,7 @@
             let crate = document.querySelector("#crate").object3D;
             let chancesLabel = document.getElementById("chances");
 
-            crate.visible = true;
-            crate.position.y = height * 0.1;
-            crate.position.z = 1.5;
-            airplane.visible = true;
-            airplane.position.y = height * 0.1;
-            airplane.position.z = 1.5;
-            simulate = true;
-
             correctDistance = velocity * quadraticTime(-4.9, 0, height);
-            document.getElementById("start").innerHTML = correctDistance.toFixed(1);
 
             if (newGame) {
                 let heightLabel = document.getElementById("height");
@@ -120,8 +109,16 @@
                 newGame = false;
             }
             else {
+                crate.visible = true;
+                crate.position.y = height * 0.1;
+                crate.position.z = 1.5;
+                airplane.visible = true;
+                airplane.position.y = height * 0.1;
+                airplane.position.z = 1.5;
+
                 chances--;
                 chancesLabel.innerHTML = "Chances: " + chances;
+                simulate = true;
             }
         }
 
@@ -140,14 +137,11 @@
                 this.chancesLabel = document.getElementById("chances");
                 this.reportLabel = document.getElementById("report");
 
+                this.velocity;
                 this.delta;
+                this.distance;
                 this.time = 0;
-                this.isFalling = true;
                 this.limiter = 0;
-
-                correctDistance = 20 * quadraticTime(-4.9, 0, 20);
-                document.getElementById("start").innerHTML = correctDistance.toFixed(1);
-
 
                 this.randomizeValues();
                 this.heightLabel.innerHTML = "Height: " + height + ".0m"
@@ -159,48 +153,31 @@
                 }, 1000)
             },
             tick: function (tickTime, tickDelta) {
-
                 this.limiter += tickDelta;
                 if (this.limiter > 200 && this.marker1.visible && this.marker2.visible) {
-                    console.log(this.limiter)
                     this.distance = this.marker1.position.distanceTo(this.marker2.position);
                     distance = this.distance * 10;
 
-                    this.distaceLabel.innerHTML = "Distance: " + distance.toFixed(2) + 'm';
+                    this.distaceLabel.innerHTML = "Distance: " + distance.toFixed(1) + 'm';
                     this.limiter = 0;
                 }
-                this.chancesLabel.innerHTML = `${distance}`;
-                if (simulate) {
-                    // if (this.airplane.position.z <= -1.5) {
-                    //     simulate = false;
-                    //     return;
-                    // }
-                    // console.log(correctDistance, this.crate.position.z);
 
+                if (simulate) {
                     this.delta = tickDelta * 0.001 // ms to s
 
                     this.airplane.position.z += this.velocity * this.delta * -1;
-                    if (this.airplane.position.z < -4.1) {
-                        simulate = false;
+                    if (this.airplane.position.z < -5) {
+                        this.airplane.visible = false;
                         this.crate.visible = false;
+                        this.simulate = false;
                     }
 
-                    if (this.isFalling)
+                    if (this.crate.position.y > 0)
                         this.crate.position.z = this.airplane.position.z;
 
-                    // if (this.crate.position.z < (correctDistance * -0.1)) {
-                    //     this.crate.position.z = correctDistance * -0.1;
-                    //     // simulate = false;
-                    // }
-                    // else {
-                    //     this.crate.position.z = this.airplane.position.z;
-                    // }
-
-
-                    if (this.isFalling && this.airplane.position.z <= 0) { // point of realse crate
+                    if (this.crate.position.y > 0 && this.airplane.position.z <= 0) { // point of realse crate
                         this.time += this.delta;
                         this.crate.position.y = height * 0.1 + (-0.49 * (this.time * this.time));
-                        // if (this.crate.position.y < 0) this.crate.position.y = 0;
 
                         if (this.crate.position.y <= 0) {
                             if (Math.abs(distance - correctDistance) <= 1.5) {
@@ -219,13 +196,6 @@
                                 newGame = true;
                             }
                             this.time = 0;
-                            // simulate = false;
-                            this.isFalling = false;
-
-                            // let self = this;
-                            // setTimeout(function () {
-                            //     self.crate.visible = false;
-                            // }, 1000)
                         };
                     }
 
@@ -282,8 +252,8 @@
     <a-scene id="scene" vr-mode-ui="enabled: false" embedded arjs renderer="logarithmicDepthBuffer: true">
         <a-assets timeout="60000">
             <a-asset-item id="airplaneModel" src="../../assets/models/airplane.glb"></a-asset-item>
-            <img id="crateTexture" src="../../assets/textures/crate.png" />
-            <img id="targetTexture" src="../../assets/textures/target.png" />
+            <img id="crateTexture" src="../../assets/textures/crate.png">
+            <img id="targetTexture" src="../../assets/textures/target.png">
             <img id="arrowTexture" src="../../assets/textures/arrow.png" />
         </a-assets>
 
@@ -299,7 +269,7 @@
         </a-marker>
 
         <a-marker preset='kanji' id="kanji">
-            <a-circle id="target" src="#targetTexture" material="transparent: true" radius="0.1" rotation="-90 0 0">
+            <a-circle id="target" src="#targetTexture" material="transparent: true" radius="0.15" rotation="-90 0 0">
             </a-circle>
         </a-marker>
 
