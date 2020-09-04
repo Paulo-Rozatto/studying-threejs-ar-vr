@@ -69,7 +69,7 @@
 
                 this.crate.addEventListener('collide', () => {
                     self.crate.setAttribute('velocity', { x: 0, y: 0, z: 0 });
-                    // if (self.crate.object3D.visible) self.crate.components.sound.playSound();
+                    if (self.crate.object3D.visible) self.crate.components.sound.playSound();
                 });
 
                 this.el.components.sound.playSound();
@@ -169,7 +169,7 @@
 
             <!-- Huggy13ear https://freesound.org/s/138957/-->
             <audio id="airplaneSound" src="../../assets/sounds/airplane.wav"></audio>
-            <!-- <audio id="crateSound" src="../../assets/sounds/dropped-wood.wav"></audio> -->
+            <audio id="crateSound" src="../../assets/sounds/dropped-wood.wav"></audio>
         </a-assets>
 
         <a-entity showinfo button-controls></a-entity>
@@ -184,13 +184,13 @@
             height="500" static-body>
         </a-plane>
 
-        <!-- <a-box id="crate" src="#crateTexture" height="4" width="4" depth="4" position="-3 3 190" visible="false"
-            dynamic-body="linearDamping: 0; angularDamping: 0.01;"
-            sound="src: #crateSound; poolSize: 2; refDistance: 50; volume: 3;">
-        </a-box> -->
         <a-box id="crate" src="#crateTexture" height="4" width="4" depth="4" position="-3 3 190" visible="false"
-            dynamic-body="linearDamping: 0; angularDamping: 0.01;">
+            dynamic-body="linearDamping: 0; angularDamping: 0.01;"
+            sound="src: #crateSound; poolSize: 2; refDistance: 50; volume: 6;">
         </a-box>
+        <!-- <a-box id="crate" src="#crateTexture" height="4" width="4" depth="4" position="-3 3 190" visible="false"
+            dynamic-body="linearDamping: 0; angularDamping: 0.01;">
+        </a-box> -->
 
         <a-entity id="airplane" gltf-model="#airplaneModel" position="0 200 -70" rotation="0 90 0"
             scale="0.25 0.25 0.25" body="type: dynamic; mass: 0; shape: none;"
