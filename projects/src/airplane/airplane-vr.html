@@ -37,16 +37,22 @@
     <script>
         AFRAME.registerComponent('move', {
             init: function () {
-                this.gamepad;
                 this.obj = this.el.object3D;
                 this.velocity = 50;
+                this.vx = this.velocity;
+                this.vz = 0;
+                this.radiusSquared = 160000; // sqrt(90,000) = 300
+                this.distanceSquared;
+
+                this.el.setAttribute('velocity', { x: this.vx, y: 0, z: this.vz });
+
                 this.crate = this.el.sceneEl.querySelector('#crate');
+
                 this.TrajectoryPath = this.ProjectileCurve();
                 this.path;
                 this.trajectory;
                 this.material = new THREE.LineBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.5 })
 
-                this.el.setAttribute('velocity', { x: this.velocity, y: 0, z: 0 });
 
                 this.path = new this.TrajectoryPath(new THREE.Vector3(0, -1, 0), 0, 0, 0, 0);
                 this.trajectory = new THREE.Line(
@@ -54,12 +60,6 @@
                     this.material
                 );
                 this.el.sceneEl.setObject3D('trajectory', this.trajectory);
-
-                window.addEventListener('keydown', (e) => {
-                    if (e.keyCode === 32) {
-                        this.dropBox();
-                    }
-                });
 
                 const self = this;
                 let controlsEl = document.querySelector('[button-controls]');
@@ -71,36 +71,41 @@
                     self.crate.setAttribute('velocity', { x: 0, y: 0, z: 0 });
                     if (self.crate.object3D.visible) self.crate.components.sound.playSound();
                 });
-
-                this.el.components.sound.playSound();
             },
             tick: function (time, delta) {
-                if (this.obj.position.x > 300 || this.obj.position.x < -300) {
-                    this.velocity *= -1;
-                    this.obj.rotation.y *= -1;
-                    this.obj.position.x = this.obj.position.x > 0 ? 300 : -300;
-                    this.el.setAttribute('velocity', { x: this.velocity, y: 0, z: 0 });
+                this.distanceSquared = (this.obj.position.x * this.obj.position.x) + (this.obj.position.z * this.obj.position.z);
+
+                if (this.distanceSquared > this.radiusSquared) {
+                    let x, z, theta;
+
+                    // x^2 + z^2 = r^2
+                    x = Math.floor(Math.random() * this.radiusSquared);
+                    z = this.radiusSquared - x;
+
+                    this.obj.position.x = Math.sqrt(x) * (Math.random() > 0.5 ? 1 : -1);
+                    this.obj.position.z = Math.sqrt(z) * (Math.random() > 0.5 ? 1 : -1);
+
+                    theta = Math.atan(this.obj.position.z / this.obj.position.x);
+                    this.obj.rotation.y = (Math.PI / 2) - theta;
+
+                    this.vx = this.velocity * Math.cos(theta);
+                    this.vz = this.velocity * Math.sin(theta);
+
+                    this.el.setAttribute('velocity', { x: this.vx, y: 0, z: this.vz });
                 }
 
-                this.gamepad = navigator.getGamepads()[0];
-
-                if (!this.gamepad) return;
-
-                if (this.gamepad.buttons.some(btn => btn.pressed)) {
-                    this.dropBox();
-                }
             },
             dropBox: function () {
                 this.crate.object3D.visible = true;
                 this.crate.body.position.set(this.obj.position.x, this.obj.position.y, this.obj.position.z)
                 this.crate.body.angularVelocity.set(0, 0, 0);
-                this.crate.body.velocity.set(this.velocity, 0, 0);
+                this.crate.body.velocity.set(this.vx, 0, this.vz);
 
                 this.path = new this.TrajectoryPath(
                     this.obj.position,
                     this.velocity,
-                    this.obj.rotation.y * 2,
                     0,
+                    this.obj.rotation.y - (Math.PI / 2),
                     9.8,
                     10
                 );
@@ -156,8 +161,8 @@
         <h2>Instructions: </h2>
         <p><b>Google Cardboard:</b> press the button to release the crate</p>
         <p><b>Joystick:</b> Press any button to release the crate</p>
-        <p><b>Keyboard:</b> Press space to release the crate</p>
-        <p><b>VR Mode:</b> Click in the VR button in the bottom right corner;</p>
+        <p><b>Mouse:</b> Click in the screen to release the crate</p>
+        <p><b>VR Mode:</b> Press the VR button in the bottom right corner;</p>
     </div>
 
     <a-scene id="scene" physics="friction: 0.8; restitution: 0.1" stats>
@@ -188,23 +193,14 @@
             dynamic-body="linearDamping: 0; angularDamping: 0.01;"
             sound="src: #crateSound; poolSize: 2; refDistance: 50; volume: 6;">
         </a-box>
-        <!-- <a-box id="crate" src="#crateTexture" height="4" width="4" depth="4" position="-3 3 190" visible="false"
-            dynamic-body="linearDamping: 0; angularDamping: 0.01;">
-        </a-box> -->
 
-        <a-entity id="airplane" gltf-model="#airplaneModel" position="0 200 -70" rotation="0 90 0"
-            scale="0.25 0.25 0.25" body="type: dynamic; mass: 0; shape: none;"
-            sound="src: #airplaneSound; loop: true;volume: 5; refDistance: 50; rolloffFactor: 1; distanceModel: exponential"
-            move>
-        </a-entity>
-        <!-- <a-entity id="airplane" gltf-model="#airplaneModel" position="0 200 -70" rotation="0 90 0"
-            scale="0.25 0.25 0.25" body="type: dynamic; mass: 0; shape: none;"
+        <a-entity id="airplane" gltf-model="#airplaneModel" position="0 200 0" rotation="0 90 0" scale="0.25 0.25 0.25"
+            body="type: dynamic; mass: 0; shape: none;"
             sound="src: #airplaneSound; on: click; autoplay: true; loop: true;volume: 5; refDistance: 50; rolloffFactor: 1; distanceModel: exponential"
             move>
-        </a-entity> -->
-        <!-- <a-sound src="src: url(../../assets/sounds/airplane.wav)" autoplay="true" position="-3 2 200"></a-sound> -->
+        </a-entity>
 
-        <a-entity id="rig" position="-3 0 200">
+        <a-entity id="rig" position="0 0 0">
             <a-entity id="camera" camera position="0 1.5 0" look-controls>
             </a-entity>
         </a-entity>
