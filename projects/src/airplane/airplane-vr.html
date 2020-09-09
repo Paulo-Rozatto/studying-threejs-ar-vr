@@ -203,7 +203,7 @@
 
         <a-box id="crate" src="#crateTexture" height="4" width="4" depth="4" position="-3 3 190" visible="false"
             dynamic-body="linearDamping: 0; angularDamping: 0.01;"
-            sound="src: #crateSound; poolSize: 2; refDistance: 50; volume: 6;">
+            sound="src: #crateSound; on: click; poolSize: 2; refDistance: 50; volume: 8; refDistance: 50; rolloffFactor: 1; distanceModel: exponential">
         </a-box>
 
         <a-entity id="airplane" gltf-model="#airplaneModel" scale="0.25 0.25 0.25"
