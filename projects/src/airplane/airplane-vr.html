@@ -41,9 +41,10 @@
                 this.velocity = 50;
                 this.vx = this.velocity;
                 this.vz = 0;
-                this.radiusSquared = 160000; // sqrt(90,000) = 300
+                this.radiusSquared = 250000; // sqrt(250,000) = 500
                 this.distanceSquared;
 
+                this.randomizePosition();
                 this.el.setAttribute('velocity', { x: this.vx, y: 0, z: this.vz });
 
                 this.crate = this.el.sceneEl.querySelector('#crate');
@@ -76,22 +77,16 @@
                 this.distanceSquared = (this.obj.position.x * this.obj.position.x) + (this.obj.position.z * this.obj.position.z);
 
                 if (this.distanceSquared > this.radiusSquared) {
-                    let x, z, theta;
+                    this.obj.visible = false;
+                    this.el.setAttribute('velocity', { x: 0, y: 0, z: 0 });
 
-                    // x^2 + z^2 = r^2
-                    x = Math.floor(Math.random() * this.radiusSquared);
-                    z = this.radiusSquared - x;
+                    this.randomizePosition();
 
-                    this.obj.position.x = Math.sqrt(x) * (Math.random() > 0.5 ? 1 : -1);
-                    this.obj.position.z = Math.sqrt(z) * (Math.random() > 0.5 ? 1 : -1);
-
-                    theta = Math.atan(this.obj.position.z / this.obj.position.x);
-                    this.obj.rotation.y = (Math.PI / 2) - theta;
-
-                    this.vx = this.velocity * Math.cos(theta);
-                    this.vz = this.velocity * Math.sin(theta);
-
-                    this.el.setAttribute('velocity', { x: this.vx, y: 0, z: this.vz });
+                    const self = this;
+                    setTimeout(() => {
+                        self.obj.visible = true;
+                        self.el.setAttribute('velocity', { x: this.vx, y: 0, z: this.vz });
+                    }, 100);
                 }
 
             },
@@ -112,6 +107,23 @@
                 this.path = this.path.getPoints(30)
                 this.trajectory.geometry = new THREE.BufferGeometry().setFromPoints(this.path);
                 this.trajectory.geometry.needsupdate = true;
+            },
+            randomizePosition: function () {
+                let x, z, theta;
+
+                // x^2 + z^2 = r^2
+                x = Math.floor(Math.random() * this.radiusSquared);
+                z = this.radiusSquared - x;
+
+                this.obj.position.x = Math.sqrt(x) * (Math.random() > 0.5 ? 1 : -1);
+                this.obj.position.z = Math.sqrt(z) * (Math.random() > 0.5 ? 1 : -1);
+                this.obj.position.y = Math.random() * 200 + 50;// random values in the interval [50, 250)
+
+                theta = Math.atan(this.obj.position.z / this.obj.position.x);
+                this.obj.rotation.y = (Math.PI / 2) - theta;
+
+                this.vx = this.velocity * Math.cos(theta);
+                this.vz = this.velocity * Math.sin(theta);
             },
             ProjectileCurve: function () {
                 function ProjectileCurve(p0, velocity, verticalAngle, horizontalAngle, gravity, scale) {
@@ -185,8 +197,8 @@
 
         <a-sky id="skyBox" material="src: #skyBoxMap" radius="700"></a-sky>
 
-        <a-plane id="ground" material="src: #grass; repeat: 140, 60" position="0 0 0" rotation="-90 0 0" width="1400"
-            height="500" static-body>
+        <a-plane id="ground" material="src: #grass; repeat: 140, 140" position="0 0 0" rotation="-90 0 0" width="1400"
+            height="1400" static-body>
         </a-plane>
 
         <a-box id="crate" src="#crateTexture" height="4" width="4" depth="4" position="-3 3 190" visible="false"
@@ -194,14 +206,14 @@
             sound="src: #crateSound; poolSize: 2; refDistance: 50; volume: 6;">
         </a-box>
 
-        <a-entity id="airplane" gltf-model="#airplaneModel" position="0 200 0" rotation="0 90 0" scale="0.25 0.25 0.25"
+        <a-entity id="airplane" gltf-model="#airplaneModel" scale="0.25 0.25 0.25"
             body="type: dynamic; mass: 0; shape: none;"
-            sound="src: #airplaneSound; on: click; autoplay: true; loop: true;volume: 5; refDistance: 50; rolloffFactor: 1; distanceModel: exponential"
+            sound="src: #airplaneSound; on: click; autoplay: true; loop: true;volume: 7; refDistance: 50; rolloffFactor: 1.2; distanceModel: exponential"
             move>
         </a-entity>
 
         <a-entity id="rig" position="0 0 0">
-            <a-entity id="camera" camera position="0 1.5 0" look-controls>
+            <a-entity id="camera" camera position="0 1.6 0" look-controls>
             </a-entity>
         </a-entity>
 
