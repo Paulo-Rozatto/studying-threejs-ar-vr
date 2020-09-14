@@ -70,7 +70,8 @@
 
                 this.crate.addEventListener('collide', () => {
                     self.crate.setAttribute('velocity', { x: 0, y: 0, z: 0 });
-                    if (self.crate.object3D.visible) self.crate.components.sound.playSound();
+                    // console.log(self.crate.components.sound.isPlaying);
+                    if (self.crate.object3D.visible && !self.crate.components.sound.pool.children[0].isPlaying) self.crate.components.sound.playSound();
                 });
             },
             tick: function (time, delta) {
@@ -162,7 +163,20 @@
 
         AFRAME.registerComponent('showinfo', {
             init: function () {
-                document.getElementById('info').style.display = 'block';
+                let airplane = this.el.sceneEl.querySelector('#airplane');
+
+                document.querySelector('a-scene').addEventListener('enter-vr', () => {
+                    document.getElementById('info').style.display = 'none';
+                });
+
+                document.querySelector('a-scene').addEventListener('exit-vr', () => {
+                    document.getElementById('info').style.display = 'block';
+                });
+
+                document.querySelector('a-scene').addEventListener('loaded', () => {
+                    document.getElementById('info').style.display = 'block';
+                    airplane.components.sound.playSound();
+                });
             }
         })
     </script>
@@ -203,12 +217,12 @@
 
         <a-box id="crate" src="#crateTexture" height="4" width="4" depth="4" position="-3 3 190" visible="false"
             dynamic-body="linearDamping: 0; angularDamping: 0.01;"
-            sound="src: #crateSound; on: click; poolSize: 2; refDistance: 50; volume: 8; refDistance: 50; rolloffFactor: 1; distanceModel: exponential">
+            sound="src: #crateSound; poolSize: 1; refDistance: 50; volume: 20; refDistance: 50; rolloffFactor: 1; distanceModel: exponential">
         </a-box>
 
         <a-entity id="airplane" gltf-model="#airplaneModel" scale="0.25 0.25 0.25"
             body="type: dynamic; mass: 0; shape: none;"
-            sound="src: #airplaneSound; on: click; autoplay: true; loop: true;volume: 7; refDistance: 50; rolloffFactor: 1.2; distanceModel: exponential"
+            sound="src: #airplaneSound; loop: true;volume: 7; refDistance: 50; rolloffFactor: 1.2; distanceModel: exponential"
             move>
         </a-entity>
 
