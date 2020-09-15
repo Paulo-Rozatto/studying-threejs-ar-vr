@@ -38,6 +38,8 @@
     <script>
         AFRAME.registerComponent('move', {
             init: function () {
+                const self = this;
+
                 this.obj = this.el.object3D;
                 this.velocity = 50;
                 this.vx = this.velocity;
@@ -50,7 +52,7 @@
                 this.sound = new Howl({
                     src: ['../../assets/sounds/airplane.wav'],
                     volume: 40,
-                    loop: true
+                    loop: true,
                 });
 
                 Howler.pos(0, 1.6, 0);
@@ -74,7 +76,6 @@
                 );
                 this.el.sceneEl.setObject3D('trajectory', this.trajectory);
 
-                const self = this;
                 let controlsEl = document.querySelector('[button-controls]');
                 controlsEl.addEventListener('buttondown', function (evt) {
                     self.dropBox();
@@ -183,6 +184,30 @@
             }
         });
 
+        AFRAME.registerComponent('hitground', {
+            init: function () {
+                const self = this;
+
+                this.obj = this.el.object3D;
+                this.canPlay = 0;
+                this.sound = new Howl({
+                    src: ['../../assets/sounds/dropped-wood.wav'],
+                    volume: 40,
+                    onplay: function () { self.canPlay++ },
+                    onend: function () { self.canPlay-- },
+                });
+
+                this.el.addEventListener('collide', () => {
+                    self.el.setAttribute('velocity', { x: 0, y: 0, z: 0 });
+
+                    if (self.el.object3D.visible && self.canPlay < 3) {
+                        self.sound.pos(self.obj.position.x, self.obj.position.y, self.obj.position.z);
+                        self.sound.play();
+                    }
+                });
+            }
+        });
+
         AFRAME.registerComponent('showinfo', {
             init: function () {
                 document.querySelector('a-scene').addEventListener('enter-vr', () => {
@@ -235,7 +260,7 @@
         </a-plane>
 
         <a-box id="crate" src="#crateTexture" height="4" width="4" depth="4" position="-3 3 190" visible="false"
-            dynamic-body="linearDamping: 0; angularDamping: 0.01;">
+            dynamic-body="linearDamping: 0; angularDamping: 0.01;" hitground>
         </a-box>
 
         <a-entity id="airplane" gltf-model="#airplaneModel" scale="0.25 0.25 0.25"
