@@ -33,6 +33,7 @@
     <script type="text/javascript" charset="UTF-8" src="../../libs/aframe-master.js"></script>
     <script type="text/javascript" charset="UTF-8" src="../../libs/aframe-physics-system.js"></script>
     <script type="text/javascript" charset="UTF-8" src="../../libs/aframe-button-controls.js"></script>
+    <script type="text/javascript" charset="UTF-8" src="../../libs/howler.js"></script>
 
     <script>
         AFRAME.registerComponent('move', {
@@ -43,6 +44,25 @@
                 this.vz = 0;
                 this.radiusSquared = 250000; // sqrt(250,000) = 500
                 this.distanceSquared;
+
+                this.camera = document.querySelector('#camera').object3D;
+                this.directionHelper = new THREE.Vector3();
+
+                this.sound = new Howl({
+                    src: ['../../assets/sounds/airplane.wav'],
+                    volume: 30,
+                    loop: true
+                });
+
+                // console.log(Howler.orientation());
+                // console.log(this.camera.rotation)
+                // console.log(this.camera.getWorldDirection())
+                Howler.pos(0, 1.6, 0);
+                // this.sound.pannerAttr().distanceModel = 'inverse';
+                // this.sound.pannerAttr().refDistance = 1;
+                // this.sound.pannerAttr().rolloffFactor = 1;
+                // this.sound.orientation(0, 1.6, 0);
+                this.sound.play();
 
                 this.randomizePosition();
                 this.el.setAttribute('velocity', { x: this.vx, y: 0, z: this.vz });
@@ -70,12 +90,27 @@
 
                 this.crate.addEventListener('collide', () => {
                     self.crate.setAttribute('velocity', { x: 0, y: 0, z: 0 });
-                    // console.log(self.crate.components.sound.isPlaying);
-                    if (self.crate.object3D.visible && !self.crate.components.sound.pool.children[0].isPlaying) self.crate.components.sound.playSound();
+                    // if (self.crate.object3D.visible) self.crate.components.sound.playSound();
                 });
             },
             tick: function (time, delta) {
                 this.distanceSquared = (this.obj.position.x * this.obj.position.x) + (this.obj.position.z * this.obj.position.z);
+
+                this.sound.pos(
+                    this.obj.position.x,
+                    this.obj.position.y,
+                    this.obj.position.z,
+                );
+
+                this.camera.getWorldDirection(this.directionHelper);
+                Howler.orientation(
+                    Math.cos(this.camera.rotation.y),
+                    0,
+                    Math.sin(this.camera.rotation.y),
+                    0,
+                    1,
+                    0
+                )
 
                 if (this.distanceSquared > this.radiusSquared) {
                     this.obj.visible = false;
@@ -163,7 +198,7 @@
 
         AFRAME.registerComponent('showinfo', {
             init: function () {
-                let airplane = this.el.sceneEl.querySelector('#airplane');
+                // let airplane = this.el.sceneEl.querySelector('#airplane');
 
                 document.querySelector('a-scene').addEventListener('enter-vr', () => {
                     document.getElementById('info').style.display = 'none';
@@ -175,10 +210,20 @@
 
                 document.querySelector('a-scene').addEventListener('loaded', () => {
                     document.getElementById('info').style.display = 'block';
-                    airplane.components.sound.playSound();
+                    // airplane.components.sound.playSound();
                 });
             }
-        })
+        });
+
+        AFRAME.registerComponent('howlersound', {
+            init: function () {
+                this.sound = new Howl({
+                    src: ['../../assets/sounds/dropped-wood.wav'],
+                    loop: true
+                });
+
+            }
+        });
     </script>
 </head>
 
@@ -199,11 +244,11 @@
             <img id="crateTexture" src="../../assets/textures/crate.png">
 
             <!-- Huggy13ear https://freesound.org/s/138957/-->
-            <audio id="airplaneSound" src="../../assets/sounds/airplane.wav"></audio>
-            <audio id="crateSound" src="../../assets/sounds/dropped-wood.wav"></audio>
+            <!-- <audio id="airplaneSound" src="../../assets/sounds/airplane.wav"></audio>
+            <audio id="crateSound" src="../../assets/sounds/dropped-wood.wav"></audio> -->
         </a-assets>
 
-        <a-entity showinfo button-controls></a-entity>
+        <a-entity showinfo button-controls howlersound></a-entity>
 
         <a-entity light=" type: ambient; color: #fff; intensity: 0.1">
         </a-entity>
@@ -215,19 +260,26 @@
             height="1400" static-body>
         </a-plane>
 
-        <a-box id="crate" src="#crateTexture" height="4" width="4" depth="4" position="-3 3 190" visible="false"
+        <!-- <a-box id="crate" src="#crateTexture" height="4" width="4" depth="4" position="-3 3 190" visible="false"
             dynamic-body="linearDamping: 0; angularDamping: 0.01;"
             sound="src: #crateSound; poolSize: 1; refDistance: 50; volume: 20; refDistance: 50; rolloffFactor: 1; distanceModel: exponential">
+        </a-box> -->
+        <a-box id="crate" src="#crateTexture" height="4" width="4" depth="4" position="-3 3 190" visible="false"
+            dynamic-body="linearDamping: 0; angularDamping: 0.01;">
         </a-box>
 
         <a-entity id="airplane" gltf-model="#airplaneModel" scale="0.25 0.25 0.25"
+            body="type: dynamic; mass: 0; shape: none;" move>
+        </a-entity>
+
+        <!-- <a-entity id="airplane" gltf-model="#airplaneModel" scale="0.25 0.25 0.25"
             body="type: dynamic; mass: 0; shape: none;"
             sound="src: #airplaneSound; loop: true;volume: 7; refDistance: 50; rolloffFactor: 1.2; distanceModel: exponential"
             move>
-        </a-entity>
+        </a-entity> -->
 
         <a-entity id="rig" position="0 0 0">
-            <a-entity id="camera" camera position="0 1.6 0" look-controls>
+            <a-entity id="camera" camera position="0 1.6 0" look-controls="pointerLockEnabled: true">
             </a-entity>
         </a-entity>
 
