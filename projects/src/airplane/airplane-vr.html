@@ -36,63 +36,95 @@
     <script type="text/javascript" charset="UTF-8" src="../../libs/howler.js"></script>
 
     <script>
-        AFRAME.registerComponent('move', {
+        AFRAME.registerComponent('appcode', {
             init: function () {
                 const self = this;
 
-                this.obj = this.el.object3D;
+                this.isPaused = true;
+
+                this.airplane = document.querySelector('#airplane').object3D;
+                this.crate = document.querySelector('#crate').object3D;
+                this.camera = document.querySelector('#camera').object3D;
+
                 this.velocity = 50;
-                this.vx = this.velocity;
+                this.vx = 0;
                 this.vz = 0;
                 this.radiusSquared = 250000; // sqrt(250,000) = 500
                 this.distanceSquared;
 
-                this.camera = document.querySelector('#camera').object3D;
+                this.randomizeAirplanePosition();
 
-                this.sound = new Howl({
-                    src: ['../../assets/sounds/airplane.wav'],
+                this.airplaneSound = new Howl({
+                    src: ['../../assets/sounds/airplane.wav'], // Huggy13ear https://freesound.org/s/138957/
                     volume: 40,
                     loop: true,
                 });
-
+                this.soundLimiter = 0;
+                this.crateSound = new Howl({
+                    src: ['../../assets/sounds/dropped-wood.wav'], // Jagadamba https://freesound.org/s/258051/
+                    volume: 40,
+                    onplay: function () { self.soundLimiter++ },
+                    onend: function () { self.soundLimiter-- },
+                });
                 Howler.pos(0, 1.6, 0);
-                this.sound.play();
 
-                this.randomizePosition();
-                this.el.setAttribute('velocity', { x: this.vx, y: 0, z: this.vz });
+                // ----- Setting trajectory object ----- //
 
-                this.crate = this.el.sceneEl.querySelector('#crate');
+                this.Curve = this.ProjectileCurve(); // Personalized curve class
+                this.path = new this.Curve(new THREE.Vector3(0, -1, 0), 0, 0, 0, 0); // instantiate Curve in an object that can be used to create a geomety 
+                this.material = new THREE.LineBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.5 });
 
-                this.TrajectoryPath = this.ProjectileCurve();
-                this.path;
-                this.trajectory;
-                this.material = new THREE.LineBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.5 })
-
-
-                this.path = new this.TrajectoryPath(new THREE.Vector3(0, -1, 0), 0, 0, 0, 0);
                 this.trajectory = new THREE.Line(
                     new THREE.BufferGeometry().setFromPoints(this.path.getPoints(1)),
                     this.material
                 );
                 this.el.sceneEl.setObject3D('trajectory', this.trajectory);
 
-                let controlsEl = document.querySelector('[button-controls]');
-                controlsEl.addEventListener('buttondown', function (evt) {
-                    self.dropBox();
+                // ----- Event listeners ----- //
+
+                this.crate.el.addEventListener('collide', () => {
+                    self.crate.el.setAttribute('velocity', { x: 0, y: 0, z: 0 });
+
+                    self.crateSound.pos(self.crate.position.z, self.crate.position.y, self.crate.position.x);
+                    if (!self.isPaused && self.soundLimiter < 3)
+                        self.crateSound.play();
+
+                    if (this.trajectory.visible)
+                        this.trajectory.visible = false;
                 });
 
-                this.crate.addEventListener('collide', () => {
-                    self.crate.setAttribute('velocity', { x: 0, y: 0, z: 0 });
-                    // if (self.crate.object3D.visible) self.crate.components.sound.playSound();
+                this.el.sceneEl.addEventListener('enter-vr', () => {
+                    document.getElementById('info').style.display = 'none';
+                    self.isPaused = false;
+                    self.airplaneSound.play();
+                    self.airplane.el.setAttribute('velocity', { x: this.vx, y: 0, z: this.vz })
+                });
+
+                this.el.sceneEl.addEventListener('exit-vr', () => {
+                    document.getElementById('info').style.display = 'block';
+                    self.isPaused = true;
+                    self.airplaneSound.pause();
+                    self.airplane.el.setAttribute('velocity', { x: 0, y: 0, z: 0 });
+                });
+
+                this.el.sceneEl.addEventListener('loaded', () => {
+                    document.getElementById('info').style.display = 'block';
+                });
+
+                document.querySelector('[button-controls]').addEventListener('buttondown', () => { // Listen click, touch, and joystick button pressed events
+                    if (!this.isPaused) self.dropBox();
                 });
             },
-            tick: function (time, delta) {
-                this.distanceSquared = (this.obj.position.x * this.obj.position.x) + (this.obj.position.z * this.obj.position.z);
+            tick: function () {
+                if (this.isPaused) return;
 
-                this.sound.pos(
-                    this.obj.position.x,
-                    this.obj.position.y,
-                    this.obj.position.z,
+                this.distanceSquared = (this.airplane.position.x * this.airplane.position.x) + (this.airplane.position.z * this.airplane.position.z);
+
+                this.airplaneSound.pos(
+                    this.airplane.position.z,
+                    this.airplane.position.y,
+                    this.airplane.position.x,
+
                 );
 
                 Howler.orientation(
@@ -101,53 +133,50 @@
                 );
 
                 if (this.distanceSquared > this.radiusSquared) {
-                    this.obj.visible = false;
-                    this.el.setAttribute('velocity', { x: 0, y: 0, z: 0 });
+                    this.airplane.visible = false;
+                    this.airplane.el.setAttribute('velocity', { x: 0, y: 0, z: 0 });
 
-                    this.randomizePosition();
+                    this.randomizeAirplanePosition();
 
-                    const self = this;
-                    setTimeout(() => {
-                        self.obj.visible = true;
-                        self.el.setAttribute('velocity', { x: this.vx, y: 0, z: this.vz });
-                    }, 100);
+                    this.airplane.visible = true;
+                    this.airplane.el.setAttribute('velocity', { x: this.vx, y: 0, z: this.vz });
                 }
-
             },
-            dropBox: function () {
-                this.crate.object3D.visible = true;
-                this.crate.body.position.set(this.obj.position.x, this.obj.position.y, this.obj.position.z)
-                this.crate.body.angularVelocity.set(0, 0, 0);
-                this.crate.body.velocity.set(this.vx, 0, this.vz);
-
-                this.path = new this.TrajectoryPath(
-                    this.obj.position,
-                    this.velocity,
-                    0,
-                    this.obj.rotation.y - (Math.PI / 2),
-                    9.8,
-                    10
-                );
-                this.path = this.path.getPoints(30)
-                this.trajectory.geometry = new THREE.BufferGeometry().setFromPoints(this.path);
-                this.trajectory.geometry.needsupdate = true;
-            },
-            randomizePosition: function () {
+            randomizeAirplanePosition: function () {
                 let x, z, theta;
 
                 // x^2 + z^2 = r^2
                 x = Math.floor(Math.random() * this.radiusSquared);
                 z = this.radiusSquared - x;
 
-                this.obj.position.x = Math.sqrt(x) * (Math.random() > 0.5 ? 1 : -1);
-                this.obj.position.z = Math.sqrt(z) * (Math.random() > 0.5 ? 1 : -1);
-                this.obj.position.y = Math.random() * 200 + 50;// random values in the interval [50, 250)
+                this.airplane.position.x = Math.sqrt(x) * (Math.random() > 0.5 ? 1 : -1);
+                this.airplane.position.z = Math.sqrt(z) * (Math.random() > 0.5 ? 1 : -1);
+                this.airplane.position.y = Math.random() * 200 + 50;// random values in the interval [50, 250)
 
-                theta = Math.atan(this.obj.position.z / this.obj.position.x);
-                this.obj.rotation.y = (Math.PI / 2) - theta;
+                theta = Math.atan(this.airplane.position.z / this.airplane.position.x);
 
+                this.airplane.rotation.y = (Math.PI / 2) - theta;
                 this.vx = this.velocity * Math.cos(theta);
                 this.vz = this.velocity * Math.sin(theta);
+            },
+            dropBox: function () {
+                this.crate.visible = true;
+                this.crate.el.body.position.set(this.airplane.position.x, this.airplane.position.y, this.airplane.position.z)
+                this.crate.el.body.angularVelocity.set(0, 0, 0);
+                this.crate.el.body.velocity.set(this.vx, 0, this.vz);
+
+                this.path = new this.Curve(
+                    this.airplane.position,
+                    this.velocity,
+                    0,
+                    this.airplane.rotation.y - (Math.PI / 2),
+                    9.8,
+                    10
+                );
+                this.path = this.path.getPoints(30)
+                this.trajectory.geometry = new THREE.BufferGeometry().setFromPoints(this.path);
+                this.trajectory.geometry.needsupdate = true;
+                this.trajectory.visible = true;
             },
             ProjectileCurve: function () {
                 function ProjectileCurve(p0, velocity, verticalAngle, horizontalAngle, gravity, scale) {
@@ -182,46 +211,7 @@
 
                 return ProjectileCurve
             }
-        });
 
-        AFRAME.registerComponent('hitground', {
-            init: function () {
-                const self = this;
-
-                this.obj = this.el.object3D;
-                this.canPlay = 0;
-                this.sound = new Howl({
-                    src: ['../../assets/sounds/dropped-wood.wav'],
-                    volume: 40,
-                    onplay: function () { self.canPlay++ },
-                    onend: function () { self.canPlay-- },
-                });
-
-                this.el.addEventListener('collide', () => {
-                    self.el.setAttribute('velocity', { x: 0, y: 0, z: 0 });
-
-                    if (self.el.object3D.visible && self.canPlay < 3) {
-                        self.sound.pos(self.obj.position.x, self.obj.position.y, self.obj.position.z);
-                        self.sound.play();
-                    }
-                });
-            }
-        });
-
-        AFRAME.registerComponent('showinfo', {
-            init: function () {
-                document.querySelector('a-scene').addEventListener('enter-vr', () => {
-                    document.getElementById('info').style.display = 'none';
-                });
-
-                document.querySelector('a-scene').addEventListener('exit-vr', () => {
-                    document.getElementById('info').style.display = 'block';
-                });
-
-                document.querySelector('a-scene').addEventListener('loaded', () => {
-                    document.getElementById('info').style.display = 'block';
-                });
-            }
         });
     </script>
 </head>
@@ -232,7 +222,7 @@
         <p><b>Google Cardboard:</b> press the button to release the crate</p>
         <p><b>Joystick:</b> Press any button to release the crate</p>
         <p><b>Mouse:</b> Click in the screen to release the crate</p>
-        <p><b>VR Mode:</b> Press the VR button in the bottom right corner;</p>
+        <p><b>Start:</b> Press the VR button in the bottom right corner to enter in Virtual Reality mode and start.</p>
     </div>
 
     <a-scene id="scene" physics="friction: 0.8; restitution: 0.1" stats>
@@ -241,30 +231,26 @@
             <img id="skyBoxMap" src="../../assets/textures/cloud.jpg">
             <img id="grass" src="../../assets/textures/grass.png">
             <img id="crateTexture" src="../../assets/textures/crate.png">
-
-            <!-- Huggy13ear https://freesound.org/s/138957/-->
-            <!-- <audio id="airplaneSound" src="../../assets/sounds/airplane.wav"></audio>
-            <audio id="crateSound" src="../../assets/sounds/dropped-wood.wav"></audio> -->
         </a-assets>
 
-        <a-entity showinfo button-controls></a-entity>
+        <a-entity button-controls appcode></a-entity>
 
         <a-entity light=" type: ambient; color: #fff; intensity: 0.1">
         </a-entity>
         <a-entity light="color: #fff" position="65 110 52"></a-entity>
 
-        <a-sky id="skyBox" material="src: #skyBoxMap" radius="700"></a-sky>
+        <a-sky id="skyBox" material="src: #skyBoxMap" radius="850"></a-sky>
 
-        <a-plane id="ground" material="src: #grass; repeat: 140, 140" position="0 0 0" rotation="-90 0 0" width="1400"
-            height="1400" static-body>
+        <a-plane id="ground" material="src: #grass; repeat: 140, 140" position="0 0 0" rotation="-90 0 0" width="1700"
+            height="1700" static-body>
         </a-plane>
 
-        <a-box id="crate" src="#crateTexture" height="4" width="4" depth="4" position="-3 3 190" visible="false"
-            dynamic-body="linearDamping: 0; angularDamping: 0.01;" hitground>
+        <a-box id="crate" src="#crateTexture" height="4" width="4" depth="4" position="0 2 0" visible="true"
+            dynamic-body="linearDamping: 0; angularDamping: 0.01;">
         </a-box>
 
         <a-entity id="airplane" gltf-model="#airplaneModel" scale="0.25 0.25 0.25"
-            body="type: dynamic; mass: 0; shape: none;" move>
+            body="type: dynamic; mass: 0; shape: none;">
         </a-entity>
 
         <a-entity id="rig" position="0 0 0">
