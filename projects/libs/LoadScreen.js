@@ -884,6 +884,10 @@ function LoadScreen(renderer, style) {
 
 			var loader = getObjectLoader(ext.toLowerCase());
 
+			if (typeof d.draco !== 'undefined' && (ext === 'glb' || ext === 'gltf')) {
+				loader.setDRACOLoader(d.draco);
+			}
+
 			switch (ext) {
 
 				case 'mmd':

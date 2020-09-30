@@ -9,12 +9,13 @@ const ASSETS = {
             fileSize: 37429
         }
     },
-    // objects: {
-    //     leftHeart: {
-    //         path: '../../assets/models/heart.glb',
-    //         fileSize: 37429
-    //     }
-    // }
+    objects: {
+        leftHeart: {
+            path: '../../assets/models/heart.glb',
+            fileSize: 37429,
+            draco: new THREE.DRACOLoader().setDecoderPath('../../libs/draco/')
+        }
+    }
 };
 
 setRenderer();
@@ -46,10 +47,31 @@ function init() {
     orbitControls.maxDistance = 120;
     orbitControls.update();
 
-    // leftHeart = ASSETS.objects.leftHeart;
-    // leftHeart.scale.set(0.5, 0.5, 0.5);
-    // leftHeart.position.set(0, 0, 0);
-    // scene.add(leftHeart);
+    // var loader = new THREE.GLTFLoader();
+
+    // // Optional: Provide a DRACOLoader instance to decode compressed mesh data
+    // var dracoLoader = new THREE.DRACOLoader();
+    // // dracoLoader.setDecoderPath('../../libs/draco/');
+    // // console.log(dracoLoader);
+    // loader.setDRACOLoader(dracoLoader);
+
+    // // Load a glTF resource
+    // loader.load(
+    //     // resource URL
+    //     '../../assets/models/heart.glb',
+    //     // called when the resource is loaded
+    //     function (gltf) {
+
+    //         scene.add(gltf.scene);
+    //         console.log('hey')
+
+    //     },
+    // );
+
+    leftHeart = ASSETS.objects.leftHeart;
+    leftHeart.scale.set(0.5, 0.5, 0.5);
+    leftHeart.position.set(0, 0, 0);
+    scene.add(leftHeart);
 
     window.addEventListener('resize', onResize);
 
