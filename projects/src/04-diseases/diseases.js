@@ -1,4 +1,4 @@
-let rendererStats, renderer, scene, camera, orbitControls, light, controls, gui, clock;
+let rendererStats, renderer, scene, camera, orbitControls, light, ambientLight, controls, gui, clock;
 
 let leftHeart;
 
@@ -9,12 +9,12 @@ const ASSETS = {
             fileSize: 37429
         }
     },
-    objects: {
-        leftHeart: {
-            path: '../../assets/models/heart.glb',
-            fileSize: 37429
-        }
-    }
+    // objects: {
+    //     leftHeart: {
+    //         path: '../../assets/models/heart.glb',
+    //         fileSize: 37429
+    //     }
+    // }
 };
 
 setRenderer();
@@ -29,21 +29,27 @@ function init() {
     scene = new THREE.Scene();
 
     camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 1, 700);
-    camera.position.set(0, 0, 80);
-    camera.lookAt(new THREE.Vector3(0, 30, 0));
+    camera.position.set(0, 0, 100);
+    camera.lookAt(new THREE.Vector3(0, 0, 0));
     scene.add(camera);
+    onResize();
 
-    light = new THREE.DirectionalLight(0xfefefe);
-    light.position.set(0, 50, 100);
+    ambientLight = new THREE.AmbientLight(0x303030);
+    scene.add(ambientLight);
+
+    light = new THREE.PointLight(0xfefefe, 1);
+    light.position.set(0, 0, 100);
     scene.add(light);
 
     orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+    orbitControls.minDistance = 10;
+    orbitControls.maxDistance = 120;
     orbitControls.update();
 
-    leftHeart = ASSETS.objects.leftHeart;
-    leftHeart.scale.set(0.5, 0.5, 0.5);
-    leftHeart.position.set(0, 0, 0);
-    scene.add(leftHeart);
+    // leftHeart = ASSETS.objects.leftHeart;
+    // leftHeart.scale.set(0.5, 0.5, 0.5);
+    // leftHeart.position.set(0, 0, 0);
+    // scene.add(leftHeart);
 
     window.addEventListener('resize', onResize);
 
@@ -55,15 +61,20 @@ function init() {
 function animate() {
     requestAnimationFrame(animate);
 
+    light.position.copy(camera.position);
+
+
+
     rendererStats.update();
     renderer.render(scene, camera);
 }
 
 function setRenderer() {
     renderer = new THREE.WebGLRenderer();
-    renderer.setClearColor(0xDFDFDF);
+    renderer.setClearColor(0xA1ACB3);
     renderer.setPixelRatio(devicePixelRatio);
     renderer.setSize(innerWidth, innerHeight);
+
     document.body.appendChild(renderer.domElement);
 }
 

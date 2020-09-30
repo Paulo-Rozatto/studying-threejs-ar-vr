@@ -7,15 +7,181 @@
     <title>Diseases project</title>
 
     <style>
+        html,
         body {
             margin: 0;
             overflow: hidden;
+            height: 100%;
+            width: 100%;
+        }
+
+        #panel {
+            position: absolute;
+            bottom: 0;
+            width: 100vw;
+            background-color: rgba(255, 255, 255, 0.7);
+        }
+
+        #panel-title {
+            margin-top: 0;
+            margin-bottom: 0;
+            background-color: #B3A1A1;
+            padding: 7px;
+            font-family: sans-serif;
+            text-align: center;
+            color: #efefef;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #panel-title:after {
+            position: absolute;
+            content: "";
+            top: 0.5em;
+            right: 0.8em;
+            width: 0;
+            height: 0;
+            border: 6px solid transparent;
+            border-color: transparent transparent #fff transparent;
+        }
+
+        #panel-title.active:after {
+            border-color: #fff transparent transparent transparent;
+            top: 0.8em;
+        }
+
+        #panel-content {
+            display: none;
+            max-height: 60vh;
+            padding: 5px;
+            color: #736767;
+            overflow-y: scroll;
+        }
+
+        #panel select {
+            width: 100%;
+            padding: 0.3em;
+        }
+
+        @media only screen and (min-width: 768px) {
+            #panel {
+                position: absolute;
+                right: 0;
+                width: 20vw;
+                height: 100vh;
+                background-color: rgba(255, 255, 255, 0.7);
+
+            }
+
+            #panel-title {
+                margin-top: 0;
+                margin-bottom: 0;
+                background-color: #B3A1A1;
+                padding: 7px;
+                font-family: sans-serif;
+                text-align: center;
+                color: #efefef;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            #panel-title:after {
+                border: none;
+            }
+
+            #panel-title.active:after {
+                border: none;
+            }
+
+            #panel-content {
+                display: block;
+                height: 100vh;
+                max-height: 100vh;
+                /* overflow-y: hidden; */
+            }
+        }
+
+        #whatis::before {
+            content: 'What is';
+            font-weight: bold;
+            display: block;
+        }
+
+        #risk::before {
+            content: 'Risk Factors';
+            font-weight: bold;
+            display: block;
+        }
+
+        #symptoms::before {
+            content: 'Symptoms';
+            font-weight: bold;
+            display: block;
+        }
+
+        #renderCanvas {
+            height: 100%;
+            width: 100%;
+            display: block;
         }
     </style>
 </head>
 
 <body>
     <div id="three-stats"></div>
+    <div id="panel">
+        <h2 id="panel-title" onclick="toggleContent()">Deadliest Diseases</h2>
+
+        <div id="panel-content">
+            <select id="" name="">
+                <option value="1" selected>1 - Cardiovascular disease</option>
+                <option value="2">2 - Cancer</option>
+                <option value="3">3- Stroke</option>
+            </select>
+
+            <p id="whatis">
+                Lorem ipsum dolor, sit amet consectetur adipisicing elit. Odit nemo rem aperiam asperiores,
+                reprehenderit
+                est
+                autem omnis, aut aliquid incidunt, repellendus distinctio! Laborum cumque qui, perferendis adipisci vel
+                voluptas necessitatibus.
+            </p>
+
+            <p id="risk">
+                Lorem ipsum dolor, sit amet consectetur adipisicing elit. Odit nemo rem aperiam asperiores,
+                reprehenderit
+                est
+                autem omnis, aut aliquid incidunt, repellendus distinctio! Laborum cumque qui, perferendis adipisci vel
+                voluptas necessitatibus.
+            </p>
+
+            <p id="symptoms">
+                Lorem ipsum dolor, sit amet consectetur adipisicing elit. Odit nemo rem aperiam asperiores,
+                reprehenderit
+                est
+                autem omnis, aut aliquid incidunt, repellendus distinctio! Laborum cumque qui, perferendis adipisci vel
+                voluptas necessitatibus.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function toggleContent() {
+            if (window.innerWidth >= 768) return;
+
+            let title = document.querySelector('#panel-title');
+            let content = document.querySelector('#panel-content');
+
+            title.classList.toggle('active');
+
+            if (content.style.display === 'block') {
+                content.style.display = 'none';
+            }
+            else content.style.display = 'block';
+        }
+    </script>
 
     <script src="../../libs/three.js"></script>
     <script src="../../libs/OrbitControls.js"></script>
