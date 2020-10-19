@@ -34,26 +34,82 @@
                 });
             }
         });
-        AFRAME.registerComponent('controls', {
+
+        AFRAME.registerComponent('menu', {
             init: function () {
-                this.gamepad;
+                const self = this;
                 this.model = document.querySelector('#aneurism').object3D;
                 this.camera = document.querySelector('#camera').object3D;
 
                 this.cursor = document.querySelector('#cursor');
+                this.raycaster = document.querySelector('[raycaster]');
 
-                console.log(this.cursor);
+                let panelGeometry = new THREE.PlaneGeometry(0.1, 0.05)
+                // let panelMaterial = new THREE.MeshBasicMaterial({ color: new THREE.Color(0xff0000) })
+                this.rotLeft = new THREE.Mesh(
+                    panelGeometry,
+                    new THREE.MeshBasicMaterial({
+                        color: new THREE.Color(0xff0000),
+                    })
+                );
+                this.rotLeft.position.set(-0.2, 1.5, 2.8);
+                this.rotLeft.name = 'rotLeft';
+
+                this.rotRight = new THREE.Mesh(
+                    panelGeometry,
+                    new THREE.MeshBasicMaterial({
+                        color: new THREE.Color(0x0000FF),
+                    })
+                );
+                this.rotRight.position.set(-0.1, 1.5, 2.8);
+                this.rotRight.name = 'rotRight';
+
+                this.zoomIn = new THREE.Mesh(
+                    panelGeometry,
+                    new THREE.MeshBasicMaterial({
+                        color: new THREE.Color(0x00FF00),
+                    })
+                );
+                this.zoomIn.position.set(0, 1.5, 2.8);
+                this.zoomIn.name = 'zoomIn';
+
+                this.zoomOut = new THREE.Mesh(
+                    panelGeometry,
+                    new THREE.MeshBasicMaterial({
+                        color: new THREE.Color(0xF0FFF0),
+                    })
+                );
+                this.zoomOut.position.set(0.1, 1.5, 2.8);
+                this.zoomOut.name = 'zoomOut';
+
+                this.el.setObject3D('rotLeft', this.rotLeft);
+                this.el.setObject3D('rotRight', this.rotRight);
+                this.el.setObject3D('zoomIn', this.zoomIn);
+                this.el.setObject3D('zoomOut', this.zoomOut);
+
+                this.el.classList.add('clickable');
+
+                console.log(this.el.object3D);
+
+                this.el.addEventListener('click', (evt) => self.clickHandle(evt));
             },
-            tick: function (time, delta) {
-                this.gamepad = navigator.getGamepads()[0];
-                if (!this.gamepad) return;
+            clickHandle: function (evt) {
+                // console.log('I was clicked at: ', evt.detail.intersection.object);
+                let obj = evt.detail.intersection.object.name;
 
-                if (this.gamepad.axes[0] !== 0) {
-                    this.model.rotation.y += 0.002 * delta * this.gamepad.axes[0];
-                }
-
-                if (this.gamepad.axes[1] !== 0) {
-                    this.camera.position.z += 0.002 * delta * this.gamepad.axes[1];
+                switch (obj) {
+                    case 'rotLeft':
+                        this.model.rotation.y -= 1.2;
+                        break;
+                    case 'rotRight':
+                        this.model.rotation.y += 1.2;
+                        break;
+                    case 'zoomIn':
+                        this.model.position.z += 1;
+                        break;
+                    case 'zoomOut':
+                        this.model.position.z -= 1;
+                        break;
                 }
 
             }
@@ -73,12 +129,12 @@
 
         <a-sky color="#343434"></a-sky>
 
-        <a-entity id="aneurism" position="-1 0 0" gltf-model="#strokeModel" controls></a-entity>
+        <a-entity id="aneurism" position="-1 0 0" gltf-model="#strokeModel"></a-entity>
 
         <a-plane position="0 0 0" rotation="-90 0 0" width="10" height="10" color="#A1ACB3"
             material="transparent: true; opacity: 0.5"></a-plane>
 
-        <a-plane id="panel" class="clickable" cursor-listener position="-0.5 1.5 3" rotation="0 90 0" width="0.1"
+        <!-- <a-plane id="panel" class="clickable" cursor-listener position="-0.5 1.5 3" rotation="0 90 0" width="0.1"
             height="0.05" material="">
         </a-plane>
         <a-plane id="panel" class="clickable" cursor-listener position="-0.5 1.5 2.9" rotation="0 90 0" width="0.1"
@@ -89,12 +145,12 @@
         </a-plane>
         <a-plane id="panel" class="clickable" cursor-listener position="-1 1.5 2.7" rotation="0 90 0" width="0.1"
             height="0.05" material="">
-        </a-plane>
-
+        </a-plane> -->
+        <a-entity menu></a-entity>
         <a-entity id="rig" position="0 0 3">
             <a-entity id="camera" camera position="0 1.6 0" look-controls="pointerLockEnabled: true">
-                <a-entity cursor="fuse: true; fuseTimeout: 500" raycaster="objects: .clickable" position="0 0 -0.5"
-                    geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
+                <a-entity id="cursor" cursor="fuse: true; fuseTimeout: 500" raycaster="objects: .clickable"
+                    position="0 0 -0.1" geometry="primitive: ring; radiusInner: 0.004; radiusOuter: 0.006"
                     material="color: black; shader: flat">
                 </a-entity>
             </a-entity>
