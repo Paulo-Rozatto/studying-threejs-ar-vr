@@ -23,28 +23,20 @@
     <script type="text/javascript" charset="UTF-8" src="../../libs/aframe-master.js"></script>
 
     <script>
-        AFRAME.registerComponent('cursor-listener', {
-            init: function () {
-                var lastIndex = -1;
-                var COLORS = ['red', 'green', 'blue', 'purple'];
-                this.el.addEventListener('click', function (evt) {
-                    lastIndex = (lastIndex + 1) % COLORS.length;
-                    this.setAttribute('material', 'color', COLORS[lastIndex]);
-                    console.log('I was clicked at: ', evt.detail.intersection.point);
-                });
-            }
-        });
-
         AFRAME.registerComponent('menu', {
             init: function () {
                 const self = this;
-                this.model = document.querySelector('#aneurism').object3D;
+                this.models = document.querySelectorAll('.menu-model');
+                this.modelIndex = 0;
                 this.camera = document.querySelector('#camera').object3D;
 
                 this.cursor = document.querySelector('#cursor');
                 this.raycaster = document.querySelector('[raycaster]');
 
-                let panelGeometry = new THREE.PlaneGeometry(0.1, 0.05)
+                this.distance = this.camera.position.z - 0.25;
+                let panelGeometry = new THREE.PlaneGeometry(0.03, 0.04)
+                let width = 0.03;
+                let panelHeight = 1.57;
                 // let panelMaterial = new THREE.MeshBasicMaterial({ color: new THREE.Color(0xff0000) })
                 this.rotLeft = new THREE.Mesh(
                     panelGeometry,
@@ -52,7 +44,7 @@
                         color: new THREE.Color(0xff0000),
                     })
                 );
-                this.rotLeft.position.set(-0.2, 1.5, 2.8);
+                this.rotLeft.position.set(-2 * width, panelHeight, this.distance);
                 this.rotLeft.name = 'rotLeft';
 
                 this.rotRight = new THREE.Mesh(
@@ -61,7 +53,7 @@
                         color: new THREE.Color(0x0000FF),
                     })
                 );
-                this.rotRight.position.set(-0.1, 1.5, 2.8);
+                this.rotRight.position.set(-width, panelHeight, this.distance);
                 this.rotRight.name = 'rotRight';
 
                 this.zoomIn = new THREE.Mesh(
@@ -70,7 +62,7 @@
                         color: new THREE.Color(0x00FF00),
                     })
                 );
-                this.zoomIn.position.set(0, 1.5, 2.8);
+                this.zoomIn.position.set(0, panelHeight, this.distance);
                 this.zoomIn.name = 'zoomIn';
 
                 this.zoomOut = new THREE.Mesh(
@@ -79,13 +71,23 @@
                         color: new THREE.Color(0xF0FFF0),
                     })
                 );
-                this.zoomOut.position.set(0.1, 1.5, 2.8);
+                this.zoomOut.position.set(width, panelHeight, this.distance);
                 this.zoomOut.name = 'zoomOut';
+
+                this.next = new THREE.Mesh(
+                    panelGeometry,
+                    new THREE.MeshBasicMaterial({
+                        color: new THREE.Color(0x0f0f0f),
+                    })
+                );
+                this.next.position.set(2 * width, panelHeight, this.distance);
+                this.next.name = 'next';
 
                 this.el.setObject3D('rotLeft', this.rotLeft);
                 this.el.setObject3D('rotRight', this.rotRight);
                 this.el.setObject3D('zoomIn', this.zoomIn);
                 this.el.setObject3D('zoomOut', this.zoomOut);
+                this.el.setObject3D('next', this.next);
 
                 this.el.classList.add('clickable');
 
@@ -96,31 +98,52 @@
             clickHandle: function (evt) {
                 // console.log('I was clicked at: ', evt.detail.intersection.object);
                 let obj = evt.detail.intersection.object.name;
+                let model = this.models[this.modelIndex].object3D;
 
                 switch (obj) {
                     case 'rotLeft':
-                        this.model.rotation.y -= 1.2;
+                        model.rotation.y -= 1.2;
                         break;
                     case 'rotRight':
-                        this.model.rotation.y += 1.2;
+                        model.rotation.y += 1.2;
                         break;
                     case 'zoomIn':
-                        this.model.position.z += 1;
+                        if (model.position.z < 1)
+                            model.position.z += 1;
                         break;
                     case 'zoomOut':
-                        this.model.position.z -= 1;
+                        model.position.z -= 1;
+                        break;
+                    case 'next':
+                        this.nextModel();
                         break;
                 }
 
+                // this.el.classList.remove('clickable');
+                // this.el.classList.add('clickable');
+
+            },
+            nextModel() {
+                this.models[this.modelIndex].object3D.visible = false;
+
+                if (this.modelIndex == this.models.length - 1) {
+                    this.modelIndex = 0;
+                }
+                else {
+                    this.modelIndex++;
+                }
+
+                this.models[this.modelIndex].object3D.visible = true;
             }
         });
     </script>
 </head>
 
 <body>
-    <a-scene main_scene id="scene">
+    <a-scene main_scene id="scene" gltf-model="dracoDecoderPath: ../../libs/draco/gltf/;">
         <a-assets timeout="3000">
-            <a-asset-item id="strokeModel" src="../../assets/models/diseases/an.glb"></a-asset-item>
+            <a-asset-item id="aneurismModel" src="../../assets/models/diseases/an.glb"></a-asset-item>
+            <a-asset-item id="strokeModel" src="../../assets/models/diseases/stroke.glb"></a-asset-item>
             <!-- <img id="text" src="assets/textures/text.png"> -->
         </a-assets>
 
@@ -129,7 +152,9 @@
 
         <a-sky color="#343434"></a-sky>
 
-        <a-entity id="aneurism" position="-1 0 0" gltf-model="#strokeModel"></a-entity>
+        <a-entity id="aneurism" class="menu-model" position="-1 0 -2" gltf-model="#aneurismModel"></a-entity>
+        <a-entity id="stroke" class="menu-model" position="0 0 0" gltf-model="#strokeModel" visible="false"></a-entity>
+        <!-- <a-entity id="aneurism1" class="menu-model" position="-1 0 0" gltf-model="#strokeModel"></a-entity> -->
 
         <a-plane position="0 0 0" rotation="-90 0 0" width="10" height="10" color="#A1ACB3"
             material="transparent: true; opacity: 0.5"></a-plane>
@@ -146,8 +171,8 @@
         <a-plane id="panel" class="clickable" cursor-listener position="-1 1.5 2.7" rotation="0 90 0" width="0.1"
             height="0.05" material="">
         </a-plane> -->
-        <a-entity menu></a-entity>
-        <a-entity id="rig" position="0 0 3">
+        <!-- <a-entity menu></a-entity> -->
+        <a-entity id="rig" position="0 0 0">
             <a-entity id="camera" camera position="0 1.6 0" look-controls="pointerLockEnabled: true">
                 <a-entity id="cursor" cursor="fuse: true; fuseTimeout: 500" raycaster="objects: .clickable"
                     position="0 0 -0.1" geometry="primitive: ring; radiusInner: 0.004; radiusOuter: 0.006"
