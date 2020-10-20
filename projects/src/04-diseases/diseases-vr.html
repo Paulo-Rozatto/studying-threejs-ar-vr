@@ -21,9 +21,11 @@
 
     <!-- Library of Virtual Reality -->
     <script type="text/javascript" charset="UTF-8" src="../../libs/aframe-master.js"></script>
+    <script type="text/javascript" charset="UTF-8" src="../../libs/aframe-button-controls.js"></script>
 
     <script>
         AFRAME.registerComponent('menu', {
+            dependencies: ['button-controls'],
             init: function () {
                 const self = this;
                 this.models = document.querySelectorAll('.menu-model');
@@ -89,9 +91,20 @@
                 this.el.setObject3D('zoomOut', this.zoomOut);
                 this.el.setObject3D('next', this.next);
 
-                this.el.classList.add('clickable');
+                // this.el.classList.add('clickable');
+                this.el.object3D.visible = false;
 
-                console.log(this.el.object3D);
+                let buttonControls = document.querySelector('[button-controls]');
+                buttonControls.addEventListener('buttondown', () => { // Listen click, touch, and joystick button pressed events
+                    console.log('down');
+                    self.el.object3D.visible = true;
+                    this.el.classList.add('clickable');
+                });
+                buttonControls.addEventListener('buttonup', () => {
+                    console.log('up');
+                    self.el.object3D.visible = false;
+                    this.el.classList.remove('clickable');
+                });
 
                 this.el.addEventListener('click', (evt) => self.clickHandle(evt));
             },
@@ -108,7 +121,7 @@
                         model.rotation.y += 1.2;
                         break;
                     case 'zoomIn':
-                        if (model.position.z < 1)
+                        if (model.position.z < -1)
                             model.position.z += 1;
                         break;
                     case 'zoomOut':
@@ -171,7 +184,7 @@
         <a-plane id="panel" class="clickable" cursor-listener position="-1 1.5 2.7" rotation="0 90 0" width="0.1"
             height="0.05" material="">
         </a-plane> -->
-        <!-- <a-entity menu></a-entity> -->
+        <a-entity button-controls menu></a-entity>
         <a-entity id="rig" position="0 0 0">
             <a-entity id="camera" camera position="0 1.6 0" look-controls="pointerLockEnabled: true">
                 <a-entity id="cursor" cursor="fuse: true; fuseTimeout: 500" raycaster="objects: .clickable"
