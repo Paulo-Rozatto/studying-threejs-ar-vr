@@ -40,46 +40,55 @@
                 let width = 0.03;
                 let panelHeight = 1.57;
 
-                buttons = {
+                this.textures = {
+                    rotLeft: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAABhGlDQ1BJQ0MgcHJvZmlsZQAAKJF9kT1Iw0AcxV9TRSkVFSuIOGSoThb8Qhy1CkWoEGqFVh1MLv2CJg1Jiouj4Fpw8GOx6uDirKuDqyAIfoA4OTopukiJ/0sKLWI9OO7Hu3uPu3eAUC0yzWobAzTdNhOxqJhKr4odrwigH70YR4/MLGNOkuJoOb7u4ePrXYRntT735+hSMxYDfCLxLDNMm3iDeHrTNjjvE4dYXlaJz4lHTbog8SPXFY/fOOdcFnhmyEwm5olDxGKuiZUmZnlTI54iDquaTvlCymOV8xZnrVhm9XvyFwYz+soy12kOIYZFLEGCCAVlFFCEjQitOikWErQfbeEfdP0SuRRyFcDIsYASNMiuH/wPfndrZScnvKRgFGh/cZyPYaBjF6hVHOf72HFqJ4D/GbjSG/5SFZj5JL3S0MJHQPc2cHHd0JQ94HIHGHgyZFN2JT9NIZsF3s/om9JA3y0QWPN6q+/j9AFIUlfxG+DgEBjJUfZ6i3d3Nvf275l6fz+EwHKuBmeZxQAAAAlwSFlzAAAuIwAALiMBeKU/dgAAAAd0SU1FB+QKFRIXH/tfskUAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABelBMVEX+/v7////8/Pz9/f37+/v8/Pz5+fn6+vr39/f4+Pjy8vLx8fHv7+/w8PDt7e3r6+vr6+vo6Ojp6enn5+fl5eXm5ubj4+Ph4eHf39/d3d3e3t7b29vc3Nza2trY2NjX19fY2NjV1dXU1NTR0dHOzs7Nzc3KysrLy8vJycnHx8fExMTAwMC+vr66urq2tra0tLSwsLCsrKyoqKinp6eoqKihoaGgoKCfn5+dnZ2bm5uampqYmJiZmZmUlJSSkpKTk5ORkZGPj4+QkJCOjo6MjIyNjY2Li4uGhoaEhISBgYGCgoJ/f399fX17e3t5eXl2dnZ3d3d0dHR1dXVvb29tbW1ubm5sbGxoaGhkZGRlZWViYmJjY2NdXV1bW1tZWVlUVFRWVlZSUlJTU1NPT09HR0dDQ0M/Pz88PDw9PT05OTk6Ojo2NjY3NzcyMjI0NDQvLy8xMTErKystLS0nJycpKSkiIiIkJCQcHBwWFhYZGRkNDQ0SEhIAAAAGBgZef73GAAAAfHRSTlOAgIGBgoKDg4SEh4iJiYqLjI2Njo+PkZKTlJSVlZaXmJiZmpyen6CgoaKlp6irrq+ytbe4uLy9vr/AwcLCxcbGx8jIycrKy87Q0dHT1NXW2NjZ2dzd3d7g4uLj4+bn6Orq6+vt8PLz9PT19fb29/f4+Pn5+vr7+/z9/f7+cybbVQAAAAFiS0dEfNG2IF8AAAGdSURBVFjD7dTZNxthHIfxPAiiJbErpShqja1VrSW1hCIose97tZE2IVGSn/+9F5OZxDkTZeiVd+6+F/OZ98wkj41HXjYFKEABCvg3MBi6ez854Dl1zYe90Lx++XuxEkZFRI7pEokdTRcbm+r5YHSz0Qz4PtuQBc3xEVf5UqA05Yn2qqUdu75rIjNl+f1/6kwAaQPY2AFeXnhvHblC6vXtP7ADq99MgJtswBEbAFje02/I/rAbFpGOxM65HgL4fGYCBABc0gMwdaIDY2etebZCcSe2U7TrxuwlAjhigwB+4wQ/PgFvDcAR70//FQDY2AbyI+PQdwnYLvqAMXEnNitbGXcDLfEvzjJ/sATapSkT5o5qX3TPilvfNWHfq9yK98NpAVrWoucLr4HMyV9yTIEvGJgoFLe+qfT9jO57itTf+RkAHyO3ZufhdegxgPOq154uSPcCGuQNVgC9XV9FREb1ot0fSLbrndRaOUGyXdaAlHZZA1LaZQ1IaZfFd5BslwZoRXvIVzDapQFa0R7yOzDapQGJoqkeKEABCvhvwF+nO4WG/SirxwAAAABJRU5ErkJggg==',
+                    rotRight: 'data:image/png;base64,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',
+                    zoomIn: 'data:image/png;base64,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',
+                    zoomOut: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAABhGlDQ1BJQ0MgcHJvZmlsZQAAKJF9kT1Iw0AcxV9TRSkVFSuIOGSoThb8Qhy1CkWoEGqFVh1MLv2CJg1Jiouj4Fpw8GOx6uDirKuDqyAIfoA4OTopukiJ/0sKLWI9OO7Hu3uPu3eAUC0yzWobAzTdNhOxqJhKr4odrwigH70YR4/MLGNOkuJoOb7u4ePrXYRntT735+hSMxYDfCLxLDNMm3iDeHrTNjjvE4dYXlaJz4lHTbog8SPXFY/fOOdcFnhmyEwm5olDxGKuiZUmZnlTI54iDquaTvlCymOV8xZnrVhm9XvyFwYz+soy12kOIYZFLEGCCAVlFFCEjQitOikWErQfbeEfdP0SuRRyFcDIsYASNMiuH/wPfndrZScnvKRgFGh/cZyPYaBjF6hVHOf72HFqJ4D/GbjSG/5SFZj5JL3S0MJHQPc2cHHd0JQ94HIHGHgyZFN2JT9NIZsF3s/om9JA3y0QWPN6q+/j9AFIUlfxG+DgEBjJUfZ6i3d3Nvf275l6fz+EwHKuBmeZxQAAAAlwSFlzAAAuIwAALiMBeKU/dgAAAAd0SU1FB+QKFRIiHi5pQGUAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABUFBMVEX////8/Pz9/f38/Pz6+vr4+Pj19fXy8vLw8PDx8fHv7+/w8PDu7u7r6+vr6+vo6Ojn5+fl5eXm5ubj4+Ph4eHf39/e3t7c3Nza2trV1dXT09PR0dHOzs7KysrJycnHx8fIyMjDw8O+vr6/v7+9vb24uLiwsLCsrKyoqKikpKSgoKCYmJiZmZmWlpaTk5ORkZGPj4+QkJCOjo6MjIyNjY2Li4uJiYmGhoaBgYGAgIB9fX16enp3d3d3d3d0dHR1dXVzc3NycnJvb29wcHBtbW1ubm5ra2toaGhpaWlnZ2dkZGRlZWViYmJjY2NeXl5bW1tZWVlUVFRWVlZRUVFOTk5PT09KSkpISEhERERDQ0M/Pz88PDw9PT02NjY3NzcyMjI0NDQvLy8xMTErKystLS0nJycpKSkiIiIkJCQcHBwfHx8ZGRkNDQ0SEhIAAAAGBgZiMTsFAAAAbnRSTlOAgYGCg4SFh4iIiYmKi4yNjo+PkZKTlJWWmZucnqChoqKlqKiprbK1t7q9wsLExsfIyMnKysvMztHS1NbX2NnZ2tvc3N3d3+Dg4eLi4+Pm5+jq6uzt7e/w8fLz9PT29vf3+Pj5+fr6+/v8/P3+/pzEfSUAAAABYktHRG4iD1EXAAABWElEQVRYw+2UR1MCQRBGn4gJFVFRMYE54oI5YhYxK4KYxYwK7f+/ebBqnQu4y8GDNe/0XfpVz1TXBxqNRvMf8YiIiGyAfy9zv9IMSjKua1dfTjrojr9G6wpZej5D+HNht3fzpgElGVdzbZUzaf9snTe5VGDe93jgZP8YcD1PoSRDuqDmM+GEwWxF3nnX2bmbsuwowFZcSRi5EuB2AegSX7750mimFdwyBDB3qSSMK4BUGGiXjnyCKekHyrJBgPW4kjCuAVLjBQUDMgbA/hFQ/TKpJisC39uaA4BALlTbuH5XryYrgl7zDgK7r0/LLaAkS0/QaH4l+PCnArPJ5g8BYhHGRUQuLM+bTWYK7G3w02TFCZQmK06gNNm3YNv2BmaTTZ8CJG3/gdlkw5ly8OYiMJKxIfhpMs/HRJVv8TACPdLpsGEwO60v8b7TFIuAYzZt/Q40Go2mGL4AK9NV0EnIO3QAAAAASUVORK5CYII=',
+                    next: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAABhGlDQ1BJQ0MgcHJvZmlsZQAAKJF9kT1Iw0AcxV9TRSkVFSuIOGSoThb8Qhy1CkWoEGqFVh1MLv2CJg1Jiouj4Fpw8GOx6uDirKuDqyAIfoA4OTopukiJ/0sKLWI9OO7Hu3uPu3eAUC0yzWobAzTdNhOxqJhKr4odrwigH70YR4/MLGNOkuJoOb7u4ePrXYRntT735+hSMxYDfCLxLDNMm3iDeHrTNjjvE4dYXlaJz4lHTbog8SPXFY/fOOdcFnhmyEwm5olDxGKuiZUmZnlTI54iDquaTvlCymOV8xZnrVhm9XvyFwYz+soy12kOIYZFLEGCCAVlFFCEjQitOikWErQfbeEfdP0SuRRyFcDIsYASNMiuH/wPfndrZScnvKRgFGh/cZyPYaBjF6hVHOf72HFqJ4D/GbjSG/5SFZj5JL3S0MJHQPc2cHHd0JQ94HIHGHgyZFN2JT9NIZsF3s/om9JA3y0QWPN6q+/j9AFIUlfxG+DgEBjJUfZ6i3d3Nvf275l6fz+EwHKuBmeZxQAAAAlwSFlzAAAuIwAALiMBeKU/dgAAAAd0SU1FB+QKFRIkBxxYTyMAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABNVBMVEX+/v7////8/Pz9/f37+/v8/Pz6+vr39/f4+Pj19fXy8vLw8PDu7u7r6+vs7Ozr6+vp6enj4+Pf39/d3d3e3t7a2trY2NjZ2dnX19fV1dXR0dHOzs7MzMzNzc3KysrJycnIyMjHx8fExMS+vr65ubmrq6uoqKipqamnp6eoqKilpaWjo6OgoKCdnZ2ampqZmZmWlpaUlJSSkpKTk5ORkZGQkJCKioqJiYmGhoaAgIB/f399fX13d3d2dnZ3d3d1dXVycnJycnJvb29wcHBsbGxoaGhjY2NiYmJgYGBdXV1bW1tcXFxUVFRSUlJTU1NRUVFKSkpERERCQkJDQ0M8PDw9PT06Ojo3NzcyMjI0NDQxMTErKysnJycpKSkiIiIkJCQcHBwfHx8ZGRkNDQ0SEhIAAAAGBgaxsr4vAAAAZXRSTlOAgIGBgoKDhISFh4mKi4uMjZGTlJSWl5eYmZyen5+goaKjpKistbe3uLi5u72/wcLExcbGx8jLzM7S09TX2NjZ2tvc3N7g4+Tl5ufn6uvr7O/x8vL09PX29/f4+fr6+/v8/P3+/vL/r4gAAAABYktHRGW13YifAAAA/ElEQVRYw+3TV08CURCG4X1FQAUbKmLHLiqiYl8VWSt2ZcEKLso5//8neGG55RATjcl8l5PJk8lkxuKHsQQQQAABBBDgHwOpx18A0oXwdik/DdCzc18+GoLmq5NGGNWTq0opla8FuJsDLXOqH6Klrc5Q0uuDmLdIWyFjOIEaA67Xwbn0A4e7wIyO79+GDYGqH9hzCLwuASzcAVa2okdMd+AC2Me0qo9ogAl1ar7ET6Cpmvwutrs5PVUvwEGu4avJuQmtVHph/qUeIPpkdwUjiWWYfRskcHYeZFwN+8wBuu1i+SLdQcxLAZHnNXwbDzXvQN5ZAAEEEECAPwXeAfR5OZ2nUVU9AAAAAElFTkSuQmCC'
+                }
+
+                this.buttons = {
                     rotLeft: new THREE.Mesh(
                         panelGeometry,
                         new THREE.MeshBasicMaterial({
-                            color: new THREE.Color(0xff0000),
+                            transparent: true
                         })
                     ),
                     rotRight: new THREE.Mesh(
                         panelGeometry,
                         new THREE.MeshBasicMaterial({
-                            color: new THREE.Color(0x0000FF),
+                            transparent: true
                         })
                     ),
                     zoomIn: new THREE.Mesh(
                         panelGeometry,
                         new THREE.MeshBasicMaterial({
-                            color: new THREE.Color(0x00FF00),
+                            transparent: true
                         })
                     ),
                     zoomOut: new THREE.Mesh(
                         panelGeometry,
                         new THREE.MeshBasicMaterial({
-                            color: new THREE.Color(0xF0AAF0),
+                            transparent: true
                         })
                     ),
                     next: new THREE.Mesh(
                         panelGeometry,
                         new THREE.MeshBasicMaterial({
-                            color: new THREE.Color(0x0f0f0f),
+                            transparent: true
                         })
                     )
                 }
-
                 let i = -2;
-                for (const key in buttons) {
-                    buttons[key].position.set(i * width, panelHeight, this.distance);
-                    buttons[key].name = key;
+                for (const key in this.buttons) {
+                    this.setTextures(key)
+
+                    this.buttons[key].position.set(i * width, panelHeight, this.distance);
+                    this.buttons[key].name = key;
 
                     const entity = document.createElement('a-entity');
-                    entity.setObject3D(key, buttons[key])
+                    entity.setObject3D(key, this.buttons[key])
 
                     this.el.appendChild(entity);
                     i++;
@@ -90,6 +99,7 @@
                 let buttonControls = document.querySelector('[button-controls]');
                 buttonControls.addEventListener('buttondown', () => { // Listen click, touch, and joystick button pressed events
                     self.el.object3D.visible = true;
+                    self.cursor.object3D.visible = true;
 
                     for (const child of this.el.children) {
                         child.classList.add('clickable');
@@ -97,6 +107,7 @@
                 });
                 buttonControls.addEventListener('buttonup', () => {
                     self.el.object3D.visible = false;
+                    self.cursor.object3D.visible = false;
 
                     for (const child of this.el.children) {
                         child.classList.remove('clickable');
@@ -104,7 +115,6 @@
                 });
 
                 this.el.addEventListener('click', (evt) => self.clickHandle(evt)); // click == fuse click
-                // this.el.addEventListener('mouseenter', () => console.log('enter'))
             },
             clickHandle: function (evt) {
                 // console.log('I was clicked at: ', evt.detail.intersection.object);
@@ -113,17 +123,17 @@
 
                 switch (obj.name) {
                     case 'rotLeft':
-                        model.rotation.y -= 1.2;
+                        model.rotation.y -= Math.PI * 0.25;
                         break;
                     case 'rotRight':
-                        model.rotation.y += 1.2;
+                        model.rotation.y += Math.PI * 0.25;
                         break;
                     case 'zoomIn':
                         if (model.position.z < -1)
-                            model.position.z += 1;
+                            model.position.z += 0.8;
                         break;
                     case 'zoomOut':
-                        model.position.z -= 1;
+                        model.position.z -= 0.8;
                         break;
                     case 'next':
                         this.nextModel();
@@ -142,6 +152,16 @@
                 }
 
                 this.models[this.modelIndex].object3D.visible = true;
+            },
+            setTextures: function (key) {
+                let image = new Image();
+                let texture = new THREE.Texture();
+
+                image.src = this.textures[key];
+                texture.image = image;
+                image.onload = () => texture.needsUpdate = true;
+
+                this.buttons[key].material.map = texture;
             }
         });
     </script>
@@ -160,8 +180,11 @@
 
         <a-sky color="#343434"></a-sky>
 
-        <a-entity id="aneurism" class="menu-model" position="-1 0 -2" gltf-model="#aneurismModel"></a-entity>
-        <a-entity id="stroke" class="menu-model" position="0 0 0" gltf-model="#strokeModel" visible="false"></a-entity>
+        <a-entity id="stroke" class="menu-model" position="0 2 -2" rotation="0 0 0" scale="0.01 0.01 0.01"
+            gltf-model="#strokeModel" visible="true">
+        </a-entity>
+        <a-entity id="aneurism" class="menu-model" position="-1 0 -2" gltf-model="#aneurismModel" visible="false">
+        </a-entity>
 
         <a-plane position="0 0 0" rotation="-90 0 0" width="10" height="10" color="#A1ACB3"
             material="transparent: true; opacity: 0.5"></a-plane>
@@ -170,10 +193,11 @@
         <a-entity id="rig" position="0 0 0">
             <a-entity id="camera" camera position="0 1.6 0" look-controls="pointerLockEnabled: true">
                 <a-entity id="cursor" cursor="fuse: true; fuseTimeout: 1000" raycaster="far: 0.5; objects: .clickable"
-                    position="0 0 -0.1" geometry="primitive: ring; radiusInner: 0.0005; radiusOuter: 0.0015"
+                    position="0 0 -0.1" geometry="primitive: ring; radiusInner: 0.0007; radiusOuter: 0.0015"
                     material="color: white; shader: flat"
                     animation__click="property: scale; startEvents: click; easing: easeInCubic; dur: 150; from: 0.1 0.1 0.1; to: 1 1 1"
-                    animation__fusing="property: scale; startEvents: fusing; easing: easeInCubic; dur: 1000; from: 1 1 1; to: 0.1 0.1 0.1">
+                    animation__fusing="property: scale; startEvents: fusing; easing: easeInCubic; dur: 1000; from: 1 1 1; to: 0.1 0.1 0.1"
+                    visible="false">
                 </a-entity>
             </a-entity>
         </a-entity>
