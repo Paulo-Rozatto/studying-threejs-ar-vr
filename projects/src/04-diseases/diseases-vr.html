@@ -39,81 +39,79 @@
                 let panelGeometry = new THREE.PlaneGeometry(0.03, 0.04)
                 let width = 0.03;
                 let panelHeight = 1.57;
-                // let panelMaterial = new THREE.MeshBasicMaterial({ color: new THREE.Color(0xff0000) })
-                this.rotLeft = new THREE.Mesh(
-                    panelGeometry,
-                    new THREE.MeshBasicMaterial({
-                        color: new THREE.Color(0xff0000),
-                    })
-                );
-                this.rotLeft.position.set(-2 * width, panelHeight, this.distance);
-                this.rotLeft.name = 'rotLeft';
 
-                this.rotRight = new THREE.Mesh(
-                    panelGeometry,
-                    new THREE.MeshBasicMaterial({
-                        color: new THREE.Color(0x0000FF),
-                    })
-                );
-                this.rotRight.position.set(-width, panelHeight, this.distance);
-                this.rotRight.name = 'rotRight';
+                buttons = {
+                    rotLeft: new THREE.Mesh(
+                        panelGeometry,
+                        new THREE.MeshBasicMaterial({
+                            color: new THREE.Color(0xff0000),
+                        })
+                    ),
+                    rotRight: new THREE.Mesh(
+                        panelGeometry,
+                        new THREE.MeshBasicMaterial({
+                            color: new THREE.Color(0x0000FF),
+                        })
+                    ),
+                    zoomIn: new THREE.Mesh(
+                        panelGeometry,
+                        new THREE.MeshBasicMaterial({
+                            color: new THREE.Color(0x00FF00),
+                        })
+                    ),
+                    zoomOut: new THREE.Mesh(
+                        panelGeometry,
+                        new THREE.MeshBasicMaterial({
+                            color: new THREE.Color(0xF0AAF0),
+                        })
+                    ),
+                    next: new THREE.Mesh(
+                        panelGeometry,
+                        new THREE.MeshBasicMaterial({
+                            color: new THREE.Color(0x0f0f0f),
+                        })
+                    )
+                }
 
-                this.zoomIn = new THREE.Mesh(
-                    panelGeometry,
-                    new THREE.MeshBasicMaterial({
-                        color: new THREE.Color(0x00FF00),
-                    })
-                );
-                this.zoomIn.position.set(0, panelHeight, this.distance);
-                this.zoomIn.name = 'zoomIn';
+                let i = -2;
+                for (const key in buttons) {
+                    buttons[key].position.set(i * width, panelHeight, this.distance);
+                    buttons[key].name = key;
 
-                this.zoomOut = new THREE.Mesh(
-                    panelGeometry,
-                    new THREE.MeshBasicMaterial({
-                        color: new THREE.Color(0xF0FFF0),
-                    })
-                );
-                this.zoomOut.position.set(width, panelHeight, this.distance);
-                this.zoomOut.name = 'zoomOut';
+                    const entity = document.createElement('a-entity');
+                    entity.setObject3D(key, buttons[key])
 
-                this.next = new THREE.Mesh(
-                    panelGeometry,
-                    new THREE.MeshBasicMaterial({
-                        color: new THREE.Color(0x0f0f0f),
-                    })
-                );
-                this.next.position.set(2 * width, panelHeight, this.distance);
-                this.next.name = 'next';
+                    this.el.appendChild(entity);
+                    i++;
+                }
 
-                this.el.setObject3D('rotLeft', this.rotLeft);
-                this.el.setObject3D('rotRight', this.rotRight);
-                this.el.setObject3D('zoomIn', this.zoomIn);
-                this.el.setObject3D('zoomOut', this.zoomOut);
-                this.el.setObject3D('next', this.next);
-
-                // this.el.classList.add('clickable');
                 this.el.object3D.visible = false;
 
                 let buttonControls = document.querySelector('[button-controls]');
                 buttonControls.addEventListener('buttondown', () => { // Listen click, touch, and joystick button pressed events
-                    console.log('down');
                     self.el.object3D.visible = true;
-                    this.el.classList.add('clickable');
+
+                    for (const child of this.el.children) {
+                        child.classList.add('clickable');
+                    }
                 });
                 buttonControls.addEventListener('buttonup', () => {
-                    console.log('up');
                     self.el.object3D.visible = false;
-                    this.el.classList.remove('clickable');
+
+                    for (const child of this.el.children) {
+                        child.classList.remove('clickable');
+                    }
                 });
 
-                this.el.addEventListener('click', (evt) => self.clickHandle(evt));
+                this.el.addEventListener('click', (evt) => self.clickHandle(evt)); // click == fuse click
+                // this.el.addEventListener('mouseenter', () => console.log('enter'))
             },
             clickHandle: function (evt) {
                 // console.log('I was clicked at: ', evt.detail.intersection.object);
-                let obj = evt.detail.intersection.object.name;
+                let obj = evt.detail.intersection.object;
                 let model = this.models[this.modelIndex].object3D;
 
-                switch (obj) {
+                switch (obj.name) {
                     case 'rotLeft':
                         model.rotation.y -= 1.2;
                         break;
@@ -131,9 +129,6 @@
                         this.nextModel();
                         break;
                 }
-
-                // this.el.classList.remove('clickable');
-                // this.el.classList.add('clickable');
 
             },
             nextModel() {
@@ -167,29 +162,18 @@
 
         <a-entity id="aneurism" class="menu-model" position="-1 0 -2" gltf-model="#aneurismModel"></a-entity>
         <a-entity id="stroke" class="menu-model" position="0 0 0" gltf-model="#strokeModel" visible="false"></a-entity>
-        <!-- <a-entity id="aneurism1" class="menu-model" position="-1 0 0" gltf-model="#strokeModel"></a-entity> -->
 
         <a-plane position="0 0 0" rotation="-90 0 0" width="10" height="10" color="#A1ACB3"
             material="transparent: true; opacity: 0.5"></a-plane>
 
-        <!-- <a-plane id="panel" class="clickable" cursor-listener position="-0.5 1.5 3" rotation="0 90 0" width="0.1"
-            height="0.05" material="">
-        </a-plane>
-        <a-plane id="panel" class="clickable" cursor-listener position="-0.5 1.5 2.9" rotation="0 90 0" width="0.1"
-            height="0.05" material="">
-        </a-plane>
-        <a-plane id="panel" class="clickable" cursor-listener position="-0.5 1.5 2.8" rotation="0 90 0" width="0.1"
-            height="0.05" material="">
-        </a-plane>
-        <a-plane id="panel" class="clickable" cursor-listener position="-1 1.5 2.7" rotation="0 90 0" width="0.1"
-            height="0.05" material="">
-        </a-plane> -->
         <a-entity button-controls menu></a-entity>
         <a-entity id="rig" position="0 0 0">
             <a-entity id="camera" camera position="0 1.6 0" look-controls="pointerLockEnabled: true">
-                <a-entity id="cursor" cursor="fuse: true; fuseTimeout: 500" raycaster="objects: .clickable"
-                    position="0 0 -0.1" geometry="primitive: ring; radiusInner: 0.004; radiusOuter: 0.006"
-                    material="color: black; shader: flat">
+                <a-entity id="cursor" cursor="fuse: true; fuseTimeout: 1000" raycaster="far: 0.5; objects: .clickable"
+                    position="0 0 -0.1" geometry="primitive: ring; radiusInner: 0.0005; radiusOuter: 0.0015"
+                    material="color: white; shader: flat"
+                    animation__click="property: scale; startEvents: click; easing: easeInCubic; dur: 150; from: 0.1 0.1 0.1; to: 1 1 1"
+                    animation__fusing="property: scale; startEvents: fusing; easing: easeInCubic; dur: 1000; from: 1 1 1; to: 0.1 0.1 0.1">
                 </a-entity>
             </a-entity>
         </a-entity>
