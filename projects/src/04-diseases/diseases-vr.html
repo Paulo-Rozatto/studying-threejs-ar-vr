@@ -22,6 +22,7 @@
     <!-- Library of Virtual Reality -->
     <script type="text/javascript" charset="UTF-8" src="../../libs/aframe-master.js"></script>
     <script type="text/javascript" charset="UTF-8" src="../../libs/aframe-button-controls.js"></script>
+    <script type="text/javascript" charset="UTF-8" src="../../libs/vr-interface.js"></script>
 
     <script>
         AFRAME.registerComponent('menu', {
@@ -47,6 +48,9 @@
                     zoomOut: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAABhGlDQ1BJQ0MgcHJvZmlsZQAAKJF9kT1Iw0AcxV9TRSkVFSuIOGSoThb8Qhy1CkWoEGqFVh1MLv2CJg1Jiouj4Fpw8GOx6uDirKuDqyAIfoA4OTopukiJ/0sKLWI9OO7Hu3uPu3eAUC0yzWobAzTdNhOxqJhKr4odrwigH70YR4/MLGNOkuJoOb7u4ePrXYRntT735+hSMxYDfCLxLDNMm3iDeHrTNjjvE4dYXlaJz4lHTbog8SPXFY/fOOdcFnhmyEwm5olDxGKuiZUmZnlTI54iDquaTvlCymOV8xZnrVhm9XvyFwYz+soy12kOIYZFLEGCCAVlFFCEjQitOikWErQfbeEfdP0SuRRyFcDIsYASNMiuH/wPfndrZScnvKRgFGh/cZyPYaBjF6hVHOf72HFqJ4D/GbjSG/5SFZj5JL3S0MJHQPc2cHHd0JQ94HIHGHgyZFN2JT9NIZsF3s/om9JA3y0QWPN6q+/j9AFIUlfxG+DgEBjJUfZ6i3d3Nvf275l6fz+EwHKuBmeZxQAAAAlwSFlzAAAuIwAALiMBeKU/dgAAAAd0SU1FB+QKFRIiHi5pQGUAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABUFBMVEX////8/Pz9/f38/Pz6+vr4+Pj19fXy8vLw8PDx8fHv7+/w8PDu7u7r6+vr6+vo6Ojn5+fl5eXm5ubj4+Ph4eHf39/e3t7c3Nza2trV1dXT09PR0dHOzs7KysrJycnHx8fIyMjDw8O+vr6/v7+9vb24uLiwsLCsrKyoqKikpKSgoKCYmJiZmZmWlpaTk5ORkZGPj4+QkJCOjo6MjIyNjY2Li4uJiYmGhoaBgYGAgIB9fX16enp3d3d3d3d0dHR1dXVzc3NycnJvb29wcHBtbW1ubm5ra2toaGhpaWlnZ2dkZGRlZWViYmJjY2NeXl5bW1tZWVlUVFRWVlZRUVFOTk5PT09KSkpISEhERERDQ0M/Pz88PDw9PT02NjY3NzcyMjI0NDQvLy8xMTErKystLS0nJycpKSkiIiIkJCQcHBwfHx8ZGRkNDQ0SEhIAAAAGBgZiMTsFAAAAbnRSTlOAgYGCg4SFh4iIiYmKi4yNjo+PkZKTlJWWmZucnqChoqKlqKiprbK1t7q9wsLExsfIyMnKysvMztHS1NbX2NnZ2tvc3N3d3+Dg4eLi4+Pm5+jq6uzt7e/w8fLz9PT29vf3+Pj5+fr6+/v8/P3+/pzEfSUAAAABYktHRG4iD1EXAAABWElEQVRYw+2UR1MCQRBGn4gJFVFRMYE54oI5YhYxK4KYxYwK7f+/ebBqnQu4y8GDNe/0XfpVz1TXBxqNRvMf8YiIiGyAfy9zv9IMSjKua1dfTjrojr9G6wpZej5D+HNht3fzpgElGVdzbZUzaf9snTe5VGDe93jgZP8YcD1PoSRDuqDmM+GEwWxF3nnX2bmbsuwowFZcSRi5EuB2AegSX7750mimFdwyBDB3qSSMK4BUGGiXjnyCKekHyrJBgPW4kjCuAVLjBQUDMgbA/hFQ/TKpJisC39uaA4BALlTbuH5XryYrgl7zDgK7r0/LLaAkS0/QaH4l+PCnArPJ5g8BYhHGRUQuLM+bTWYK7G3w02TFCZQmK06gNNm3YNv2BmaTTZ8CJG3/gdlkw5ly8OYiMJKxIfhpMs/HRJVv8TACPdLpsGEwO60v8b7TFIuAYzZt/Q40Go2mGL4AK9NV0EnIO3QAAAAASUVORK5CYII=',
                     next: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAABhGlDQ1BJQ0MgcHJvZmlsZQAAKJF9kT1Iw0AcxV9TRSkVFSuIOGSoThb8Qhy1CkWoEGqFVh1MLv2CJg1Jiouj4Fpw8GOx6uDirKuDqyAIfoA4OTopukiJ/0sKLWI9OO7Hu3uPu3eAUC0yzWobAzTdNhOxqJhKr4odrwigH70YR4/MLGNOkuJoOb7u4ePrXYRntT735+hSMxYDfCLxLDNMm3iDeHrTNjjvE4dYXlaJz4lHTbog8SPXFY/fOOdcFnhmyEwm5olDxGKuiZUmZnlTI54iDquaTvlCymOV8xZnrVhm9XvyFwYz+soy12kOIYZFLEGCCAVlFFCEjQitOikWErQfbeEfdP0SuRRyFcDIsYASNMiuH/wPfndrZScnvKRgFGh/cZyPYaBjF6hVHOf72HFqJ4D/GbjSG/5SFZj5JL3S0MJHQPc2cHHd0JQ94HIHGHgyZFN2JT9NIZsF3s/om9JA3y0QWPN6q+/j9AFIUlfxG+DgEBjJUfZ6i3d3Nvf275l6fz+EwHKuBmeZxQAAAAlwSFlzAAAuIwAALiMBeKU/dgAAAAd0SU1FB+QKFRIkBxxYTyMAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABNVBMVEX+/v7////8/Pz9/f37+/v8/Pz6+vr39/f4+Pj19fXy8vLw8PDu7u7r6+vs7Ozr6+vp6enj4+Pf39/d3d3e3t7a2trY2NjZ2dnX19fV1dXR0dHOzs7MzMzNzc3KysrJycnIyMjHx8fExMS+vr65ubmrq6uoqKipqamnp6eoqKilpaWjo6OgoKCdnZ2ampqZmZmWlpaUlJSSkpKTk5ORkZGQkJCKioqJiYmGhoaAgIB/f399fX13d3d2dnZ3d3d1dXVycnJycnJvb29wcHBsbGxoaGhjY2NiYmJgYGBdXV1bW1tcXFxUVFRSUlJTU1NRUVFKSkpERERCQkJDQ0M8PDw9PT06Ojo3NzcyMjI0NDQxMTErKysnJycpKSkiIiIkJCQcHBwfHx8ZGRkNDQ0SEhIAAAAGBgaxsr4vAAAAZXRSTlOAgIGBgoKDhISFh4mKi4uMjZGTlJSWl5eYmZyen5+goaKjpKistbe3uLi5u72/wcLExcbGx8jLzM7S09TX2NjZ2tvc3N7g4+Tl5ufn6uvr7O/x8vL09PX29/f4+fr6+/v8/P3+/vL/r4gAAAABYktHRGW13YifAAAA/ElEQVRYw+3TV08CURCG4X1FQAUbKmLHLiqiYl8VWSt2ZcEKLso5//8neGG55RATjcl8l5PJk8lkxuKHsQQQQAABBBDgHwOpx18A0oXwdik/DdCzc18+GoLmq5NGGNWTq0opla8FuJsDLXOqH6Klrc5Q0uuDmLdIWyFjOIEaA67Xwbn0A4e7wIyO79+GDYGqH9hzCLwuASzcAVa2okdMd+AC2Me0qo9ogAl1ar7ET6Cpmvwutrs5PVUvwEGu4avJuQmtVHph/qUeIPpkdwUjiWWYfRskcHYeZFwN+8wBuu1i+SLdQcxLAZHnNXwbDzXvQN5ZAAEEEECAPwXeAfR5OZ2nUVU9AAAAAElFTkSuQmCC'
                 }
+
+                let a = document.querySelector('[vr-interface]').setAttribute('vr-interface', { position: { x: 1, y: 1, z: -1 } });
+                // console.log(a); 
 
                 this.buttons = {
                     rotLeft: new THREE.Mesh(
@@ -164,6 +168,20 @@
                 this.buttons[key].material.map = texture;
             }
         });
+
+        AFRAME.registerComponent('test', {
+            init: function () {
+                const self = this;
+                const vrInterface = document.querySelector('[vr-interface]').components["vr-interface"];
+                this.text = 'mensagem de teste ai';
+
+                vrInterface.addButton('next', '#next', function () { console.log(self.text) });
+                vrInterface.addButton('rotLeft', '#rotLeft');
+                vrInterface.addButton('rotRight', '#rotRight', () => { });
+                vrInterface.addButton('zoomIn', '#zoomIn', () => { });
+                vrInterface.addButton('zoomOut', '#zoomOut', () => { });
+            }
+        });
     </script>
 </head>
 
@@ -172,7 +190,12 @@
         <a-assets timeout="3000">
             <a-asset-item id="aneurismModel" src="../../assets/models/diseases/an.glb"></a-asset-item>
             <a-asset-item id="strokeModel" src="../../assets/models/diseases/stroke.glb"></a-asset-item>
-            <!-- <img id="text" src="assets/textures/text.png"> -->
+
+            <img id="next" src="../../assets/icons/vr-interface/next.png">
+            <img id="rotLeft" src="../../assets/icons/vr-interface/rotleft.png">
+            <img id="rotRight" src="../../assets/icons/vr-interface/rotright.png">
+            <img id="zoomIn" src="../../assets/icons/vr-interface/zooin.png">
+            <img id="zoomOut" src="../../assets/icons/vr-interface/zoomout.png">
         </a-assets>
 
         <a-entity light="type: ambient; color: #fff; intensity: 0.3"></a-entity>
@@ -189,16 +212,16 @@
         <a-plane position="0 0 0" rotation="-90 0 0" width="10" height="10" color="#A1ACB3"
             material="transparent: true; opacity: 0.5"></a-plane>
 
-        <a-entity button-controls menu></a-entity>
-        <a-entity id="rig" position="0 0 0">
+        <a-entity button-controls vr-interface test></a-entity>
+
+        <a-entity id="rig" position="0 0 0" rotation="0 0 0">
             <a-entity id="camera" camera position="0 1.6 0" look-controls="pointerLockEnabled: true">
-                <a-entity id="cursor" cursor="fuse: true; fuseTimeout: 1000" raycaster="far: 0.5; objects: .clickable"
+                <!-- <a-entity id="cursor" cursor="fuse: true; fuseTimeout: 1000" raycaster="far: 1; objects: .clickable"
                     position="0 0 -0.1" geometry="primitive: ring; radiusInner: 0.0007; radiusOuter: 0.0015"
-                    material="color: white; shader: flat"
+                    material="color: green; shader: flat"
                     animation__click="property: scale; startEvents: click; easing: easeInCubic; dur: 150; from: 0.1 0.1 0.1; to: 1 1 1"
-                    animation__fusing="property: scale; startEvents: fusing; easing: easeInCubic; dur: 1000; from: 1 1 1; to: 0.1 0.1 0.1"
-                    visible="false">
-                </a-entity>
+                    animation__fusing="property: scale; startEvents: fusing; easing: easeInCubic; dur: 1000; from: 1 1 1; to: 0.1 0.1 0.1">
+                </a-entity> -->
             </a-entity>
         </a-entity>
 
