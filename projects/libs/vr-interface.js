@@ -27,45 +27,8 @@ AFRAME.registerComponent('vr-interface', {
     this.cursor.setAttribute('animation__fusing2', 'property: scale; startEvents: mouseleave; easing: easeInCubic; dur: 150; to: 1 1 1')
 
     this.camera.appendChild(this.cursor);
-    // console.log(this.cursor, this.cursor.getAttribute('position'));
 
     this.el.addEventListener('click', (evt) => self.clickHandle(evt)); // click == fuse click
-
-
-    // if (data.dimension.x * data.dimension.y !== data.textures.length) {
-    //   console.warn(' Dimension doesn\'t match the number of textures.\n',
-    //     `Dimension has been resized from (${data.dimension.x}x${data.dimension.y}) to (1x${data.textures.length}).`)
-    //   data.dimension.x = 1;
-    //   data.dimension.y = data.textures.length;
-    // }
-    // all buttons got the same geometry
-    // let buttonGeometry = new THREE.PlaneGeometry(data.buttonSize.x, data.buttonSize.y);
-
-    // for (let i = 0; i < data.dimension.x; i++) {
-    //   for (let j = 0; j < data.dimension.y; j++) {
-    //     let texture = new THREE.Texture();
-    //     texture.image = data.textures[i * data.dimension.y + j];
-    //     texture.needsUpdate = true;
-
-    //     // console.log(data.textures[i * data.dimension.y + j])
-
-    //     let button = new THREE.Mesh(
-    //       buttonGeometry,
-    //       new THREE.MeshBasicMaterial({ map: texture })
-    //     );
-    //     button.name = data.textures[i * data.dimension.y + j].name;
-    //     button.rotation.y = Math.PI / 2;
-    //     button.position.set(
-    //       data.position.x,
-    //       data.position.y - i * data.buttonSize.y,
-    //       data.position.z + j * data.buttonSize.x - data.buttonSize.x * 0.5 * (data.dimension.y - 1)
-    //     );
-    //     this.buttons[button.name] = button;
-    //     el.sceneEl.setObject3D(button.name, this.buttons[button.name]);
-    //     // console.log(button.name, this.buttons[button.name].position);
-    //   }
-    // }
-
   },
 
   update: function (oldData) {
@@ -76,10 +39,6 @@ AFRAME.registerComponent('vr-interface', {
     // If `oldData` is empty, then this means we're in the initialization process.
     // No need to update.
     if (Object.keys(oldData).length === 0) { return; }
-
-    // if (oldData.position !== data.position) {
-    //   this.box.position.set(data.position.x, data.position.y, data.position.z)
-    // }
   },
   clickHandle: function (evt) {
     let name = evt.detail.intersection.object.name;
@@ -93,7 +52,7 @@ AFRAME.registerComponent('vr-interface', {
   addButton: function (name, img, callback) {
     const data = this.data;
 
-    let image = document.querySelector(img)//.getAttribute('src');
+    let image = document.querySelector(img);
 
 
     let texture = new THREE.Texture();
@@ -128,7 +87,6 @@ AFRAME.registerComponent('vr-interface', {
     button.onClick = callback;
 
     this.buttons.push(button);
-    // console.log(this.buttons)
 
     const entity = document.createElement('a-entity');
     entity.setObject3D(button.name, button)
