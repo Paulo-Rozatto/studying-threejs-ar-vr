@@ -1,10 +1,10 @@
 AFRAME.registerComponent('vr-interface', {
   schema: {
-    position: { type: 'vec3', default: { x: -1, y: 1.6, z: 0 } },
+    position: { type: 'vec3', default: { x: -1, y: 0, z: 0 } },
     dimension: { type: 'vec2', default: { x: 5, y: 1 } },
     centralize: { type: 'bool', default: true },
     buttonSize: { type: 'vec2', default: { x: 0.25, y: 0.25 } },
-    textures: { type: 'selectorAll' }
+    textures: { type: 'selectorAll' },
   },
 
   init: function () {
@@ -30,16 +30,16 @@ AFRAME.registerComponent('vr-interface', {
 
     this.el.addEventListener('click', (evt) => self.clickHandle(evt)); // click == fuse click
   },
+  // TODO: implement update function
+  // update: function (oldData) {
+  //   const el = this.el;
+  //   const data = this.data;
 
-  update: function (oldData) {
-    const el = this.el;
-    const data = this.data;
 
-
-    // If `oldData` is empty, then this means we're in the initialization process.
-    // No need to update.
-    if (Object.keys(oldData).length === 0) { return; }
-  },
+  //   // If `oldData` is empty, then this means we're in the initialization process.
+  //   // No need to update.
+  //   if (Object.keys(oldData).length === 0) { return; }
+  // },
   clickHandle: function (evt) {
     let name = evt.detail.intersection.object.name;
 
@@ -52,8 +52,11 @@ AFRAME.registerComponent('vr-interface', {
   addButton: function (name, img, callback) {
     const data = this.data;
 
-    let image = document.querySelector(img);
+    if (data.dimension.x * data.dimension.y <= this.buttons.length) {
+      console.warn('VRInterface: Number of buttons doesn\'t match dimensions limits.')
+    }
 
+    let image = document.querySelector(img);
 
     let texture = new THREE.Texture();
     texture.image = image;
@@ -66,7 +69,7 @@ AFRAME.registerComponent('vr-interface', {
     button.name = name;
     button.rotation.y = Math.PI / 2
 
-    let i, j;
+    let i, j; // indexes of imaginary matrix where buttons are placed
     if (this.buttons.length === 0) {
       i = 0;
     }
@@ -75,10 +78,12 @@ AFRAME.registerComponent('vr-interface', {
     }
     j = this.buttons.length - data.dimension.y * i;
 
+    // 
+    let camera = document.getElementById('camera').getAttribute('position');
     button.position.set(
-      data.position.x,
-      data.position.y - i * data.buttonSize.y,
-      data.position.z - j * data.buttonSize.x,
+      this.camera.object3D.position.x + data.position.x,
+      (this.camera.object3D.position.y + data.position.y) - i * data.buttonSize.y,
+      (this.camera.object3D.position.z + data.position.z) - j * data.buttonSize.x,
     );
     if (data.centralize) {
       button.position.y += data.buttonSize.y * 0.5 * (data.dimension.x - 1);

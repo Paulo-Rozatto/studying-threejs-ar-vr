@@ -212,19 +212,11 @@
         <a-plane position="0 0 0" rotation="-90 0 0" width="10" height="10" color="#A1ACB3"
             material="transparent: true; opacity: 0.5"></a-plane>
 
-        <a-entity button-controls vr-interface test></a-entity>
-
         <a-entity id="rig" position="0 0 0" rotation="0 0 0">
-            <a-entity id="camera" camera position="0 1.6 0" look-controls="pointerLockEnabled: true">
-                <!-- <a-entity id="cursor" cursor="fuse: true; fuseTimeout: 1000" raycaster="far: 1; objects: .clickable"
-                    position="0 0 -0.1" geometry="primitive: ring; radiusInner: 0.0007; radiusOuter: 0.0015"
-                    material="color: green; shader: flat"
-                    animation__click="property: scale; startEvents: click; easing: easeInCubic; dur: 150; from: 0.1 0.1 0.1; to: 1 1 1"
-                    animation__fusing="property: scale; startEvents: fusing; easing: easeInCubic; dur: 1000; from: 1 1 1; to: 0.1 0.1 0.1">
-                </a-entity> -->
-            </a-entity>
+            <a-entity id="camera" camera position="0 1.6 0" look-controls="pointerLockEnabled: true"></a-entity>
         </a-entity>
 
+        <a-entity vr-interface test></a-entity>
     </a-scene>
 
 </body>
