@@ -1,16 +1,44 @@
+/*
+  Usage:
+  - Import vr-interface to your code
+    <script type="text/javascript" charset="UTF-8" src="path/to/vr-interface.js"></script>
+
+  - Call it in an aframe entity and pass the options to config
+     <a-entity vr-interface="position: -1 0 0; dimension: 5 1;" config></a-entity>
+
+  - To add buttons create a component in your code
+    AFRAME.registerComponent('my-component', {
+      init: function () {
+        const vrInterface = document.querySelector('[vr-interface]').components['vr-interface'];
+
+        vrInterface.addButton('myButton', '#myTexture', callbackButtonAction);
+      },
+    });
+
+  Properties:
+  - position: position relative to the camera;
+  - rotation: button rotation in Y-Axis;
+  - dimension: number of lines and columns of the imaginary matrix in which the buttons will be placed;
+  - centralize: it makes the center of the imaginary matrix correspond to the position property, if false the position property corresponds to the top-left; 
+  - buttonSize: individual button size;
+  - cursorColor: defines the color of the aim cursor.
+
+  Observations:
+  - if the scene's camera is not initialized before calling vr-interface or the number of buttons overflow the dimension property, the buttons may be misplaced. 
+*/
+
 AFRAME.registerComponent('vr-interface', {
   schema: {
     position: { type: 'vec3', default: { x: -1, y: 0, z: 0 } },
-    dimension: { type: 'vec2', default: { x: 5, y: 1 } },
+    rotation: { type: 'number', default: Math.PI / 2 },
+    dimension: { type: 'vec2', default: { x: 1, y: 1 } },
     centralize: { type: 'bool', default: true },
-    buttonSize: { type: 'vec2', default: { x: 0.25, y: 0.25 } },
-    textures: { type: 'selectorAll' },
+    buttonSize: { type: 'vec2', default: { x: 0.30, y: 0.20 } },
+    cursorColor: { type: 'color', default: 'white' },
   },
 
   init: function () {
     const self = this;
-    const el = this.el;
-    const data = this.data;
 
     this.buttons = [];
     this.camera = document.querySelector('[camera]')
@@ -18,10 +46,10 @@ AFRAME.registerComponent('vr-interface', {
     this.cursor = document.createElement('a-entity')
 
     this.cursor.setAttribute('cursor', { fuse: true, fuseTimeout: 1000, });
-    this.cursor.setAttribute('raycaster', { far: 2, objects: '.clickable' })
-    this.cursor.setAttribute('position', { x: 0, y: 0, z: -1 });
+    this.cursor.setAttribute('raycaster', { far: 1, objects: '.vrInterface-button' })
+    this.cursor.setAttribute('position', { x: 0, y: 0, z: -0.9 });
     this.cursor.setAttribute('geometry', { primitive: 'ring', radiusInner: 0.007, radiusOuter: 0.015 });
-    this.cursor.setAttribute('material', { color: 'white', shader: 'flat' });
+    this.cursor.setAttribute('material', { color: this.data.cursorColor, shader: 'flat' });
     this.cursor.setAttribute('animation__click', 'property: scale; startEvents: click; easing: easeInCubic; dur: 150; from: 0.1 0.1 0.1; to: 1 1 1');
     this.cursor.setAttribute('animation__fusing', 'property: scale; startEvents: fusing; easing: easeInCubic; dur: 1000; from: 1 1 1; to: 0.1 0.1 0.1')
     this.cursor.setAttribute('animation__fusing2', 'property: scale; startEvents: mouseleave; easing: easeInCubic; dur: 150; to: 1 1 1')
@@ -67,7 +95,7 @@ AFRAME.registerComponent('vr-interface', {
       new THREE.MeshBasicMaterial({ map: texture, transparent: true })
     );
     button.name = name;
-    button.rotation.y = Math.PI / 2
+    button.rotation.y = data.rotation;
 
     let i, j; // indexes of imaginary matrix where buttons are placed
     if (this.buttons.length === 0) {
@@ -78,8 +106,6 @@ AFRAME.registerComponent('vr-interface', {
     }
     j = this.buttons.length - data.dimension.y * i;
 
-    // 
-    let camera = document.getElementById('camera').getAttribute('position');
     button.position.set(
       this.camera.object3D.position.x + data.position.x,
       (this.camera.object3D.position.y + data.position.y) - i * data.buttonSize.y,
@@ -95,7 +121,7 @@ AFRAME.registerComponent('vr-interface', {
 
     const entity = document.createElement('a-entity');
     entity.setObject3D(button.name, button)
-    entity.classList.add('clickable');
+    entity.classList.add('vrInterface-button');
 
     this.el.appendChild(entity);
   }
