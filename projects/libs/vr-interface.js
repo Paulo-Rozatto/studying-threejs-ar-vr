@@ -17,7 +17,7 @@
 
   Properties:
   - position: position relative to the camera;
-  - rotation: button rotation in Y-Axis;
+  - rotation: button rotation in Y-Axis in degrees;
   - dimension: number of lines and columns of the imaginary matrix in which the buttons will be placed;
   - centralize: it makes the center of the imaginary matrix correspond to the position property, if false the position property corresponds to the top-left; 
   - buttonSize: individual button size;
@@ -34,12 +34,14 @@ AFRAME.registerComponent('vr-interface', {
     dimension: { type: 'vec2', default: { x: 1, y: 1 } },
     centralize: { type: 'bool', default: true },
     buttonSize: { type: 'vec2', default: { x: 0.30, y: 0.20 } },
+    isTransparent: { type: 'bool', default: false },
     gap: { type: 'vec2', default: { x: 0.00, y: 0.00 } },
     cursorColor: { type: 'color', default: 'white' },
   },
 
   init: function () {
     const self = this;
+    const data = this.data;
 
     this.buttons = [];
     this.camera = document.querySelector('[camera]');
@@ -50,14 +52,14 @@ AFRAME.registerComponent('vr-interface', {
     this.cursor.setAttribute('raycaster', { far: 1, objects: '.vrInterface-button' });
     this.cursor.setAttribute('position', { x: 0, y: 0, z: -0.9 });
     this.cursor.setAttribute('geometry', { primitive: 'ring', radiusInner: 0.007, radiusOuter: 0.015 });
-    this.cursor.setAttribute('material', { color: this.data.cursorColor, shader: 'flat' });
+    this.cursor.setAttribute('material', { color: data.cursorColor, shader: 'flat' });
     this.cursor.setAttribute('animation__click', 'property: scale; startEvents: click; easing: easeInCubic; dur: 150; from: 0.1 0.1 0.1; to: 1 1 1');
     this.cursor.setAttribute('animation__fusing', 'property: scale; startEvents: fusing; easing: easeInCubic; dur: 1000; from: 1 1 1; to: 0.1 0.1 0.1');
     this.cursor.setAttribute('animation__fusing2', 'property: scale; startEvents: mouseleave; easing: easeInCubic; dur: 150; to: 1 1 1');
 
     this.camera.appendChild(this.cursor);
 
-    this.data.rotation = this.data.rotation * Math.PI / 180;
+    this.data.rotation = data.rotation * Math.PI / 180; // converts deg to rad
 
     this.el.addEventListener('click', (evt) => self.clickHandle(evt)); // click == fuse click
   },
@@ -95,7 +97,7 @@ AFRAME.registerComponent('vr-interface', {
 
     let button = new THREE.Mesh(
       new THREE.PlaneGeometry(data.buttonSize.x, data.buttonSize.y),
-      new THREE.MeshBasicMaterial({ map: texture, transparent: true })
+      new THREE.MeshBasicMaterial({ map: texture, transparent: data.isTransparent })
     );
     button.name = name;
     button.onClick = callback;
