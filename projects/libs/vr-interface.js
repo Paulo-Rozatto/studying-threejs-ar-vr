@@ -30,11 +30,11 @@
 AFRAME.registerComponent('vr-interface', {
   schema: {
     position: { type: 'vec3', default: { x: -1, y: 0, z: 0 } },
-    rotation: { type: 'number', default: Math.PI / 2 },
+    rotation: { type: 'number', default: 90 },
     dimension: { type: 'vec2', default: { x: 1, y: 1 } },
     centralize: { type: 'bool', default: true },
     buttonSize: { type: 'vec2', default: { x: 0.30, y: 0.20 } },
-    gap: { type: 'vec2', default: { x: 0.02, y: 0.02 } },
+    gap: { type: 'vec2', default: { x: 0.00, y: 0.00 } },
     cursorColor: { type: 'color', default: 'white' },
   },
 
@@ -56,6 +56,8 @@ AFRAME.registerComponent('vr-interface', {
     this.cursor.setAttribute('animation__fusing2', 'property: scale; startEvents: mouseleave; easing: easeInCubic; dur: 150; to: 1 1 1');
 
     this.camera.appendChild(this.cursor);
+
+    this.data.rotation = this.data.rotation * Math.PI / 180;
 
     this.el.addEventListener('click', (evt) => self.clickHandle(evt)); // click == fuse click
   },
@@ -96,7 +98,7 @@ AFRAME.registerComponent('vr-interface', {
       new THREE.MeshBasicMaterial({ map: texture, transparent: true })
     );
     button.name = name;
-    button.rotation.y = data.rotation;
+    button.onClick = callback;
 
     let i, j; // indexes of imaginary matrix where buttons are placed
     if (this.buttons.length === 0) {
@@ -108,17 +110,18 @@ AFRAME.registerComponent('vr-interface', {
     j = this.buttons.length - data.dimension.y * i;
 
     button.position.set(
-      this.camera.object3D.position.x + data.position.x,
+      (this.camera.object3D.position.x + data.position.x) + j * (data.buttonSize.x + data.gap.x) * Math.cos(data.rotation),
       (this.camera.object3D.position.y + data.position.y) - i * (data.buttonSize.y + data.gap.y),
-      (this.camera.object3D.position.z + data.position.z) - j * (data.buttonSize.x + data.gap.x),
+      (this.camera.object3D.position.z + data.position.z) + j * (data.buttonSize.x + data.gap.x) * -Math.sin(data.rotation)
     );
+
+    button.rotation.y = data.rotation;
+
     if (data.centralize) {
-      button.position.y += data.buttonSize.y * 0.5 * (data.dimension.x - 1);
-      button.position.z += data.buttonSize.x * 0.5 * (data.dimension.y - 1);
+      button.position.y += data.buttonSize.y * 0.5 * (data.dimension.x - 1); // data.dimension.x == lines
+      button.position.x -= data.buttonSize.x * 0.5 * (data.dimension.y - 1) * Math.cos(data.rotation); // data.dimension.y == columns
+      button.position.z += data.buttonSize.x * 0.5 * (data.dimension.y - 1) * Math.sin(data.rotation); // data.dimension.y == columns
     }
-
-    button.onClick = callback;
-
     this.buttons.push(button);
 
     const entity = document.createElement('a-entity');
@@ -126,5 +129,5 @@ AFRAME.registerComponent('vr-interface', {
     entity.classList.add('vrInterface-button');
 
     this.el.appendChild(entity);
-  }
+  },
 });
