@@ -38,7 +38,20 @@ AFRAME.registerComponent('vr-interface', {
     gap: { type: 'vec2', default: { x: 0.00, y: 0.00 } },
     cursorColor: { type: 'color', default: 'white' },
     cursorPosition: { type: 'vec3', default: { x: 0, y: 0, z: -0.9 } },
-    raycaster: { type: 'vec2', default: { x: 0.1, y: 10 } }, // x == near, y == far
+    raycaster: {
+      default: { near: 0, far: 1 },
+      parse: function (value) {
+        if (typeof value === 'string') {
+          let props = value.split(' ');
+          return { near: props[0], far: props[1] }
+        }
+        return value;
+      },
+      stringify: function (value) {
+        return `${value.near} ${value.far}`
+      }
+
+    },
     border: {
       default: { thickness: 1, color: null },
       parse: function (value) {
@@ -65,7 +78,7 @@ AFRAME.registerComponent('vr-interface', {
     this.borderGeometry;
 
     this.cursor.setAttribute('cursor', { fuse: true, fuseTimeout: 1000, });
-    this.cursor.setAttribute('raycaster', { near: 0, far: 2, showLine: new THREE.Line, objects: '.vrInterface-button' });
+    this.cursor.setAttribute('raycaster', { near: data.raycaster.near, far: data.raycaster.far, objects: '.vrInterface-button' });
     this.cursor.setAttribute('position', { x: data.cursorPosition.x, y: data.cursorPosition.y, z: data.cursorPosition.z });
     this.cursor.setAttribute('geometry', { primitive: 'ring', radiusInner: 0.007, radiusOuter: 0.015 });
     this.cursor.setAttribute('material', { color: data.cursorColor, shader: 'flat' });
