@@ -34,9 +34,24 @@ AFRAME.registerComponent('vr-interface', {
     dimension: { type: 'vec2', default: { x: 1, y: 1 } },
     centralize: { type: 'bool', default: true },
     buttonSize: { type: 'vec2', default: { x: 0.30, y: 0.20 } },
-    isTransparent: { type: 'bool', default: false },
+    transparency: { type: 'bool', default: false },
     gap: { type: 'vec2', default: { x: 0.00, y: 0.00 } },
     cursorColor: { type: 'color', default: 'white' },
+    cursorPosition: { type: 'vec3', default: { x: 0, y: 0, z: -0.9 } },
+    raycaster: { type: 'vec2', default: { x: 0.1, y: 10 } }, // x == near, y == far
+    border: {
+      default: { thickness: 1, color: null },
+      parse: function (value) {
+        if (typeof value === 'string') {
+          let props = value.split(' ');
+          return { thickness: props[0], color: props[1] }
+        }
+        return value;
+      },
+      stringify: function (value) {
+        return `${value.thickness} ${value.color}`
+      }
+    },
   },
 
   init: function () {
@@ -45,12 +60,13 @@ AFRAME.registerComponent('vr-interface', {
 
     this.buttons = [];
     this.camera = document.querySelector('[camera]');
-
     this.cursor = document.createElement('a-entity');
+    this.borderMaterial = null;
+    this.borderGeometry;
 
     this.cursor.setAttribute('cursor', { fuse: true, fuseTimeout: 1000, });
-    this.cursor.setAttribute('raycaster', { far: 1, objects: '.vrInterface-button' });
-    this.cursor.setAttribute('position', { x: 0, y: 0, z: -0.9 });
+    this.cursor.setAttribute('raycaster', { near: 0, far: 2, showLine: new THREE.Line, objects: '.vrInterface-button' });
+    this.cursor.setAttribute('position', { x: data.cursorPosition.x, y: data.cursorPosition.y, z: data.cursorPosition.z });
     this.cursor.setAttribute('geometry', { primitive: 'ring', radiusInner: 0.007, radiusOuter: 0.015 });
     this.cursor.setAttribute('material', { color: data.cursorColor, shader: 'flat' });
     this.cursor.setAttribute('animation__click', 'property: scale; startEvents: click; easing: easeInCubic; dur: 150; from: 0.1 0.1 0.1; to: 1 1 1');
@@ -59,7 +75,15 @@ AFRAME.registerComponent('vr-interface', {
 
     this.camera.appendChild(this.cursor);
 
+    if (data.border.color) {
+      this.borderMaterial = new THREE.LineBasicMaterial({
+        color: new THREE.Color(data.border.color),
+        linewidth: data.border.thickness
+      })
+    }
+
     this.data.rotation = data.rotation * Math.PI / 180; // converts deg to rad
+
 
     this.el.addEventListener('click', (evt) => self.clickHandle(evt)); // click == fuse click
   },
@@ -97,7 +121,7 @@ AFRAME.registerComponent('vr-interface', {
 
     let button = new THREE.Mesh(
       new THREE.PlaneGeometry(data.buttonSize.x, data.buttonSize.y),
-      new THREE.MeshBasicMaterial({ map: texture, transparent: data.isTransparent })
+      new THREE.MeshBasicMaterial({ map: texture, transparent: data.transparency })
     );
     button.name = name;
     button.onClick = callback;
@@ -127,9 +151,21 @@ AFRAME.registerComponent('vr-interface', {
     this.buttons.push(button);
 
     const entity = document.createElement('a-entity');
-    entity.setObject3D(button.name, button)
-    entity.classList.add('vrInterface-button');
+    entity.setObject3D(button.name, button);
+    // entity.classList.add('vrInterface-button');
 
+    if (this.borderMaterial) { // if there's a material, the user wants a border
+      let border = new THREE.LineSegments(
+        new THREE.EdgesGeometry(button.geometry),
+        this.borderMaterial
+      )
+      border.position.copy(button.position);
+      border.rotation.copy(button.rotation);
+
+      this.el.setObject3D(button.name + '-border', border);
+    }
+
+    entity.classList.add('vrInterface-button');
     this.el.appendChild(entity);
   },
 });
