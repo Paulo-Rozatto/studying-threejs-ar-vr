@@ -1,10 +1,10 @@
 /*
   Usage:
-  - Import vr-interface to your code
+  - Import vr-interface to your code:
     <script type="text/javascript" charset="UTF-8" src="path/to/vr-interface.js"></script>
 
-  - Call it in an aframe entity and pass the options to config
-     <a-entity vr-interface="position: -1 0 0; dimension: 5 1;" config></a-entity>
+  - Call it in an aframe entity and pass the options to config like the example below:
+     <a-entity vr-interface="position: -1 0 0; rotation: 90; dimension: 5 1; gap: 0 0.02; border: 2 #ff0000"></a-entity>
 
   - To add buttons create a component in your code
     AFRAME.registerComponent('my-component', {
@@ -12,6 +12,7 @@
         const vrInterface = document.querySelector('[vr-interface]').components['vr-interface'];
 
         vrInterface.addButton('myButton', '#myTexture', callbackButtonAction);
+        vrInterface.addButton('myButton2', '#myTexture2', callbackButtonAction2);
       },
     });
 
@@ -19,9 +20,14 @@
   - position: position relative to the camera;
   - rotation: button rotation in Y-Axis in degrees;
   - dimension: number of lines and columns of the imaginary matrix in which the buttons will be placed;
-  - centralize: it makes the center of the imaginary matrix correspond to the position property, if false the position property corresponds to the top-left; 
+  - centralize: whether to align buttons to the center, if false they are aligned to the top-left; 
   - buttonSize: individual button size;
-  - cursorColor: defines the color of the aim cursor.
+  - transparency: whether the textures have transparency;
+  - gap: distance beteween the buttons in the x and y axis;
+  - cursorColor: defines the color of the aim cursor;
+  - cursorPosition: defines the positon of the aim cursor, usually it doesn't need to change;
+  - raycaster: defines near and far properties of the raycaster;
+  - border: thickness and color of button border, if nothing is set, no border is added.
 
   Observations:
   - if the scene's camera is not initialized before calling vr-interface or the number of buttons overflow the dimension property, the buttons may be misplaced. 
@@ -72,6 +78,7 @@ AFRAME.registerComponent('vr-interface', {
     const data = this.data;
 
     this.buttons = [];
+    this.buttonGeometry = new THREE.PlaneGeometry(1, 1);
     this.camera = document.querySelector('[camera]');
     this.cursor = document.createElement('a-entity');
     this.borderMaterial = null;
@@ -100,16 +107,75 @@ AFRAME.registerComponent('vr-interface', {
 
     this.el.addEventListener('click', (evt) => self.clickHandle(evt)); // click == fuse click
   },
-  // TODO: implement update function
-  // update: function (oldData) {
-  //   const el = this.el;
-  //   const data = this.data;
+  update: function (oldData) {
+    const el = this.el;
+    const data = this.data;
 
+    // If `oldData` is empty, then this means we're in the initialization process. No need to update.
+    if (Object.keys(oldData).length === 0) { return; }
 
-  //   // If `oldData` is empty, then this means we're in the initialization process.
-  //   // No need to update.
-  //   if (Object.keys(oldData).length === 0) { return; }
-  // },
+    if (oldData.rotation !== data.rotation) {
+      this.data.rotation = data.rotation * Math.PI / 180; // converts deg to rad
+    }
+
+    // if position, dimension, button size, gap, or rotation changes it's the same processes to change the buttons
+    if (
+      oldData.position.x !== data.position.x || oldData.position.y !== data.position.y || oldData.position.z !== data.position.z ||
+      oldData.dimension.x !== data.dimension.x || oldData.dimension.y !== data.dimension.y ||
+      oldData.buttonSize.x !== data.buttonSize.x || oldData.buttonSize.y !== data.buttonSize.y ||
+      oldData.gap.x !== data.gap.x || oldData.gap.y !== data.gap.y ||
+      oldData.rotation !== data.rotation
+    ) {
+      for (let k = 0; k < this.buttons.length; k++) {
+        this.buttons[k].rotation.y = data.rotation;
+
+        this.positionate(this.buttons[k], k);
+        if (oldData.buttonSize.x !== data.buttonSize.x || oldData.buttonSize.y !== data.buttonSize.y) {
+          this.buttons[k].scale.set(data.buttonSize.x, data.buttonSize.y, 1);
+        }
+
+        if (data.centralize) {
+          this.centralize(this.buttons[k]);
+        }
+
+        if (this.borderMaterial) {
+          this.positionateBorder(this.buttons[k])
+        }
+      }
+    }
+    else if (oldData.centralize !== data.centralize) { // the previous option updates the centralization already
+      for (let k = 0; k < this.buttons.length; k++) {
+        if (data.centralize) {
+          this.centralize(this.buttons[k]);
+        }
+        else {
+          this.decentralize(this.buttons[k]);
+        }
+        if (this.borderMaterial) {
+          this.positionateBorder(this.buttons[k])
+        }
+      }
+    }
+
+    if (oldData.cursorColor !== data.cursorColor) {
+      this.cursor.setAttribute('material', { color: data.cursorColor, shader: 'flat' });
+    }
+
+    if (oldData.cursorPosition !== data.cursorPosition) {
+      this.cursor.setAttribute('position', { x: data.cursorPosition.x, y: data.cursorPosition.y, z: data.cursorPosition.z });
+    }
+
+    if (oldData.raycaster.near !== data.raycaster.near || oldData.raycaster.far !== data.raycaster.far) {
+      this.cursor.setAttribute('raycaster', { near: data.raycaster.near, far: data.raycaster.far });
+    }
+
+    if (oldData.border.thickness !== data.border.thickness || oldData.border.color !== data.border.color) {
+      this.borderMaterial.linewidth = data.border.thickness;
+      this.borderMaterial.color = new THREE.Color(data.border.color);
+      this.borderMaterial.needsUpdate = true;
+    }
+
+  },
   clickHandle: function (evt) {
     let name = evt.detail.intersection.object.name;
 
@@ -127,26 +193,48 @@ AFRAME.registerComponent('vr-interface', {
     }
 
     let image = document.querySelector(img);
-
     let texture = new THREE.Texture();
-    texture.image = image;
-    texture.needsUpdate = true;
+
+    if (image) {
+      texture.image = image;
+      texture.needsUpdate = true;
+    }
 
     let button = new THREE.Mesh(
-      new THREE.PlaneGeometry(data.buttonSize.x, data.buttonSize.y),
+      this.buttonGeometry,
       new THREE.MeshBasicMaterial({ map: texture, transparent: data.transparency })
     );
     button.name = name;
     button.onClick = callback;
+    button.scale.set(data.buttonSize.x, data.buttonSize.y, 1);
+    button.rotation.y = data.rotation;
 
-    let i, j; // indexes of imaginary matrix where buttons are placed
-    if (this.buttons.length === 0) {
-      i = 0;
+    this.positionate(button);
+    this.centralize(button);
+
+    const entity = document.createElement('a-entity');
+    entity.setObject3D(button.name, button);
+
+    if (this.borderMaterial) { // if there's a material, the user wants a border
+      let border = new THREE.LineSegments(
+        new THREE.EdgesGeometry(button.geometry),
+        this.borderMaterial
+      )
+      button.border = border;
+      this.positionateBorder(button);
+      this.el.setObject3D(button.name + '-border', border);
     }
-    else {
-      i = Math.trunc((this.buttons.length) / data.dimension.y);
-    }
-    j = this.buttons.length - data.dimension.y * i;
+
+    entity.classList.add('vrInterface-button');
+    this.buttons.push(button);
+    this.el.appendChild(entity);
+  },
+  positionate: function (button, length) {
+    const data = this.data;
+
+    let n = typeof length === 'number' ? length : this.buttons.length; // index of the n-th button
+    let i = Math.trunc(n / data.dimension.y); // index of the line
+    let j = n - data.dimension.y * i; // index of the column
 
     button.position.set(
       (this.camera.object3D.position.x + data.position.x) + j * (data.buttonSize.x + data.gap.x) * Math.cos(data.rotation),
@@ -154,31 +242,20 @@ AFRAME.registerComponent('vr-interface', {
       (this.camera.object3D.position.z + data.position.z) + j * (data.buttonSize.x + data.gap.x) * -Math.sin(data.rotation)
     );
 
-    button.rotation.y = data.rotation;
-
-    if (data.centralize) {
-      button.position.y += data.buttonSize.y * 0.5 * (data.dimension.x - 1); // data.dimension.x == lines
-      button.position.x -= data.buttonSize.x * 0.5 * (data.dimension.y - 1) * Math.cos(data.rotation); // data.dimension.y == columns
-      button.position.z += data.buttonSize.x * 0.5 * (data.dimension.y - 1) * Math.sin(data.rotation); // data.dimension.y == columns
-    }
-    this.buttons.push(button);
-
-    const entity = document.createElement('a-entity');
-    entity.setObject3D(button.name, button);
-    // entity.classList.add('vrInterface-button');
-
-    if (this.borderMaterial) { // if there's a material, the user wants a border
-      let border = new THREE.LineSegments(
-        new THREE.EdgesGeometry(button.geometry),
-        this.borderMaterial
-      )
-      border.position.copy(button.position);
-      border.rotation.copy(button.rotation);
-
-      this.el.setObject3D(button.name + '-border', border);
-    }
-
-    entity.classList.add('vrInterface-button');
-    this.el.appendChild(entity);
   },
+  centralize: function (button) {
+    button.position.y += this.data.buttonSize.y * 0.5 * (this.data.dimension.x - 1); // data.dimension.x == lines
+    button.position.x -= this.data.buttonSize.x * 0.5 * (this.data.dimension.y - 1) * Math.cos(this.data.rotation); // data.dimension.y == columns
+    button.position.z += this.data.buttonSize.x * 0.5 * (this.data.dimension.y - 1) * Math.sin(this.data.rotation); // data.dimension.y == columns
+  },
+  decentralize: function (button) {
+    button.position.y -= this.data.buttonSize.y * 0.5 * (this.data.dimension.x - 1); // data.dimension.x == lines
+    button.position.x += this.data.buttonSize.x * 0.5 * (this.data.dimension.y - 1) * Math.cos(this.data.rotation); // data.dimension.y == columns
+    button.position.z -= this.data.buttonSize.x * 0.5 * (this.data.dimension.y - 1) * Math.sin(this.data.rotation); // data.dimension.y == columns
+  },
+  positionateBorder: function (button) {
+    button.border.scale.copy(button.scale);
+    button.border.position.copy(button.position);
+    button.border.rotation.copy(button.rotation);
+  }
 });

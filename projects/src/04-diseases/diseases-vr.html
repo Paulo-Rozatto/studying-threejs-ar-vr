@@ -172,7 +172,8 @@
         AFRAME.registerComponent('test', {
             init: function () {
                 const self = this;
-                const vrInterface = document.querySelector('[vr-interface]').components["vr-interface"];
+                const entity = document.querySelector('[vr-interface]');
+                const vrInterface = entity.components["vr-interface"];
                 this.text = 'mensagem de teste ai';
 
                 vrInterface.addButton('next', '#next', function () { console.log(self.text) });
@@ -180,6 +181,9 @@
                 vrInterface.addButton('rotRight', '#rotRight', () => { });
                 vrInterface.addButton('zoomIn', '#zoomIn', () => { });
                 vrInterface.addButton('zoomOut', '#zoomOut', () => { });
+
+                entity.setAttribute('vr-interface', { border: '2 red' });
+                // vrInterface.setAttribute('rotation', 90);
             }
         });
     </script>
@@ -217,7 +221,7 @@
         </a-entity>
 
         <a-entity
-            vr-interface="dimension: 5 1; rotation: 80; position: -0.9 0 -0.1; transparency: true; gap: 0.01 0.01; border: 2 rgb(0,0,3); raycaster: 0 1;"
+            vr-interface="dimension: 5 1; rotation: 80; position: -0.9 0 -0.1; transparency: true; gap: 0.01 0.01; border: 2 rgb(0,0,3); raycaster: 0 1; centralize: true;"
             test>
         </a-entity>
     </a-scene>
