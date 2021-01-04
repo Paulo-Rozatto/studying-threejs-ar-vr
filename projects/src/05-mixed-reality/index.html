@@ -13,26 +13,19 @@
         }
 
         #container {
-            /* margin: 0px auto; */
             width: 100vh;
             height: 100vw;
-            /* height: 375px; */
-            /* border: 10px #333 solid; */
         }
 
         #videoElement {
-            /* width: 100%; */
-            /* height: 100%; */
             width: 100vw;
-            /* height: 375px; */
-            /* background-color: #666; */
         }
     </style>
 </head>
 
 <body>
     </div>
-    <a-scene main_scene id="scene" background="color: black">
+    <a-scene main_scene id="scene" stats background="color: black">
         <a-assets timeout="3000">
             <img id="next" src="../../assets/icons/vr-interface/next.png">
             <video id="webcam" playsinline></video>
@@ -48,33 +41,28 @@
         <a-entity id="rig" position="0 0 0" rotation="0 0 0">
             <a-entity id="camera" camera position="0 1.6 0" look-controls="pointerLockEnabled: true"
                 wasd-controls="acceleration:150; fly: true; enabled: false">
-                <a-plane src="#webcam" position="0 0 -2" rotation="0 0 0" width="4" height="3"></a-plane>
+                <a-plane src="#webcam" position="0 0 -4.2" rotation="0 0 0" width="8" height="4.5"></a-plane>
             </a-entity>
         </a-entity>
     </a-scene>
 
     <script>
-        var video = document.querySelector("#videoElement");
-
         if (navigator.mediaDevices.getUserMedia) {
-            // navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: "environment" } } })
-            // navigator.mediaDevices.getUserMedia({ video: true })
-            //     .then(function (stream) {
-            //         video.srcObject = stream;
-            //     })
-            //     .catch(function (err0r) {
-            //         console.log("Something went wrong!");
-            //     });
 
-            // navigator.mediaDevices.getUserMedia({ audio: false, video: true })
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: "environment" } } })
-                .then(stream => {
-                    let $video = document.querySelector('video')
-                    $video.srcObject = stream
-                    $video.onloadedmetadata = () => {
-                        $video.play()
-                    }
-                })
+            navigator.mediaDevices.getUserMedia({
+                audio: false,
+                video: {
+                    width: { min: 1024, ideal: 1280, max: 1920 },
+                    height: { min: 576, ideal: 720, max: 1080 },
+                    facingMode: "environment",
+                }
+            }).then(stream => {
+                let $video = document.querySelector('video')
+                $video.srcObject = stream
+                $video.onloadedmetadata = () => {
+                    $video.play()
+                }
+            })
         }
 
         AFRAME.registerComponent('config', {
