@@ -271,7 +271,11 @@ AFRAME.registerComponent('vr-interface', {
       self.isToChangeRho = true;
 
       self.stopButton.object3D.visible = true;
-      self.stopButton.object3D.position.set((data.dimension.y / 2 * data.buttonSize.x + 0.06), (-data.dimension.x * data.buttonSize.y) / 4 - 0.05, 0.01);
+      self.stopButton.object3D.position.set(
+        (data.dimension.y / 2 * data.buttonSize.x + 0.06),
+        (-data.dimension.x + 1) * data.buttonSize.y / 2,
+        0.01
+      );
       self.stopButton.object3D.rotation.z = 0;
       self.stopButton.classList.add('vrInterface-button');
     }
