@@ -22,6 +22,7 @@
     <!-- Library of Virtual Reality -->
     <script type="text/javascript" charset="UTF-8" src="../../libs/aframe-master.js"></script>
     <script type="text/javascript" charset="UTF-8" src="../../libs/vr-interface.js"></script>
+    <script type="text/javascript" charset="UTF-8" src="../../libs/vr-grid.js"></script>
 
     <script>
         AFRAME.registerComponent('test', {
@@ -31,6 +32,42 @@
                 vrInterface.addButton('1', '#wire');
                 vrInterface.addButton('2', '#led');
                 vrInterface.addButton('3', '#resistor');
+            }
+        });
+
+        AFRAME.registerComponent('grid', {
+            init: function () {
+                const vrGrid = this.el.components['vr-grid'];
+
+                const bar1 = document.querySelector('#bar1');
+                const bar2 = document.querySelector('#bar2');
+                const ledBar = document.querySelector('#ledBar');
+
+                let f1 = function () {
+                    bar1.object3D.visible = !bar1.object3D.visible;
+                    ledBar.object3D.children[0].visible = bar1.object3D.visible && bar2.object3D.visible;
+                }
+                let f2 = function () {
+                    bar2.object3D.visible = !bar2.object3D.visible;
+                    ledBar.object3D.children[0].visible = bar1.object3D.visible && bar2.object3D.visible;
+                }
+
+                let lb = function () {
+                    ledBar.object3D.visible = !ledBar.object3D.visible;
+                    ledBar.object3D.children[0].visible = bar1.object3D.visible && bar2.object3D.visible;
+                }
+
+                vrGrid.addButton('1', '#transparent', f2);
+                vrGrid.addButton('2', '#transparent', f2);
+                vrGrid.addButton('3', '#transparent', f2);
+
+                vrGrid.addButton('4', '#transparent', lb);
+                vrGrid.addButton('5', '#transparent');
+                vrGrid.addButton('6', '#transparent');
+
+                vrGrid.addButton('8', '#transparent', f1);
+                vrGrid.addButton('7', '#transparent', f1);
+                vrGrid.addButton('9', '#transparent', f1);
             }
         });
     </script>
@@ -44,6 +81,7 @@
             <img id="led" src="img/led.png">
             <img id="resistor" src="img/resistor.png">
             <img id="wire" src="img/wire.png">
+            <img id="transparent" src="img/transparent.png">
         </a-assets>
 
         <a-entity light="type: ambient; color: #fff; intensity: 0.3"></a-entity>
@@ -52,14 +90,15 @@
         <a-box position="0 0.5 -0.8" width="2" height="1" material="color: #567689"> </a-box>
 
         <a-box position="0.6 1.075 -0.8" width="0.15" height="0.15" depth="0.2" material="color: #00ff00"></a-box>
-        <a-box position="0.25 1.04 -0.65" width="0.65" height="0.08" depth="0.08" material="color: #0000ff"></a-box>
-        <a-box position="0.25 1.04 -0.95" width="0.65" height="0.08" depth="0.08" material="color: #0000ff"></a-box>
-        <a-box position="0 1.045 -0.8" width="0.15" height="0.09" depth="0.2" material="color: #ff9999"></a-box>
-        <!-- <a-sphere position="0 1.1 -0.8" radius="0.005" material="color: #ff0000, transparency: true; opacity: 0.5"
-            light="type: point; color: #ff0000; distance: 0.5"></a-sphere> -->
-        <a-light position="0 1.1 -0.8" type="point" color="red" distance="0.2" intensity="5"
-            geometry="primitive: sphere; radius: 0.008" material="color: red">
-        </a-light>
+        <a-box id="bar1" position="0.25 1.04 -0.65" width="0.65" height="0.08" depth="0.08" material="color: #0000ff">
+        </a-box>
+        <a-box id="bar2" position="0.25 1.04 -0.95" width="0.65" height="0.08" depth="0.08" material="color: #0000ff">
+        </a-box>
+        <a-box id="ledBar" position="0 1.045 -0.8" width="0.15" height="0.09" depth="0.2" material="color: #ff9999">
+            <a-light position="0 0.05 0" type="point" color="red" distance="0.2" intensity="5"
+                geometry="primitive: sphere; radius: 0.008" material="color: red">
+            </a-light>
+        </a-box>
 
 
         <a-plane position="0 0 0" rotation="-90 0 0" width="10" height="10" color="#A1ACB3"></a-plane>
@@ -68,7 +107,12 @@
             vr-interface="dimension: 1 3; orbits: 1.2; theta: 0; rho: 0; buttonSize: 0.4 0.4; gap: 0 0; border: 5 #6d7584; movementBar: false;"
             test></a-entity>
 
-        <a-entity id="rig" position="0 0 0" rotation="0 0 0">
+        <a-entity
+            vr-grid="dimension: 3 3; orbits: 0; referencePoint: 0.25 1.01 -1;theta: 0; rho: -90; movementBar: false; transparency: true; buttonSize: 0.225 0.2; border: 5 #6d7584;"
+            grid>
+        </a-entity>
+
+        <a-entity id="rig" position="0 0.1 0.15">
             <a-entity id="camera" camera position="0 1.6 0" look-controls="pointerLockEnabled: true"
                 wasd-controls="acceleration:150; fly: true; enabled: true"></a-entity>
         </a-entity>

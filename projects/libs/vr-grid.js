@@ -59,10 +59,10 @@
   - Setting the dimension property correctly is important for displaying the vr interface elements correctly;
 */
 
-AFRAME.registerComponent('vr-interface', {
+AFRAME.registerComponent('vr-grid', {
   schema: {
     dimension: { type: 'vec2', default: { x: 1, y: 1 } },
-    radius: { type: 'number', default: 1 },
+    referencePoint: { type: 'vec3', default: { x: 0, y: 1, z: -1 } },
     orbits: {
       default: [1.1],
       parse: function (value) {
@@ -149,18 +149,6 @@ AFRAME.registerComponent('vr-interface', {
 
     this.buttonGroup = document.createElement('a-entity');
     this.el.appendChild(this.buttonGroup);
-
-    this.cursor = document.createElement('a-entity');
-    this.cursor.setAttribute('cursor', { fuse: true, fuseTimeout: 1000, });
-    this.cursor.setAttribute('raycaster', { near: data.raycaster.near, far: data.raycaster.far, objects: '.vrInterface-button' });
-    this.cursor.setAttribute('position', { x: data.cursorPosition.x, y: data.cursorPosition.y, z: data.cursorPosition.z });
-    this.cursor.setAttribute('geometry', { primitive: 'ring', radiusInner: 0.007, radiusOuter: 0.015 });
-    this.cursor.setAttribute('material', { color: data.cursorColor, shader: 'flat', depthTest: false });
-    this.cursor.setAttribute('animation__click', 'property: scale; startEvents: click; easing: easeInCubic; dur: 150; from: 0.1 0.1 0.1; to: 1 1 1');
-    this.cursor.setAttribute('animation__fusing', 'property: scale; startEvents: fusing; easing: easeInCubic; dur: 1000; from: 1 1 1; to: 0.1 0.1 0.1');
-    this.cursor.setAttribute('animation__fusing2', 'property: scale; startEvents: mouseleave; easing: easeInCubic; dur: 150; to: 1 1 1');
-
-    this.camera.appendChild(this.cursor);
 
     this.message = document.createElement('a-entity');
     this.message.setAttribute('text', { align: 'center', width: 1, height: 1, color: new THREE.Color(data.messageColor) });
@@ -336,82 +324,7 @@ AFRAME.registerComponent('vr-interface', {
       this.buttonGroup.object3D.rotation.x = this.data.rho;
     }
   },
-  update: function (oldData) {
-    //TODO - refactor this function
-
-    // const el = this.el;
-    // const data = this.data;
-
-    // // If `oldData` is empty, then this means we're in the initialization process. No need to update.
-    // if (Object.keys(oldData).length === 0) { return; }
-
-    // if (oldData.visible !== data.visible) {
-    //   if (data.visible) this.show();
-    //   else this.hide();
-    // }
-
-    // if (oldData.rotation !== data.rotation) {
-    //   this.data.rotation = data.rotation * Math.PI / 180; // converts deg to rad
-    // }
-
-    // // if position, dimension, button size, gap, or rotation changes it's the same processes to change the buttons
-    // if (
-    //   oldData.position.x !== data.position.x || oldData.position.y !== data.position.y || oldData.position.z !== data.position.z ||
-    //   oldData.dimension.x !== data.dimension.x || oldData.dimension.y !== data.dimension.y ||
-    //   oldData.buttonSize.x !== data.buttonSize.x || oldData.buttonSize.y !== data.buttonSize.y ||
-    //   oldData.gap.x !== data.gap.x || oldData.gap.y !== data.gap.y ||
-    //   oldData.rotation !== data.rotation
-    // ) {
-    //   for (let k = 0; k < this.buttons.length; k++) {
-    //     this.buttons[k].rotation.y = data.rotation;
-
-    //     this.positionate(this.buttons[k], k);
-    //     if (oldData.buttonSize.x !== data.buttonSize.x || oldData.buttonSize.y !== data.buttonSize.y) {
-    //       this.buttons[k].scale.set(data.buttonSize.x, data.buttonSize.y, 1);
-    //     }
-
-    //     if (data.centralize) {
-    //       this.centralize(this.buttons[k]);
-    //     }
-
-    //     if (this.borderMaterial) {
-    //       this.positionateBorder(this.buttons[k])
-    //     }
-    //   }
-    // }
-    // else if (oldData.centralize !== data.centralize) { // the previous option updates the centralization already
-    //   for (let k = 0; k < this.buttons.length; k++) {
-    //     if (data.centralize) {
-    //       this.centralize(this.buttons[k]);
-    //     }
-    //     else {
-    //       this.decentralize(this.buttons[k]);
-    //     }
-    //     if (this.borderMaterial) {
-    //       this.positionateBorder(this.buttons[k])
-    //     }
-    //   }
-    // }
-
-    // if (oldData.cursorColor !== data.cursorColor) {
-    //   this.cursor.setAttribute('material', { color: data.cursorColor, shader: 'flat' });
-    // }
-
-    // if (oldData.cursorPosition !== data.cursorPosition) {
-    //   this.cursor.setAttribute('position', { x: data.cursorPosition.x, y: data.cursorPosition.y, z: data.cursorPosition.z });
-    // }
-
-    // if (oldData.raycaster.near !== data.raycaster.near || oldData.raycaster.far !== data.raycaster.far) {
-    //   this.cursor.setAttribute('raycaster', { near: data.raycaster.near, far: data.raycaster.far });
-    // }
-
-    // if (oldData.border.thickness !== data.border.thickness || oldData.border.color !== data.border.color) {
-    //   this.borderMaterial.linewidth = data.border.thickness;
-    //   this.borderMaterial.color = new THREE.Color(data.border.color);
-    //   this.borderMaterial.needsUpdate = true;
-    // }
-
-  },
+  update: function (oldData) { },
   clickHandle: function (evt) {
     let name = evt.detail.intersection.object.name;
 
@@ -610,9 +523,9 @@ AFRAME.registerComponent('vr-interface', {
     }
     this.oldCameraPos.copy(this.referencePoint);
 
-    this.el.object3D.position.x = this.referencePoint.x;
-    this.el.object3D.position.y = this.referencePoint.y;
-    this.el.object3D.position.z = this.referencePoint.z;
+    this.el.object3D.position.x = this.data.referencePoint.x;
+    this.el.object3D.position.y = this.data.referencePoint.y;
+    this.el.object3D.position.z = this.data.referencePoint.z;
 
     for (let k = 0; k < this.buttons.length; k++) {
       this.positionate(this.buttons[k], k);
