@@ -217,11 +217,12 @@
             material="transparent: true; opacity: 0.5"></a-plane>
 
         <a-entity id="rig" position="0 0 0" rotation="0 0 0">
-            <a-entity id="camera" camera position="0 1.6 0" look-controls="pointerLockEnabled: true"></a-entity>
+            <a-entity id="camera" camera position="0 1.6 0" look-controls="pointerLockEnabled: true"
+                wasd-controls="acceleration:150; fly: true; enabled: true"></a-entity>
         </a-entity>
 
         <a-entity
-            vr-interface="dimension: 5 1; orbits: 1 1.5 2;  transparency: true; gap: 0.01 0.01; border: 1.2 #6d7584;"
+            vr-interface="dimension: 3 2; orbits: 1 1.5 2; theta: 90; rho: 0 ; transparency: true; gap: 0.01 0.01; border: 1.2 #6d7584;"
             test>
         </a-entity>
     </a-scene>

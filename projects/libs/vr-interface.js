@@ -31,7 +31,6 @@
   - theta: horizontal rotation in degrees;
   - rho: vertical rotation in degrees;
   - movementBar: whether to display move bar or not;
-  - updatePos: whether it is move vr interface with the camera or not;
   - rotation: button rotation in Y-Axis in degrees;
   - dimension: number of lines and columns of the imaginary matrix in which the buttons will be placed;
   - centralize: whether to align buttons to the center, if false they are aligned to the top-left; 
@@ -62,7 +61,6 @@
 AFRAME.registerComponent('vr-interface', {
   schema: {
     dimension: { type: 'vec2', default: { x: 1, y: 1 } },
-    radius: { type: 'number', default: 1 },
     orbits: {
       default: [1.1],
       parse: function (value) {
@@ -85,6 +83,7 @@ AFRAME.registerComponent('vr-interface', {
     theta: { type: 'number', default: 90 },
     rho: { type: 'number', default: 0 },
     movementBar: { type: 'bool', default: true },
+    worldPosition: { type: 'vec3', default: null },
     updatePos: { type: 'bool', default: false },
     centralize: { type: 'bool', default: true },
     buttonSize: { type: 'vec2', default: { x: 0.30, y: 0.20 } },
@@ -130,24 +129,45 @@ AFRAME.registerComponent('vr-interface', {
     const self = this;
     const data = this.data;
 
-    this.buttons = [];
-    this.buttonGeometry = new THREE.PlaneGeometry(1, 1);
     this.rig = document.querySelector('#rig');
     this.camera = document.querySelector('[camera]');
-    this.oldCameraPos = new THREE.Vector3().copy(this.camera.object3D.position);
-    this.toleratedDifference = 0.01;
     this.referencePoint = new THREE.Vector3();
 
-    this.orbitIndex = 0;
-    this.radius = data.orbits[this.orbitIndex];
-
-    if (typeof data.raycaster.far === 'null') {
-      data.raycaster.far = this.radius;
-      data.raycaster.far = this.radius / 2;
-    }
-
+    this.buttons = [];
+    this.buttonGeometry = new THREE.PlaneGeometry(1, 1);
     this.buttonGroup = document.createElement('a-entity');
     this.el.appendChild(this.buttonGroup);
+
+    // converts deg to rad
+    data.theta = data.theta * Math.PI / 180;
+    data.rho = data.rho * Math.PI / 180;
+
+    if (typeof data.worldPosition.x === 'number') {
+      this.positioning = 'world';
+
+      data.movementBar = false;
+
+      this.buttonGroup.object3D.position.copy(data.worldPosition);
+      this.buttonGroup.object3D.rotation.y = data.theta;
+      this.buttonGroup.object3D.rotation.x = data.rho;
+
+      if (typeof data.raycaster.far === 'null') {
+        data.raycaster.far = this.buttonGroup.position.distanceTo(this.camera.position);
+      }
+    }
+    else {
+      this.positioning = 'orbit';
+      this.orbitIndex = 0;
+      this.radius = data.orbits[this.orbitIndex];
+
+      this.el.object3D.rotation.y = data.theta;
+      this.buttonGroup.object3D.rotation.x = data.rho;
+
+      if (typeof data.raycaster.far === 'null') {
+        data.raycaster.far = this.radius;
+      }
+    }
+
 
     this.cursor = document.createElement('a-entity');
     this.cursor.setAttribute('cursor', { fuse: true, fuseTimeout: 1000, });
@@ -181,13 +201,6 @@ AFRAME.registerComponent('vr-interface', {
       })
     }
 
-    // converts deg to rad
-    data.theta = data.theta * Math.PI / 180;
-    data.rho = data.rho * Math.PI / 180;
-
-    this.el.object3D.rotation.y = data.theta;
-    this.buttonGroup.object3D.rotation.x = data.rho;
-
     if (data.movementBar) {
       this.createMovementBar();
       this.buttonGroup.appendChild(this.moveBar);
@@ -202,17 +215,6 @@ AFRAME.registerComponent('vr-interface', {
     this.el.addEventListener('click', (evt) => self.clickHandle(evt)); // click == fuse click
   },
   tick: function () {
-    if (this.data.updatePos) {
-      this.camera.object3D.getWorldPosition(this.referencePoint);
-
-      if (Math.abs(this.oldCameraPos.x - this.referencePoint.x) > this.toleratedDifference
-        || Math.abs(this.oldCameraPos.y - this.referencePoint.y) > this.toleratedDifference
-        || Math.abs(this.oldCameraPos.z - this.referencePoint.z) > this.toleratedDifference
-      ) {
-        this.updatePostion();
-      }
-    }
-
     if (this.isToChangeTheta) {
       this.data.theta = this.camera.object3D.rotation.y + this.rig.object3D.rotation.y;
       this.el.object3D.rotation.y = this.data.theta;
@@ -331,15 +333,20 @@ AFRAME.registerComponent('vr-interface', {
 
     let image = document.querySelector(img);
     let texture = new THREE.Texture();
+    let material;
 
     if (image) {
       texture.image = image;
       texture.needsUpdate = true;
+      material = new THREE.MeshBasicMaterial({ map: texture, transparent: data.transparency });
+    }
+    else {
+      material = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 })
     }
 
     let button = new THREE.Mesh(
       this.buttonGeometry,
-      new THREE.MeshBasicMaterial({ map: texture, transparent: data.transparency })
+      material
     );
     button.name = name;
     button.onClick = callback;
@@ -377,32 +384,36 @@ AFRAME.registerComponent('vr-interface', {
     this.moveBar = document.createElement('a-entity');
 
     const moveBarButtonGeometry = new THREE.PlaneGeometry(0.1, 0.1);
+    let yPos = 0.05;
 
     /* --- Orbits button --- */
-    const oImage = new Image();
-    oImage.src = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAADJ0lEQVRYw92Xv4sTQRTHFzzLxUIIot0JKVKeXCWB/APHFZJgcYHDxisChq3cM4VguHZD0gUbtQhBIYhbSK64YBAiKSRBmEC2yQ8xhdmw2UVudXe+FmZ/JGaT6FwhbjW/8sm8N9/35g0Hxo9DiWP4sv84IBQ7FERROIyF/gIQychkbNoAYJtjImcifwLghfqEAtZ02Gm1OsOpBdBJXeA3BPDZrg17VJMS278GthNSbWTD7mb5TQApQqHX0gt2h9I1HZSk1gLCsgmjEltmb6xiwJTDqwFxBXZjP8jn+w0bSnwVQFChSXzwsfOSBlUIBhwb6B+sVs5BH8ZxEEAwQKLrtBclMITlgLgKsrtevbsEanwZIKygP/f/fLJYbbbbzWoxOeeWaB9KeAlAhua3P1oaWE7MW4OSH32gQf4dkDJtyRcKZQ3QW5WcKOYqLR3Qyr5gkGwztQjgCRreRo96oEphx+nuFBSK3pFnXAOEXwBkqeHp58SAmp/TciivwjjxFGXQ7DyA76Li/f4cZG/R+XsE5x6hgi4/BxBs3dX/kYHmkuiPNGG4VsR0W5gD1FFzF/ZAlmaPCEHPnaih7gdEJnbamSpDdfa/dfrikt8KFWWnnbYnER8gQ0eOz6IazTurXgNn132EPNUcPYRGNOMDyJ4FJSgO6zkFQG77zkLxhF+D7AMQOCLiByg4ax5NAeDLPY9QwMARiwTiAUJjKzEbT1q6qx/u7mcAMJ64Azu6lZw1E9Y45AJi5nSWP7kiWj6jb30CgB/P3IEWirPW9tSMuYBDe+isqPoExXHc1SoFQM+uuQKqOlND+9AFCOg4w03k5k//6XcAeD/r5dB0JjoQXIDo7bsNcUE/EgUwnXVEtD1rxI0Ad0YA0FgNWGFC8isAfLy52oRgJ96fAMCHG9xqJwYe44MpALy7su4Yg4T00ACA0621QgqQ8uNvAPBma72UA4LpLQD6ktskmJaH82WZ0hfcRuEckFC4V0Vus4TCnNLYkypzWme+WNivNubLlf16Zy8wmEsc9iKLvcxjLzTZS132Ypu93L+ABwf7k+cCHl0X8ez7T56+GwF+Am1c2iRVXhf/AAAAAElFTkSuQmCC`;
-    const oTexture = new THREE.Texture();
-    oTexture.image = oImage;
-    oImage.onload = () => oTexture.needsUpdate = true;
+    if (this.positioning === 'orbit') {
+      const oImage = new Image();
+      oImage.src = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAADJ0lEQVRYw92Xv4sTQRTHFzzLxUIIot0JKVKeXCWB/APHFZJgcYHDxisChq3cM4VguHZD0gUbtQhBIYhbSK64YBAiKSRBmEC2yQ8xhdmw2UVudXe+FmZ/JGaT6FwhbjW/8sm8N9/35g0Hxo9DiWP4sv84IBQ7FERROIyF/gIQychkbNoAYJtjImcifwLghfqEAtZ02Gm1OsOpBdBJXeA3BPDZrg17VJMS278GthNSbWTD7mb5TQApQqHX0gt2h9I1HZSk1gLCsgmjEltmb6xiwJTDqwFxBXZjP8jn+w0bSnwVQFChSXzwsfOSBlUIBhwb6B+sVs5BH8ZxEEAwQKLrtBclMITlgLgKsrtevbsEanwZIKygP/f/fLJYbbbbzWoxOeeWaB9KeAlAhua3P1oaWE7MW4OSH32gQf4dkDJtyRcKZQ3QW5WcKOYqLR3Qyr5gkGwztQjgCRreRo96oEphx+nuFBSK3pFnXAOEXwBkqeHp58SAmp/TciivwjjxFGXQ7DyA76Li/f4cZG/R+XsE5x6hgi4/BxBs3dX/kYHmkuiPNGG4VsR0W5gD1FFzF/ZAlmaPCEHPnaih7gdEJnbamSpDdfa/dfrikt8KFWWnnbYnER8gQ0eOz6IazTurXgNn132EPNUcPYRGNOMDyJ4FJSgO6zkFQG77zkLxhF+D7AMQOCLiByg4ax5NAeDLPY9QwMARiwTiAUJjKzEbT1q6qx/u7mcAMJ64Azu6lZw1E9Y45AJi5nSWP7kiWj6jb30CgB/P3IEWirPW9tSMuYBDe+isqPoExXHc1SoFQM+uuQKqOlND+9AFCOg4w03k5k//6XcAeD/r5dB0JjoQXIDo7bsNcUE/EgUwnXVEtD1rxI0Ad0YA0FgNWGFC8isAfLy52oRgJ96fAMCHG9xqJwYe44MpALy7su4Yg4T00ACA0621QgqQ8uNvAPBma72UA4LpLQD6ktskmJaH82WZ0hfcRuEckFC4V0Vus4TCnNLYkypzWme+WNivNubLlf16Zy8wmEsc9iKLvcxjLzTZS132Ypu93L+ABwf7k+cCHl0X8ez7T56+GwF+Am1c2iRVXhf/AAAAAElFTkSuQmCC`;
+      const oTexture = new THREE.Texture();
+      oTexture.image = oImage;
+      oImage.onload = () => oTexture.needsUpdate = true;
 
 
-    this.orbitButton = document.createElement('a-entity');
-    this.orbitButton.setObject3D('orbitButton', new THREE.Mesh(
-      moveBarButtonGeometry,
-      new THREE.MeshBasicMaterial({ map: oTexture })
-    ));
-    this.orbitButton.object3D.position.y = 0.05;
-    this.orbitButton.object3D.children[0].name = 'orbitButton';
-    this.orbitButton.onClick = () => {
-      self.orbitIndex++;
-      if (self.orbitIndex >= data.orbits.length) {
-        self.orbitIndex = 0;
+      this.orbitButton = document.createElement('a-entity');
+      this.orbitButton.setObject3D('orbitButton', new THREE.Mesh(
+        moveBarButtonGeometry,
+        new THREE.MeshBasicMaterial({ map: oTexture })
+      ));
+      this.orbitButton.object3D.position.y = yPos;
+      yPos -= 0.1;
+      this.orbitButton.object3D.children[0].name = 'orbitButton';
+      this.orbitButton.onClick = () => {
+        self.orbitIndex++;
+        if (self.orbitIndex >= data.orbits.length) {
+          self.orbitIndex = 0;
+        }
+        self.radius = data.orbits[self.orbitIndex];
+        self.updatePostion();
       }
-      self.radius = data.orbits[self.orbitIndex];
-      self.updatePostion();
+      this.orbitButton.classList.add('vrInterface-button')
+      this.moveBar.appendChild(this.orbitButton);
     }
-    this.orbitButton.classList.add('vrInterface-button')
-    this.moveBar.appendChild(this.orbitButton);
 
     /* --- Horizontal movement button --- */
     const hImage = new Image();
@@ -416,7 +427,8 @@ AFRAME.registerComponent('vr-interface', {
       moveBarButtonGeometry,
       new THREE.MeshBasicMaterial({ map: hTexture, transparent: true })
     ));
-    this.horizMovButton.object3D.position.y = -0.05;
+    this.horizMovButton.object3D.position.y = yPos;
+    yPos -= 0.1;
     this.horizMovButton.object3D.children[0].name = 'horizMovButton';
     this.horizMovButton.onClick = () => {
       self.isToChangeTheta = true;
@@ -441,7 +453,7 @@ AFRAME.registerComponent('vr-interface', {
       moveBarButtonGeometry,
       new THREE.MeshBasicMaterial({ map: vTexture, transparent: true })
     ));
-    this.vertiMovButton.object3D.position.y = -0.15;
+    this.vertiMovButton.object3D.position.y = yPos;
     this.vertiMovButton.object3D.children[0].name = 'vertiMovButton';
     this.vertiMovButton.onClick = () => {
       self.isToChangeRho = true;
@@ -519,35 +531,26 @@ AFRAME.registerComponent('vr-interface', {
     this.sideText.object3D.visible = false;
   },
   positionate: function (button, length) {
-    /*
-      The buttons are placed in negative z-axis, where the camere is looking by default.
-      To determine the button position, it's used the following formulas
-      x = x0 + rcos(rho)cos(theta)
-      y = y0 + rsin(rho)
-      z = z0 + rcos(rho)sin(theta)
-   
-      As the camera is looking to negative z-axis, theta = 90 deg, and z0 = 0
-      x = x0
-      y = y0 + rsin(rho)
-      z = -rcos(rho)
-   
-      As the buttons are inclined at the angle of rho, it's need alignment correction in y-axis and z-axis
-      y = y0 + rsin(rho) - lineIndex * buttonHeight * cos(rho)
-      z = -rcos(rho) - lineIndex * buttonHeight * sin(rho)
-     */
     const data = this.data;
 
     let n = typeof length === 'number' ? length : this.buttons.length; // index of the n-th button, checks if length was passed as parameter
     let i = Math.trunc(n / data.dimension.y); // index of the line
     let j = n - data.dimension.y * i; // index of the column
 
-    // button.rotation.x = data.rho;
-
-    button.position.set(
-      j * (data.buttonSize.x + data.gap.x),
-      - (i * (data.buttonSize.y + data.gap.y)), //* Math.cos(data.rho)),
-      -this.radius  //- (i * (data.buttonSize.y + data.gap.y) * Math.sin(data.rho))
-    );
+    if (this.positioning === 'world') {
+      button.position.set(
+        j * (data.buttonSize.x + data.gap.x),
+        - (i * (data.buttonSize.y + data.gap.y)),
+        0
+      );
+    }
+    else {
+      button.position.set(
+        j * (data.buttonSize.x + data.gap.x),
+        - (i * (data.buttonSize.y + data.gap.y)), //* Math.cos(data.rho)),
+        -this.radius  //- (i * (data.buttonSize.y + data.gap.y) * Math.sin(data.rho))
+      );
+    }
   },
   positionateMessage: function (pos) {
     const msg = this.message.object3D;
@@ -590,7 +593,6 @@ AFRAME.registerComponent('vr-interface', {
       if (typeof args.radius === 'number') {
         this.radius = args.radius;
         this.data.raycaster.far = args.radius;
-        console.log(this.radius);
         this.cursor.setAttribute('raycaster', { far: this.data.raycaster.far, near: this.data.raycaster.far / 2 });
       }
       if (typeof args.theta === 'number') {
@@ -602,14 +604,16 @@ AFRAME.registerComponent('vr-interface', {
       }
     }
 
-    if (this.rig) {
+    if (this.positioning === 'world') {
+      this.buttonGroup.object3D.position.copy(this.data.worldPosition);
+    }
+    else if (this.rig) {
       this.rig.object3D.getWorldPosition(this.referencePoint);
       this.referencePoint.y += this.camera.object3D.position.y;
     }
     else {
       this.camera.object3D.getWorldPosition(this.referencePoint);
     }
-    this.oldCameraPos.copy(this.referencePoint);
 
     this.el.object3D.position.x = this.referencePoint.x;
     this.el.object3D.position.y = this.referencePoint.y;
