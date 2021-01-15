@@ -126,7 +126,6 @@ AFRAME.registerComponent('vr-interface', {
       }
     },
   },
-
   init: function () {
     const self = this;
     const data = this.data;
@@ -155,11 +154,10 @@ AFRAME.registerComponent('vr-interface', {
     this.cursor.setAttribute('raycaster', { near: data.raycaster.near, far: data.raycaster.far, objects: '.vrInterface-button' });
     this.cursor.setAttribute('position', { x: data.cursorPosition.x, y: data.cursorPosition.y, z: data.cursorPosition.z });
     this.cursor.setAttribute('geometry', { primitive: 'ring', radiusInner: 0.007, radiusOuter: 0.015 });
-    this.cursor.setAttribute('material', { color: data.cursorColor, shader: 'flat', depthTest: false });
+    this.cursor.setAttribute('material', { color: data.cursorColor, shader: 'flat', depthTest: true });
     this.cursor.setAttribute('animation__click', 'property: scale; startEvents: click; easing: easeInCubic; dur: 150; from: 0.1 0.1 0.1; to: 1 1 1');
     this.cursor.setAttribute('animation__fusing', 'property: scale; startEvents: fusing; easing: easeInCubic; dur: 1000; from: 1 1 1; to: 0.1 0.1 0.1');
     this.cursor.setAttribute('animation__fusing2', 'property: scale; startEvents: mouseleave; easing: easeInCubic; dur: 150; to: 1 1 1');
-
     this.camera.appendChild(this.cursor);
 
     this.message = document.createElement('a-entity');
@@ -190,122 +188,11 @@ AFRAME.registerComponent('vr-interface', {
     this.el.object3D.rotation.y = data.theta;
     this.buttonGroup.object3D.rotation.x = data.rho;
 
-    //--------------------Creating movement bar--------------------------------------------
-    this.isToChangeTheta = false;
-    this.isToChangeRho = false;
-
-    this.moveBar = document.createElement('a-entity');
-
     if (data.movementBar) {
+      this.createMovementBar();
       this.buttonGroup.appendChild(this.moveBar);
     }
 
-    const moveBarButtonGeometry = new THREE.PlaneGeometry(0.1, 0.1);
-
-    // --- Orbits button
-    const oImage = new Image();
-    oImage.src = orbitImage();
-    const oTexture = new THREE.Texture();
-    oTexture.image = oImage;
-    oImage.onload = () => oTexture.needsUpdate = true;
-
-
-    this.orbitButton = document.createElement('a-entity');
-    this.orbitButton.setObject3D('orbitButton', new THREE.Mesh(
-      moveBarButtonGeometry,
-      new THREE.MeshBasicMaterial({ map: oTexture })
-    ));
-    this.orbitButton.object3D.position.y = 0.05;
-    this.orbitButton.object3D.children[0].name = 'orbitButton';
-    this.orbitButton.onClick = () => {
-      self.orbitIndex++;
-      if (self.orbitIndex >= data.orbits.length) {
-        self.orbitIndex = 0;
-      }
-      self.radius = data.orbits[self.orbitIndex];
-      self.updatePostion();
-    }
-    this.orbitButton.classList.add('vrInterface-button')
-    this.moveBar.appendChild(this.orbitButton);
-
-    // --- Horizontal movement button
-    const hImage = new Image();
-    hImage.src = horizontalImage();
-    const hTexture = new THREE.Texture();
-    hTexture.image = hImage;
-    hImage.onload = () => hTexture.needsUpdate = true;
-
-    this.horizMovButton = document.createElement('a-entity');
-    this.horizMovButton.setObject3D('horizMovButton', new THREE.Mesh(
-      moveBarButtonGeometry,
-      new THREE.MeshBasicMaterial({ map: hTexture, transparent: true })
-    ));
-    this.horizMovButton.object3D.position.y = -0.05;
-    this.horizMovButton.object3D.children[0].name = 'horizMovButton';
-    this.horizMovButton.onClick = () => {
-      self.isToChangeTheta = true;
-
-      self.stopButton.object3D.visible = true;
-      self.stopButton.object3D.position.set((data.dimension.y / 2 * data.buttonSize.x + 0.06), 0, 0.01);
-      self.stopButton.object3D.rotation.z = Math.PI / 2;
-      self.stopButton.classList.add('vrInterface-button');
-    }
-    this.horizMovButton.classList.add('vrInterface-button')
-    this.moveBar.appendChild(this.horizMovButton);
-
-    // --- Vertical movement button
-    const vImage = new Image();
-    vImage.src = verticalImage();
-    const vTexture = new THREE.Texture();
-    vTexture.image = vImage;
-    vImage.onload = () => vTexture.needsUpdate = true;
-
-    this.vertiMovButton = document.createElement('a-entity');
-    this.vertiMovButton.setObject3D('vertiMovButton', new THREE.Mesh(
-      moveBarButtonGeometry,
-      new THREE.MeshBasicMaterial({ map: vTexture, transparent: true })
-    ));
-    this.vertiMovButton.object3D.position.y = -0.15;
-    this.vertiMovButton.object3D.children[0].name = 'vertiMovButton';
-    this.vertiMovButton.onClick = () => {
-      self.isToChangeRho = true;
-
-      self.stopButton.object3D.visible = true;
-      self.stopButton.object3D.position.set(
-        (data.dimension.y / 2 * data.buttonSize.x + 0.06),
-        (-data.dimension.x + 1) * data.buttonSize.y / 2,
-        0.01
-      );
-      self.stopButton.object3D.rotation.z = 0;
-      self.stopButton.classList.add('vrInterface-button');
-    }
-    this.vertiMovButton.classList.add('vrInterface-button')
-    this.moveBar.appendChild(this.vertiMovButton);
-
-    // -
-    const sImage = new Image();
-    sImage.src = stopImage();
-    const sTexture = new THREE.Texture();
-    sTexture.image = sImage;
-    sImage.onload = () => sTexture.needsUpdate = true;
-
-    this.stopButton = document.createElement('a-entity');
-    this.stopButton.setObject3D('stopButton', new THREE.Mesh(
-      moveBarButtonGeometry,
-      new THREE.MeshBasicMaterial({ map: sTexture, transparent: true })
-    ));
-    this.stopButton.object3D.children[0].name = 'stopButton';
-    this.stopButton.object3D.visible = false;
-    this.stopButton.onClick = () => {
-      self.isToChangeTheta = false;
-      self.isToChangeRho = false;
-
-      self.stopButton.object3D.visible = false;
-      self.stopButton.classList.remove('vrInterface-button');
-    }
-    this.moveBar.appendChild(this.stopButton);
-
-    //--------------------------------------------------------------------
     this.isLoaded = false;
     this.el.sceneEl.addEventListener('loaded', () => {
       self.isLoaded = true;
@@ -481,6 +368,119 @@ AFRAME.registerComponent('vr-interface', {
     this.buttons.push(button);
     this.buttonGroup.appendChild(entity);
   },
+  createMovementBar: function () {
+    const data = this.data;
+    const self = this;
+
+    this.isToChangeTheta = false;
+    this.isToChangeRho = false;
+    this.moveBar = document.createElement('a-entity');
+
+    const moveBarButtonGeometry = new THREE.PlaneGeometry(0.1, 0.1);
+
+    /* --- Orbits button --- */
+    const oImage = new Image();
+    oImage.src = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAADJ0lEQVRYw92Xv4sTQRTHFzzLxUIIot0JKVKeXCWB/APHFZJgcYHDxisChq3cM4VguHZD0gUbtQhBIYhbSK64YBAiKSRBmEC2yQ8xhdmw2UVudXe+FmZ/JGaT6FwhbjW/8sm8N9/35g0Hxo9DiWP4sv84IBQ7FERROIyF/gIQychkbNoAYJtjImcifwLghfqEAtZ02Gm1OsOpBdBJXeA3BPDZrg17VJMS278GthNSbWTD7mb5TQApQqHX0gt2h9I1HZSk1gLCsgmjEltmb6xiwJTDqwFxBXZjP8jn+w0bSnwVQFChSXzwsfOSBlUIBhwb6B+sVs5BH8ZxEEAwQKLrtBclMITlgLgKsrtevbsEanwZIKygP/f/fLJYbbbbzWoxOeeWaB9KeAlAhua3P1oaWE7MW4OSH32gQf4dkDJtyRcKZQ3QW5WcKOYqLR3Qyr5gkGwztQjgCRreRo96oEphx+nuFBSK3pFnXAOEXwBkqeHp58SAmp/TciivwjjxFGXQ7DyA76Li/f4cZG/R+XsE5x6hgi4/BxBs3dX/kYHmkuiPNGG4VsR0W5gD1FFzF/ZAlmaPCEHPnaih7gdEJnbamSpDdfa/dfrikt8KFWWnnbYnER8gQ0eOz6IazTurXgNn132EPNUcPYRGNOMDyJ4FJSgO6zkFQG77zkLxhF+D7AMQOCLiByg4ax5NAeDLPY9QwMARiwTiAUJjKzEbT1q6qx/u7mcAMJ64Azu6lZw1E9Y45AJi5nSWP7kiWj6jb30CgB/P3IEWirPW9tSMuYBDe+isqPoExXHc1SoFQM+uuQKqOlND+9AFCOg4w03k5k//6XcAeD/r5dB0JjoQXIDo7bsNcUE/EgUwnXVEtD1rxI0Ad0YA0FgNWGFC8isAfLy52oRgJ96fAMCHG9xqJwYe44MpALy7su4Yg4T00ACA0621QgqQ8uNvAPBma72UA4LpLQD6ktskmJaH82WZ0hfcRuEckFC4V0Vus4TCnNLYkypzWme+WNivNubLlf16Zy8wmEsc9iKLvcxjLzTZS132Ypu93L+ABwf7k+cCHl0X8ez7T56+GwF+Am1c2iRVXhf/AAAAAElFTkSuQmCC`;
+    const oTexture = new THREE.Texture();
+    oTexture.image = oImage;
+    oImage.onload = () => oTexture.needsUpdate = true;
+
+
+    this.orbitButton = document.createElement('a-entity');
+    this.orbitButton.setObject3D('orbitButton', new THREE.Mesh(
+      moveBarButtonGeometry,
+      new THREE.MeshBasicMaterial({ map: oTexture })
+    ));
+    this.orbitButton.object3D.position.y = 0.05;
+    this.orbitButton.object3D.children[0].name = 'orbitButton';
+    this.orbitButton.onClick = () => {
+      self.orbitIndex++;
+      if (self.orbitIndex >= data.orbits.length) {
+        self.orbitIndex = 0;
+      }
+      self.radius = data.orbits[self.orbitIndex];
+      self.updatePostion();
+    }
+    this.orbitButton.classList.add('vrInterface-button')
+    this.moveBar.appendChild(this.orbitButton);
+
+    /* --- Horizontal movement button --- */
+    const hImage = new Image();
+    hImage.src = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAABO0lEQVRYw+3WrQ7CQAwH8D3NPcAsT4CYnMSDQeM3g5snqAlCcDgMDoeZwS1BzBEIZpBAlj+CqXH9uBASxNVe90u29doGWARfxAKBBzzggV8BUUznx5ECKFIaSAsZSMABSESg4oFKAnLwAHIe6NUSUPdYYAsJwJYDRk8ZeI4Y4AAZwIEGptAAmFKAOemAkyGAJXQAlnagf9MCt74V2L1PMR+SMW9TdjZg3EAdzdgClHCI8hPI4BRZFzAXN+BiOkBYuwF12H2F3A3IPz9i5fJ8ZfkLiQuQ2AqpaA9XKRmrNqWwVmL80JbyI7Zfpo0W2BC3MbzqgGtINZSZDpjRLe2oAY5MT5w0MtBMuLa+l4E9OxeiuwTcI360rSVgLcxGc+aBs5Gmc8YDmbxglBxQKjaUAbfiDPye6AEP/C3wAjQlXixnoVFmAAAAAElFTkSuQmCC`;
+    const hTexture = new THREE.Texture();
+    hTexture.image = hImage;
+    hImage.onload = () => hTexture.needsUpdate = true;
+
+    this.horizMovButton = document.createElement('a-entity');
+    this.horizMovButton.setObject3D('horizMovButton', new THREE.Mesh(
+      moveBarButtonGeometry,
+      new THREE.MeshBasicMaterial({ map: hTexture, transparent: true })
+    ));
+    this.horizMovButton.object3D.position.y = -0.05;
+    this.horizMovButton.object3D.children[0].name = 'horizMovButton';
+    this.horizMovButton.onClick = () => {
+      self.isToChangeTheta = true;
+
+      self.stopButton.object3D.visible = true;
+      self.stopButton.object3D.position.set((data.dimension.y / 2 * data.buttonSize.x + 0.06), 0, 0.01);
+      self.stopButton.object3D.rotation.z = Math.PI / 2;
+      self.stopButton.classList.add('vrInterface-button');
+    }
+    this.horizMovButton.classList.add('vrInterface-button')
+    this.moveBar.appendChild(this.horizMovButton);
+
+    /* --- Vertical movement button --- */
+    const vImage = new Image();
+    vImage.src = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAAA2klEQVRYw2P4v5yBArD8P8OoAUPAAFM1igzgXfzl3UQKDGh+8h8I7hSQaUDYxf8Q8PeoJxkGmO789R8Ovq1SI9EA3tkf/qOA110kGVD54D8GuJZFtAH+p//+xwJ+77MlygC1jd//4wBfFvMSNmDim/94wJNmAgbE3/lPAFz0x2tAaCsSWAvTNA9ZNJT4lNgKMyCNzKQ8asCoAaMGjBowasCoAZQaQHHVRnHlSnH1ToUGBuVNHCo0sqjQzKO8oUmFpi4VGttUaO5T3uEY7bURacD55RSA80ADKAQAlbbCnlvwDscAAAAASUVORK5CYII=`;
+    const vTexture = new THREE.Texture();
+    vTexture.image = vImage;
+    vImage.onload = () => vTexture.needsUpdate = true;
+
+    this.vertiMovButton = document.createElement('a-entity');
+    this.vertiMovButton.setObject3D('vertiMovButton', new THREE.Mesh(
+      moveBarButtonGeometry,
+      new THREE.MeshBasicMaterial({ map: vTexture, transparent: true })
+    ));
+    this.vertiMovButton.object3D.position.y = -0.15;
+    this.vertiMovButton.object3D.children[0].name = 'vertiMovButton';
+    this.vertiMovButton.onClick = () => {
+      self.isToChangeRho = true;
+
+      self.stopButton.object3D.visible = true;
+      self.stopButton.object3D.position.set(
+        (data.dimension.y / 2 * data.buttonSize.x + 0.06),
+        (-data.dimension.x + 1) * data.buttonSize.y / 2,
+        0.01
+      );
+      self.stopButton.object3D.rotation.z = 0;
+      self.stopButton.classList.add('vrInterface-button');
+    }
+    this.vertiMovButton.classList.add('vrInterface-button')
+    this.moveBar.appendChild(this.vertiMovButton);
+
+    /* --- Stop button --- */
+    const sImage = new Image();
+    sImage.src = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAAAS1BMVEX/AAD/Li7/RUX/R0f/S0v/T0//XV3/bW3/c3P/dXX/lJT/l5f/p6f/wcH/zMz/z8//1tb/19f/4+P/5eX/7e3/9PT/9fX//f3///9m19XwAAAAx0lEQVRYw+3XyRKCMBAE0IgbQhDELf//pR5Ey5DpmUr10ZkjVf1OzJKQyAppjESNKaQYiIoOOKABx/OU19BUAad78c/P2wpAyANBBsS8LIjAO3/pfqq/AUEClvwm+3gAggCIeSiUAMgjoQBgHghrQMnLwgpQ86KQA62e/woNAq5G/iMMCHhY+UWYFOC5N/q3t4CdAXQOOPAnANtMXDvTA4UeafRQ5cc6v1j41cYvV3698wcGf+LwRxZ/5vGHpl/rDlQD9OObrBdJNVKVGSgnwAAAAABJRU5ErkJggg==`;
+    const sTexture = new THREE.Texture();
+    sTexture.image = sImage;
+    sImage.onload = () => sTexture.needsUpdate = true;
+
+    this.stopButton = document.createElement('a-entity');
+    this.stopButton.setObject3D('stopButton', new THREE.Mesh(
+      moveBarButtonGeometry,
+      new THREE.MeshBasicMaterial({ map: sTexture, transparent: true })
+    ));
+    this.stopButton.object3D.children[0].name = 'stopButton';
+    this.stopButton.object3D.visible = false;
+    this.stopButton.onClick = () => {
+      self.isToChangeTheta = false;
+      self.isToChangeRho = false;
+
+      self.stopButton.object3D.visible = false;
+      self.stopButton.classList.remove('vrInterface-button');
+    }
+    this.moveBar.appendChild(this.stopButton);
+  },
   showMessage: function (text, pos) {
     const msg = this.message.object3D;
 
@@ -590,6 +590,7 @@ AFRAME.registerComponent('vr-interface', {
       if (typeof args.radius === 'number') {
         this.radius = args.radius;
         this.data.raycaster.far = args.radius;
+        console.log(this.radius);
         this.cursor.setAttribute('raycaster', { far: this.data.raycaster.far, near: this.data.raycaster.far / 2 });
       }
       if (typeof args.theta === 'number') {
@@ -647,19 +648,3 @@ AFRAME.registerComponent('vr-interface', {
     this.cursor.setAttribute('raycaster', { near: 0, far: 0 });
   }
 });
-
-function orbitImage() {
-  return `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAADJ0lEQVRYw92Xv4sTQRTHFzzLxUIIot0JKVKeXCWB/APHFZJgcYHDxisChq3cM4VguHZD0gUbtQhBIYhbSK64YBAiKSRBmEC2yQ8xhdmw2UVudXe+FmZ/JGaT6FwhbjW/8sm8N9/35g0Hxo9DiWP4sv84IBQ7FERROIyF/gIQychkbNoAYJtjImcifwLghfqEAtZ02Gm1OsOpBdBJXeA3BPDZrg17VJMS278GthNSbWTD7mb5TQApQqHX0gt2h9I1HZSk1gLCsgmjEltmb6xiwJTDqwFxBXZjP8jn+w0bSnwVQFChSXzwsfOSBlUIBhwb6B+sVs5BH8ZxEEAwQKLrtBclMITlgLgKsrtevbsEanwZIKygP/f/fLJYbbbbzWoxOeeWaB9KeAlAhua3P1oaWE7MW4OSH32gQf4dkDJtyRcKZQ3QW5WcKOYqLR3Qyr5gkGwztQjgCRreRo96oEphx+nuFBSK3pFnXAOEXwBkqeHp58SAmp/TciivwjjxFGXQ7DyA76Li/f4cZG/R+XsE5x6hgi4/BxBs3dX/kYHmkuiPNGG4VsR0W5gD1FFzF/ZAlmaPCEHPnaih7gdEJnbamSpDdfa/dfrikt8KFWWnnbYnER8gQ0eOz6IazTurXgNn132EPNUcPYRGNOMDyJ4FJSgO6zkFQG77zkLxhF+D7AMQOCLiByg4ax5NAeDLPY9QwMARiwTiAUJjKzEbT1q6qx/u7mcAMJ64Azu6lZw1E9Y45AJi5nSWP7kiWj6jb30CgB/P3IEWirPW9tSMuYBDe+isqPoExXHc1SoFQM+uuQKqOlND+9AFCOg4w03k5k//6XcAeD/r5dB0JjoQXIDo7bsNcUE/EgUwnXVEtD1rxI0Ad0YA0FgNWGFC8isAfLy52oRgJ96fAMCHG9xqJwYe44MpALy7su4Yg4T00ACA0621QgqQ8uNvAPBma72UA4LpLQD6ktskmJaH82WZ0hfcRuEckFC4V0Vus4TCnNLYkypzWme+WNivNubLlf16Zy8wmEsc9iKLvcxjLzTZS132Ypu93L+ABwf7k+cCHl0X8ez7T56+GwF+Am1c2iRVXhf/AAAAAElFTkSuQmCC`;
-}
-
-function horizontalImage() {
-  return `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAABO0lEQVRYw+3WrQ7CQAwH8D3NPcAsT4CYnMSDQeM3g5snqAlCcDgMDoeZwS1BzBEIZpBAlj+CqXH9uBASxNVe90u29doGWARfxAKBBzzggV8BUUznx5ECKFIaSAsZSMABSESg4oFKAnLwAHIe6NUSUPdYYAsJwJYDRk8ZeI4Y4AAZwIEGptAAmFKAOemAkyGAJXQAlnagf9MCt74V2L1PMR+SMW9TdjZg3EAdzdgClHCI8hPI4BRZFzAXN+BiOkBYuwF12H2F3A3IPz9i5fJ8ZfkLiQuQ2AqpaA9XKRmrNqWwVmL80JbyI7Zfpo0W2BC3MbzqgGtINZSZDpjRLe2oAY5MT5w0MtBMuLa+l4E9OxeiuwTcI360rSVgLcxGc+aBs5Gmc8YDmbxglBxQKjaUAbfiDPye6AEP/C3wAjQlXixnoVFmAAAAAElFTkSuQmCC`;
-}
-
-function verticalImage() {
-  return `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAAA2klEQVRYw2P4v5yBArD8P8OoAUPAAFM1igzgXfzl3UQKDGh+8h8I7hSQaUDYxf8Q8PeoJxkGmO789R8Ovq1SI9EA3tkf/qOA110kGVD54D8GuJZFtAH+p//+xwJ+77MlygC1jd//4wBfFvMSNmDim/94wJNmAgbE3/lPAFz0x2tAaCsSWAvTNA9ZNJT4lNgKMyCNzKQ8asCoAaMGjBowasCoAZQaQHHVRnHlSnH1ToUGBuVNHCo0sqjQzKO8oUmFpi4VGttUaO5T3uEY7bURacD55RSA80ADKAQAlbbCnlvwDscAAAAASUVORK5CYII=`;
-}
-
-function stopImage() {
-  return `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAAAS1BMVEX/AAD/Li7/RUX/R0f/S0v/T0//XV3/bW3/c3P/dXX/lJT/l5f/p6f/wcH/zMz/z8//1tb/19f/4+P/5eX/7e3/9PT/9fX//f3///9m19XwAAAAx0lEQVRYw+3XyRKCMBAE0IgbQhDELf//pR5Ey5DpmUr10ZkjVf1OzJKQyAppjESNKaQYiIoOOKABx/OU19BUAad78c/P2wpAyANBBsS8LIjAO3/pfqq/AUEClvwm+3gAggCIeSiUAMgjoQBgHghrQMnLwgpQ86KQA62e/woNAq5G/iMMCHhY+UWYFOC5N/q3t4CdAXQOOPAnANtMXDvTA4UeafRQ5cc6v1j41cYvV3698wcGf+LwRxZ/5vGHpl/rDlQD9OObrBdJNVKVGSgnwAAAAABJRU5ErkJggg==`;
-}
