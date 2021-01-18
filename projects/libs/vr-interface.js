@@ -168,17 +168,20 @@ AFRAME.registerComponent('vr-interface', {
       }
     }
 
-
-    this.cursor = document.createElement('a-entity');
-    this.cursor.setAttribute('cursor', { fuse: true, fuseTimeout: 1000, });
-    this.cursor.setAttribute('raycaster', { near: data.raycaster.near, far: data.raycaster.far, objects: '.vrInterface-button' });
-    this.cursor.setAttribute('position', { x: data.cursorPosition.x, y: data.cursorPosition.y, z: data.cursorPosition.z });
-    this.cursor.setAttribute('geometry', { primitive: 'ring', radiusInner: 0.007, radiusOuter: 0.015 });
-    this.cursor.setAttribute('material', { color: data.cursorColor, shader: 'flat', depthTest: true });
-    this.cursor.setAttribute('animation__click', 'property: scale; startEvents: click; easing: easeInCubic; dur: 150; from: 0.1 0.1 0.1; to: 1 1 1');
-    this.cursor.setAttribute('animation__fusing', 'property: scale; startEvents: fusing; easing: easeInCubic; dur: 1000; from: 1 1 1; to: 0.1 0.1 0.1');
-    this.cursor.setAttribute('animation__fusing2', 'property: scale; startEvents: mouseleave; easing: easeInCubic; dur: 150; to: 1 1 1');
-    this.camera.appendChild(this.cursor);
+    console.log(document.querySelector('#vrInterface-cursor') === null)
+    if (document.querySelector('#vrInterface-cursor') === null) {
+      this.cursor = document.createElement('a-entity');
+      this.cursor.id = 'vrInterface-cursor';
+      this.cursor.setAttribute('cursor', { fuse: true, fuseTimeout: 1000, });
+      this.cursor.setAttribute('raycaster', { near: data.raycaster.near, far: data.raycaster.far, objects: '.vrInterface-button' });
+      this.cursor.setAttribute('position', { x: data.cursorPosition.x, y: data.cursorPosition.y, z: data.cursorPosition.z });
+      this.cursor.setAttribute('geometry', { primitive: 'ring', radiusInner: 0.007, radiusOuter: 0.015 });
+      this.cursor.setAttribute('material', { color: data.cursorColor, shader: 'flat', depthTest: true });
+      this.cursor.setAttribute('animation__click', 'property: scale; startEvents: click; easing: easeInCubic; dur: 150; from: 0.1 0.1 0.1; to: 1 1 1');
+      this.cursor.setAttribute('animation__fusing', 'property: scale; startEvents: fusing; easing: easeInCubic; dur: 1000; from: 1 1 1; to: 0.1 0.1 0.1');
+      this.cursor.setAttribute('animation__fusing2', 'property: scale; startEvents: mouseleave; easing: easeInCubic; dur: 150; to: 1 1 1');
+      this.camera.appendChild(this.cursor);
+    }
 
     this.message = document.createElement('a-entity');
     this.message.setAttribute('text', { align: 'center', width: 1, height: 1, color: new THREE.Color(data.messageColor) });

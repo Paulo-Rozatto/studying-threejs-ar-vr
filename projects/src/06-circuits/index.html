@@ -37,13 +37,14 @@
 
         AFRAME.registerComponent('grid', {
             init: function () {
-                const vrGrid = this.el.components['vr-grid'];
+                const vrGrid = this.el.components['vr-interface'];
 
                 const bar1 = document.querySelector('#bar1');
                 const bar2 = document.querySelector('#bar2');
                 const ledBar = document.querySelector('#ledBar');
 
                 let f1 = function () {
+                    console.log(1);
                     bar1.object3D.visible = !bar1.object3D.visible;
                     ledBar.object3D.children[0].visible = bar1.object3D.visible && bar2.object3D.visible;
                 }
@@ -57,27 +58,23 @@
                     ledBar.object3D.children[0].visible = bar1.object3D.visible && bar2.object3D.visible;
                 }
 
-                vrGrid.addButton('1', '#transparent', f2);
-                vrGrid.addButton('2', '#transparent', f2);
-                vrGrid.addButton('3', '#transparent', f2);
-
-                vrGrid.addButton('4', '#transparent', lb);
-                vrGrid.addButton('5', '#transparent');
-                vrGrid.addButton('6', '#transparent');
-
-                vrGrid.addButton('8', '#transparent', f1);
-                vrGrid.addButton('7', '#transparent', f1);
-                vrGrid.addButton('9', '#transparent', f1);
+                for (let i = 0; i < 45; i++) {
+                    vrGrid.addButton(i.toString(), '#transparent');
+                }
             }
         });
     </script>
 </head>
 
 <body>
-    <a-scene main_scene id="scene" background="color: #343434">
+    <a-scene main_scene id="scene" renderer="colorManagement: true;" background="color: #343434">
         <a-assets timeout="3000">
-            <!-- <a-asset-item id="aneurismModel" src="../../assets/models/diseases/an.glb"></a-asset-item> -->
-            <!-- <img id="next" src="../../assets/icons/vr-interface/next.png"> -->
+            <a-asset-item id="tableModel" src="../../assets/models/table.glb"></a-asset-item>
+            <a-asset-item id="blockModel" src="../../assets/models/circuits/block.glb"></a-asset-item>
+            <a-asset-item id="tblockModel" src="../../assets/models/circuits/l-block.glb"></a-asset-item>
+            <a-asset-item id="batteryModel" src="../../assets/models/circuits/battery-block.glb"></a-asset-item>
+            <a-asset-item id="ledModel" src="../../assets/models/circuits/led-block.glb"></a-asset-item>
+
             <img id="led" src="img/led.png">
             <img id="resistor" src="img/resistor.png">
             <img id="wire" src="img/wire.png">
@@ -87,19 +84,23 @@
         <a-entity light="type: ambient; color: #fff; intensity: 0.3"></a-entity>
         <a-entity light="color: #fff" position="-65 110 0"></a-entity>
 
-        <a-box position="0 0.5 -0.8" width="2" height="1" material="color: #567689"> </a-box>
+        <a-entity id="table" gltf-model="#tableModel" position="0 -0.03 -0.75" scale="1 1 1.05"></a-entity>
 
-        <a-box position="0.6 1.075 -0.8" width="0.15" height="0.15" depth="0.2" material="color: #00ff00"></a-box>
-        <a-box id="bar1" position="0.25 1.04 -0.65" width="0.65" height="0.08" depth="0.08" material="color: #0000ff">
-        </a-box>
-        <a-box id="bar2" position="0.25 1.04 -0.95" width="0.65" height="0.08" depth="0.08" material="color: #0000ff">
-        </a-box>
-        <a-box id="ledBar" position="0 1.045 -0.8" width="0.15" height="0.09" depth="0.2" material="color: #ff9999">
-            <a-light position="0 0.05 0" type="point" color="red" distance="0.2" intensity="5"
-                geometry="primitive: sphere; radius: 0.008" material="color: red">
+        <a-entity id="led" gltf-model="#ledModel" position="0 0.97 -0.54">
+            <a-light position="0 0.05 0" type="point" color="#ff9999" distance="0.15" intensity="10">
             </a-light>
-        </a-box>
+        </a-entity>
+        <a-entity id="b1" gltf-model="#blockModel" position="-0.2 0.97 -0.54"></a-entity>
+        <a-entity id="b2" gltf-model="#blockModel" position="0.2 0.97 -0.74" rotation="0 90 0"></a-entity>
+        <a-entity id="b3" gltf-model="#blockModel" position="0 0.97 -0.94" rotation="0 180 0"></a-entity>
+        <a-entity id="b4" gltf-model="#blockModel" position="-0.2 0.97 -0.94" rotation="0 180 0"></a-entity>
 
+        <a-entity id="t1" gltf-model="#tblockModel" position="-0.4 0.97 -0.54" rotation="0 -90 0"></a-entity>
+        <a-entity id="t2" gltf-model="#tblockModel" position="0.2 0.97 -0.54"></a-entity>
+        <a-entity id="t3" gltf-model="#tblockModel" position="0.2 0.97 -0.94" rotation="0 90 0"></a-entity>
+        <a-entity id="t4" gltf-model="#tblockModel" position="-0.4 0.97 -0.94" rotation="0 180 0"></a-entity>
+
+        <a-entity id="battery" gltf-model="#batteryModel" position="-0.4 0.97 -0.74"></a-entity>
 
         <a-plane position="0 0 0" rotation="-90 0 0" width="10" height="10" color="#A1ACB3"></a-plane>
 
@@ -108,11 +109,11 @@
             test></a-entity>
 
         <a-entity
-            vr-grid="dimension: 3 3; orbits: 0; referencePoint: 0.25 1.01 -1;theta: 0; rho: -90; movementBar: false; transparency: true; buttonSize: 0.225 0.2; border: 5 #6d7584;"
+            vr-interface="dimension: 5 9; worldPosition: 0 0.97 -1.14; theta: 0; rho: -90; transparency: true; buttonSize: 0.2 0.2; border: 5 #6d7584;"
             grid>
         </a-entity>
 
-        <a-entity id="rig" position="0 0.1 0.15">
+        <a-entity id="rig" position="0 0.1 0">
             <a-entity id="camera" camera position="0 1.6 0" look-controls="pointerLockEnabled: true"
                 wasd-controls="acceleration:150; fly: true; enabled: true"></a-entity>
         </a-entity>
