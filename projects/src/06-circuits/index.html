@@ -25,13 +25,22 @@
     <script type="text/javascript" charset="UTF-8" src="../../libs/vr-grid.js"></script>
 
     <script>
-        AFRAME.registerComponent('test', {
+        AFRAME.registerComponent('panel', {
             init: function () {
                 const vrInterface = this.el.components['vr-interface'];
+                const models = this.el.querySelectorAll('.panelModel');
 
-                vrInterface.addButton('1', '#wire');
-                vrInterface.addButton('2', '#led');
-                vrInterface.addButton('3', '#resistor');
+                vrInterface.addButton('rotate', '#rotateImage', rotate)
+                vrInterface.addButton('block');
+                vrInterface.addButton('t-block')
+                vrInterface.addButton('led')
+                vrInterface.addButton('battery');
+
+                function rotate() {
+                    for (let i = 0; i < models.length; i++) {
+                        models[i].object3D.rotation.x += (Math.PI * 0.5);
+                    }
+                }
             }
         });
 
@@ -75,14 +84,13 @@
             <a-asset-item id="batteryModel" src="../../assets/models/circuits/battery-block.glb"></a-asset-item>
             <a-asset-item id="ledModel" src="../../assets/models/circuits/led-block.glb"></a-asset-item>
 
-            <img id="led" src="img/led.png">
-            <img id="resistor" src="img/resistor.png">
-            <img id="wire" src="img/wire.png">
+            <img id="rotateImage" src="img/rotate.png">
             <img id="transparent" src="img/transparent.png">
+            <img id="wood" src="img/wood.png">
         </a-assets>
 
         <a-entity light="type: ambient; color: #fff; intensity: 0.3"></a-entity>
-        <a-entity light="color: #fff" position="-65 110 0"></a-entity>
+        <a-entity light="color: #fff" position="-15 110 30"></a-entity>
 
         <a-entity id="table" gltf-model="#tableModel" position="0 -0.03 -0.75" scale="1 1 1.05"></a-entity>
 
@@ -104,12 +112,20 @@
 
         <a-plane position="0 0 0" rotation="-90 0 0" width="10" height="10" color="#A1ACB3"></a-plane>
 
+        <a-plane position="0 1.5 -1.51" width="2.1" height="1" color="#4D3100"></a-plane>
         <a-entity
-            vr-interface="dimension: 1 3; orbits: 1.2; theta: 0; rho: 0; buttonSize: 0.4 0.4; gap: 0 0; border: 5 #6d7584; movementBar: false;"
-            test></a-entity>
+            vr-interface="dimension: 1 5; orbits: 1.5; theta: 0; rho: 0; buttonSize: 0.4 0.4; gap: 0 0; border: 1 #6d7584; movementBar: false; transparency: true;"
+            panel>
+            <a-entity class="panelModel" gltf-model="#blockModel" position="-0.4 0 -1.45" rotation="90 90 90">
+            </a-entity>
+            <a-entity class="panelModel" gltf-model="#tblockModel" position="0 0 -1.45" rotation="90 90 90"></a-entity>
+            <a-entity class="panelModel" gltf-model="#ledModel" position="0.4 0 -1.45" rotation="90 90 90"></a-entity>
+            <a-entity class="panelModel" gltf-model="#batteryModel" position="0.8 0 -1.45" rotation="90 90 90">
+            </a-entity>
+        </a-entity>
 
         <a-entity
-            vr-interface="dimension: 5 9; worldPosition: 0 0.97 -1.14; theta: 0; rho: -90; transparency: true; buttonSize: 0.2 0.2; border: 5 #6d7584;"
+            vr-interface="dimension: 5 9; worldPosition: 0 0.97 -1.14; theta: 0; rho: -90; transparency: true; buttonSize: 0.2 0.2; border: 5 #6d7584; cursorPosition: 0 0 -0.65"
             grid>
         </a-entity>
 
