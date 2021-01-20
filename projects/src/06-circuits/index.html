@@ -45,6 +45,7 @@
                         models[i].object3D.rotation.x += (Math.PI * 0.5);
                     }
                     self.rotation -= 90;
+                    clipboard.setAttribute('rotation', { x: 0, y: self.rotation, z: 0 });
                 }
 
                 function addToClipboard(model) {
@@ -57,34 +58,23 @@
         AFRAME.registerComponent('grid', {
             init: function () {
                 const vrGrid = this.el.components['vr-interface'];
-                const clipboard = document.querySelector('#clipboard');
-
-                const bar1 = document.querySelector('#bar1');
-                const bar2 = document.querySelector('#bar2');
-                const ledBar = document.querySelector('#ledBar');
-
-                let f1 = function () {
-                    bar1.object3D.visible = !bar1.object3D.visible;
-                    ledBar.object3D.children[0].visible = bar1.object3D.visible && bar2.object3D.visible;
-                }
-                let f2 = function () {
-                    bar2.object3D.visible = !bar2.object3D.visible;
-                    ledBar.object3D.children[0].visible = bar1.object3D.visible && bar2.object3D.visible;
-                }
-
-                let lb = function () {
-                    ledBar.object3D.visible = !ledBar.object3D.visible;
-                    ledBar.object3D.children[0].visible = bar1.object3D.visible && bar2.object3D.visible;
-                }
+                const clipboard = document.querySelector('#clipboard').object3D;
+                const container = document.querySelector('#container');
 
                 function placeBlock(button) {
-                    if (clipboard.object3D.children[0]) {
-                        clipboard.object3D.children[0].rotation.y = clipboard.object3D.rotation.y;
-                        button.getWorldPosition(clipboard.object3D.children[0].position);
-                        this.el.sceneEl.object3D.add(clipboard.object3D.children[0]);
+                    if (clipboard.children[0]) {
+                        button.getWorldPosition(clipboard.children[0].position);
+                        clipboard.children[0].rotation.y = clipboard.rotation.y;
+                        clipboard.children[0].name = button.name;
+                        container.object3D.add(clipboard.children[0]);
 
-                        clipboard.object3D.remove(clipboard.object3D.children[0]);
-                        clipboard.removeAttribute('gltf-model');
+                        clipboard.el.removeAttribute('gltf-model');
+                    }
+                    else {
+                        let block = container.object3D.getObjectByName(button.name);
+                        if (block) {
+                            container.object3D.remove(block);
+                        }
                     }
                 }
 
@@ -150,6 +140,7 @@
         </a-entity>
 
         <a-entity id="clipboard" visible="false"></a-entity>
+        <a-entity id="container"></a-entity>
 
         <a-entity id="rig" position="0 0.1 0">
             <a-entity id="camera" camera position="0 1.6 0" look-controls="pointerLockEnabled: true"
