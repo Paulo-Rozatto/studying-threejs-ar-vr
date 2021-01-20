@@ -4,7 +4,7 @@
     <script type="text/javascript" charset="UTF-8" src="path/to/vr-interface.js"></script>
 
   - Call it in an aframe entity and pass the options to config like the example below:
-      <a-entity vr-interface="dimension: 3 2; theta: 90; rho: 0; transparency: true; gap: 0.01 0.01; border: 1.2 #6d7584;"</a-entity>
+      <a-entity vr-interface="dimension: 3 2; orbits: 1 1.5 2 ; theta: 90; rho: 0; transparency: true; gap: 0.01 0.01; border: 1.2 #6d7584;"</a-entity>
 
   - To add buttons and use functions create a component in your code
     AFRAME.registerComponent('my-component', {
@@ -28,9 +28,10 @@
   Properties:
   - visible: visibilty of the interface;
   - orbits: distances from the camera;
+  - worldPosition: a second way for positioning the interface, it overrides the orbital way;
   - theta: horizontal rotation in degrees;
   - rho: vertical rotation in degrees;
-  - movementBar: whether to display move bar or not;
+  - movementBar: whether to display move bar or not, doesn't work with world position;
   - rotation: button rotation in Y-Axis in degrees;
   - dimension: number of lines and columns of the imaginary matrix in which the buttons will be placed;
   - centralize: whether to align buttons to the center, if false they are aligned to the top-left; 
@@ -50,7 +51,7 @@
   - showMessage(message, position) - shows message, position parameter is optional
   - showSideText() - shows a permanent multiline message to the right of the interface
   - hideSideText() - hides side text
-  - updatePosition({radius, theta, rho}) - should be called if the camera position changes or if you want to change one parameter. All parameters are optional.
+  - updatePosition({radius, theta, rho, worldPosition}) - should be called if the camera position changes or if you want to change one parameter. All parameters are optional.
   - hide() - hide the interface
   - show() - make interface visible
   
@@ -610,17 +611,23 @@ AFRAME.registerComponent('vr-interface', {
       if (typeof args.rho === 'number') {
         this.data.rho = args.rho * Math.PI / 180;
       }
+
+      if (this.positioning === 'world' && typeof args.worldPosition.x === 'number' && typeof args.worldPosition.z === 'number' && typeof args.worldPosition.z === 'number') {
+        this.data.worldPosition.x = args.worldPosition.x;
+        this.data.worldPosition.y = args.worldPosition.y;
+        this.data.worldPosition.z = args.worldPosition.z;
+        this.buttonGroup.object3D.position.copy(this.data.worldPosition);
+      }
     }
 
-    if (this.positioning === 'world') {
-      this.buttonGroup.object3D.position.copy(this.data.worldPosition);
-    }
-    else if (this.rig) {
-      this.rig.object3D.getWorldPosition(this.referencePoint);
-      this.referencePoint.y += this.camera.object3D.position.y;
-    }
-    else {
-      this.camera.object3D.getWorldPosition(this.referencePoint);
+    if (this.positioning !== 'world') {
+      if (this.rig) {
+        this.rig.object3D.getWorldPosition(this.referencePoint);
+        this.referencePoint.y += this.camera.object3D.position.y;
+      }
+      else {
+        this.camera.object3D.getWorldPosition(this.referencePoint);
+      }
     }
 
     this.el.object3D.position.x = this.referencePoint.x;
