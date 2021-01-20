@@ -27,19 +27,29 @@
     <script>
         AFRAME.registerComponent('panel', {
             init: function () {
+                const self = this;
                 const vrInterface = this.el.components['vr-interface'];
                 const models = this.el.querySelectorAll('.panelModel');
+                const clipboard = document.querySelector('#clipboard');
+
+                this.rotation = 0;
 
                 vrInterface.addButton('rotate', '#rotateImage', rotate)
-                vrInterface.addButton('block');
-                vrInterface.addButton('t-block')
-                vrInterface.addButton('led')
-                vrInterface.addButton('battery');
+                vrInterface.addButton('block', null, () => addToClipboard('#blockModel'));
+                vrInterface.addButton('t-block', null, () => addToClipboard('#tblockModel'));
+                vrInterface.addButton('led', null, () => addToClipboard('#ledModel'));
+                vrInterface.addButton('battery', null, () => addToClipboard('#batteryModel'));
 
                 function rotate() {
                     for (let i = 0; i < models.length; i++) {
                         models[i].object3D.rotation.x += (Math.PI * 0.5);
                     }
+                    self.rotation -= 90;
+                }
+
+                function addToClipboard(model) {
+                    clipboard.setAttribute('gltf-model', model);
+                    clipboard.setAttribute('rotation', { x: 0, y: self.rotation, z: 0 });
                 }
             }
         });
@@ -47,13 +57,13 @@
         AFRAME.registerComponent('grid', {
             init: function () {
                 const vrGrid = this.el.components['vr-interface'];
+                const clipboard = document.querySelector('#clipboard');
 
                 const bar1 = document.querySelector('#bar1');
                 const bar2 = document.querySelector('#bar2');
                 const ledBar = document.querySelector('#ledBar');
 
                 let f1 = function () {
-                    console.log(1);
                     bar1.object3D.visible = !bar1.object3D.visible;
                     ledBar.object3D.children[0].visible = bar1.object3D.visible && bar2.object3D.visible;
                 }
@@ -67,8 +77,19 @@
                     ledBar.object3D.children[0].visible = bar1.object3D.visible && bar2.object3D.visible;
                 }
 
+                function placeBlock(button) {
+                    if (clipboard.object3D.children[0]) {
+                        clipboard.object3D.children[0].rotation.y = clipboard.object3D.rotation.y;
+                        button.getWorldPosition(clipboard.object3D.children[0].position);
+                        this.el.sceneEl.object3D.add(clipboard.object3D.children[0]);
+
+                        clipboard.object3D.remove(clipboard.object3D.children[0]);
+                        clipboard.removeAttribute('gltf-model');
+                    }
+                }
+
                 for (let i = 0; i < 45; i++) {
-                    vrGrid.addButton(i.toString(), '#transparent');
+                    vrGrid.addButton(i.toString(), '#transparent', placeBlock);
                 }
             }
         });
@@ -86,7 +107,6 @@
 
             <img id="rotateImage" src="img/rotate.png">
             <img id="transparent" src="img/transparent.png">
-            <img id="wood" src="img/wood.png">
         </a-assets>
 
         <a-entity light="type: ambient; color: #fff; intensity: 0.3"></a-entity>
@@ -128,6 +148,8 @@
             vr-interface="dimension: 5 9; worldPosition: 0 0.97 -1.14; theta: 0; rho: -90; transparency: true; buttonSize: 0.2 0.2; border: 5 #6d7584; cursorPosition: 0 0 -0.65"
             grid>
         </a-entity>
+
+        <a-entity id="clipboard" visible="false"></a-entity>
 
         <a-entity id="rig" position="0 0.1 0">
             <a-entity id="camera" camera position="0 1.6 0" look-controls="pointerLockEnabled: true"

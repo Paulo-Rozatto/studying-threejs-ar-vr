@@ -321,7 +321,7 @@ AFRAME.registerComponent('vr-interface', {
     else if (!this.isToChangeTheta && !this.isToChangeRho) {
       for (let button of this.buttons) {
         if (button.name === name && typeof button.onClick === 'function') {
-          button.onClick();
+          button.onClick(evt.detail.intersection.object);
         }
       }
     }
