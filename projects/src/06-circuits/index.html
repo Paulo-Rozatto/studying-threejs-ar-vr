@@ -35,10 +35,22 @@
                 this.rotation = 0;
 
                 vrInterface.addButton('rotate', '#rotateImage', rotate)
-                vrInterface.addButton('block', null, () => addToClipboard('#blockModel'));
-                vrInterface.addButton('t-block', null, () => addToClipboard('#tblockModel'));
-                vrInterface.addButton('led', null, () => addToClipboard('#ledModel'));
-                vrInterface.addButton('battery', null, () => addToClipboard('#batteryModel'));
+                vrInterface.addButton('block', null, () => {
+                    addToClipboard('#blockModel');
+                    vrInterface.showMessage('Wire block added to clipboard')
+                });
+                vrInterface.addButton('t-block', null, () => {
+                    addToClipboard('#tblockModel');
+                    vrInterface.showMessage('Curved wire block added to clipboard')
+                });
+                vrInterface.addButton('led', null, () => {
+                    addToClipboard('#ledModel');
+                    vrInterface.showMessage('Lamp block added to clipboard')
+                });
+                vrInterface.addButton('battery', null, () => {
+                    addToClipboard('#batteryModel');
+                    vrInterface.showMessage('Battery block added to clipboard')
+                });
 
                 function rotate() {
                     for (let i = 0; i < models.length; i++) {
@@ -49,6 +61,7 @@
                 }
 
                 function addToClipboard(model) {
+                    clipboard.removeAttribute('gltf-model');
                     clipboard.setAttribute('gltf-model', model);
                     clipboard.setAttribute('rotation', { x: 0, y: self.rotation, z: 0 });
                 }
