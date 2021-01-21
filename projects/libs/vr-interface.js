@@ -4,7 +4,7 @@
     <script type="text/javascript" charset="UTF-8" src="path/to/vr-interface.js"></script>
 
   - Call it in an aframe entity and pass the options to config like the example below:
-      <a-entity vr-interface="dimension: 3 2; orbits: 1 1.5 2 ; theta: 90; rho: 0; transparency: true; gap: 0.01 0.01; border: 1.2 #6d7584;"</a-entity>
+      <a-entity vr-interface="dimension: 3 2; orbits: 1 1.5 2 ; theta: 90; rho: 0; transparency: true; gap: 0.01 0.01; border: 1.2 #6d7584; movementBar: true"</a-entity>
 
   - To add buttons and use functions create a component in your code
     AFRAME.registerComponent('my-component', {
@@ -20,19 +20,26 @@
         });
 
         vrInterface.addButton('myButtonRotate', '#myTexture3', function(){
-          vrInterface.updatePostion({theta: 180, rho: 15})
+          vrInterface.updatePosition({theta: 180, rho: 15})
         });
       },
     });
 
+    - There are two ways to define the position to the vr-interface: relative to the camera and relative to the world.
+      Positioning relative to the camera works similar to polar coordinates, where the camera is the pole and you define some orbits (distances to the camera), theta (horizontal angle), and rho (vertical angle)
+        <a-entity vr-interface="orbits: 1; theta: 45; rho: 45;"></a-entity>
+      Positioning relative to the world works like positioning regular a-frame object, you define position and rotation in each axis
+        <a-entity vr-interface="worldPosition: -1 1.6 -1; rotation: 0 45 0">
+      The advantage of positioning relative to the camera is being able to move the vr-interface if movementBar is set to true;
+
   Properties:
   - visible: visibilty of the interface;
   - orbits: distances from the camera;
-  - worldPosition: a second way for positioning the interface, it overrides the orbital way;
   - theta: horizontal rotation in degrees;
   - rho: vertical rotation in degrees;
+  - worldPosition: a second way for positioning the interface, it overrides the orbital way;
+  - rotation: Defines the rotation in x, y and z;
   - movementBar: whether to display move bar or not, doesn't work with world position;
-  - rotation: button rotation in Y-Axis in degrees;
   - dimension: number of lines and columns of the imaginary matrix in which the buttons will be placed;
   - centralize: whether to align buttons to the center, if false they are aligned to the top-left; 
   - buttonSize: individual button size;
@@ -85,7 +92,7 @@ AFRAME.registerComponent('vr-interface', {
     rho: { type: 'number', default: 0 },
     movementBar: { type: 'bool', default: true },
     worldPosition: { type: 'vec3', default: null },
-    updatePos: { type: 'bool', default: false },
+    rotation: { type: 'vec3', default: { x: 0, y: 0, z: 0 } },
     centralize: { type: 'bool', default: true },
     buttonSize: { type: 'vec2', default: { x: 0.30, y: 0.20 } },
     transparency: { type: 'bool', default: false },
@@ -139,24 +146,30 @@ AFRAME.registerComponent('vr-interface', {
     this.buttonGroup = document.createElement('a-entity');
     this.el.appendChild(this.buttonGroup);
 
-    // converts deg to rad
-    data.theta = data.theta * Math.PI / 180;
-    data.rho = data.rho * Math.PI / 180;
-
     if (typeof data.worldPosition.x === 'number') {
+      // converts deg to rad
+      data.rotation.x = data.rotation.x * Math.PI / 180;
+      data.rotation.y = data.rotation.y * Math.PI / 180;
+      data.rotation.z = data.rotation.z * Math.PI / 180;
+
       this.positioning = 'world';
 
       data.movementBar = false;
 
       this.buttonGroup.object3D.position.copy(data.worldPosition);
-      this.buttonGroup.object3D.rotation.y = data.theta;
-      this.buttonGroup.object3D.rotation.x = data.rho;
+      this.buttonGroup.object3D.rotation.x = data.rotation.x;
+      this.buttonGroup.object3D.rotation.y = data.rotation.y;
+      this.buttonGroup.object3D.rotation.z = data.rotation.z;
 
       if (typeof data.raycaster.far === 'null') {
         data.raycaster.far = this.buttonGroup.position.distanceTo(this.camera.position);
       }
     }
     else {
+      // converts deg to rad
+      data.theta = data.theta * Math.PI / 180;
+      data.rho = data.rho * Math.PI / 180;
+
       this.positioning = 'orbit';
       this.orbitIndex = 0;
       this.radius = data.orbits[this.orbitIndex];
@@ -212,7 +225,7 @@ AFRAME.registerComponent('vr-interface', {
     this.isLoaded = false;
     this.el.sceneEl.addEventListener('loaded', () => {
       self.isLoaded = true;
-      self.updatePostion();
+      self.updatePosition();
     }, { once: true });
 
     this.el.addEventListener('click', (evt) => self.clickHandle(evt)); // click == fuse click
@@ -227,82 +240,6 @@ AFRAME.registerComponent('vr-interface', {
       this.data.rho = this.camera.object3D.rotation.x;
       this.buttonGroup.object3D.rotation.x = this.data.rho;
     }
-  },
-  update: function (oldData) {
-    //TODO - refactor this function
-
-    // const el = this.el;
-    // const data = this.data;
-
-    // // If `oldData` is empty, then this means we're in the initialization process. No need to update.
-    // if (Object.keys(oldData).length === 0) { return; }
-
-    // if (oldData.visible !== data.visible) {
-    //   if (data.visible) this.show();
-    //   else this.hide();
-    // }
-
-    // if (oldData.rotation !== data.rotation) {
-    //   this.data.rotation = data.rotation * Math.PI / 180; // converts deg to rad
-    // }
-
-    // // if position, dimension, button size, gap, or rotation changes it's the same processes to change the buttons
-    // if (
-    //   oldData.position.x !== data.position.x || oldData.position.y !== data.position.y || oldData.position.z !== data.position.z ||
-    //   oldData.dimension.x !== data.dimension.x || oldData.dimension.y !== data.dimension.y ||
-    //   oldData.buttonSize.x !== data.buttonSize.x || oldData.buttonSize.y !== data.buttonSize.y ||
-    //   oldData.gap.x !== data.gap.x || oldData.gap.y !== data.gap.y ||
-    //   oldData.rotation !== data.rotation
-    // ) {
-    //   for (let k = 0; k < this.buttons.length; k++) {
-    //     this.buttons[k].rotation.y = data.rotation;
-
-    //     this.positionate(this.buttons[k], k);
-    //     if (oldData.buttonSize.x !== data.buttonSize.x || oldData.buttonSize.y !== data.buttonSize.y) {
-    //       this.buttons[k].scale.set(data.buttonSize.x, data.buttonSize.y, 1);
-    //     }
-
-    //     if (data.centralize) {
-    //       this.centralize(this.buttons[k]);
-    //     }
-
-    //     if (this.borderMaterial) {
-    //       this.positionateBorder(this.buttons[k])
-    //     }
-    //   }
-    // }
-    // else if (oldData.centralize !== data.centralize) { // the previous option updates the centralization already
-    //   for (let k = 0; k < this.buttons.length; k++) {
-    //     if (data.centralize) {
-    //       this.centralize(this.buttons[k]);
-    //     }
-    //     else {
-    //       this.decentralize(this.buttons[k]);
-    //     }
-    //     if (this.borderMaterial) {
-    //       this.positionateBorder(this.buttons[k])
-    //     }
-    //   }
-    // }
-
-    // if (oldData.cursorColor !== data.cursorColor) {
-    //   this.cursor.setAttribute('material', { color: data.cursorColor, shader: 'flat' });
-    // }
-
-    // if (oldData.cursorPosition !== data.cursorPosition) {
-    //   this.cursor.setAttribute('position', { x: data.cursorPosition.x, y: data.cursorPosition.y, z: data.cursorPosition.z });
-    // }
-
-    // if (oldData.raycaster.near !== data.raycaster.near || oldData.raycaster.far !== data.raycaster.far) {
-    //   this.cursor.setAttribute('raycaster', { near: data.raycaster.near, far: data.raycaster.far });
-    // }
-
-    // if (oldData.border.thickness !== data.border.thickness || oldData.border.color !== data.border.color) {
-    //   this.borderMaterial.linewidth = data.border.thickness;
-    //   this.borderMaterial.color = new THREE.Color(data.border.color);
-    //   this.borderMaterial.needsUpdate = true;
-    // }
-
   },
   clickHandle: function (evt) {
     let name = evt.detail.intersection.object.name;
@@ -418,7 +355,7 @@ AFRAME.registerComponent('vr-interface', {
           self.orbitIndex = 0;
         }
         self.radius = data.orbits[self.orbitIndex];
-        self.updatePostion();
+        self.updatePosition();
       }
       this.orbitButton.classList.add('vrInterface-button')
       this.moveBar.appendChild(this.orbitButton);
@@ -597,7 +534,7 @@ AFRAME.registerComponent('vr-interface', {
     button.position.y -= this.data.buttonSize.y * 0.5 * (this.data.dimension.x - 1); // data.dimension.x == lines
     button.position.x += this.data.buttonSize.x * 0.5 * (this.data.dimension.y - 1); // data.dimension.y == columns
   },
-  updatePostion: function (args) {
+  updatePosition: function (args) {
     if (args) {
       if (typeof args.radius === 'number') {
         this.radius = args.radius;
@@ -612,11 +549,25 @@ AFRAME.registerComponent('vr-interface', {
         this.data.rho = args.rho * Math.PI / 180;
       }
 
-      if (this.positioning === 'world' && typeof args.worldPosition.x === 'number' && typeof args.worldPosition.z === 'number' && typeof args.worldPosition.z === 'number') {
-        this.data.worldPosition.x = args.worldPosition.x;
-        this.data.worldPosition.y = args.worldPosition.y;
-        this.data.worldPosition.z = args.worldPosition.z;
-        this.buttonGroup.object3D.position.copy(this.data.worldPosition);
+      if (this.positioning === 'world') {
+        if (args.worldPosition && typeof args.worldPosition.x === 'number' && typeof args.worldPosition.z === 'number' && typeof args.worldPosition.z === 'number') {
+          this.data.worldPosition.x = args.worldPosition.x;
+          this.data.worldPosition.y = args.worldPosition.y;
+          this.data.worldPosition.z = args.worldPosition.z;
+          this.buttonGroup.object3D.position.copy(this.data.worldPosition);
+        }
+
+        if (args.rotation && typeof args.rotation.x === 'number' && typeof args.rotation.z === 'number' && typeof args.rotation.z === 'number') {
+          args.rotation.x = args.rotation.x * Math.PI / 180;
+          args.rotation.y = args.rotation.y * Math.PI / 180;
+          args.rotation.z = args.rotation.z * Math.PI / 180;
+
+          this.data.rotation = args.rotation;
+
+          this.buttonGroup.object3D.rotation.x = args.rotation.x;
+          this.buttonGroup.object3D.rotation.y = args.rotation.y;
+          this.buttonGroup.object3D.rotation.z = args.rotation.z;
+        }
       }
     }
 
