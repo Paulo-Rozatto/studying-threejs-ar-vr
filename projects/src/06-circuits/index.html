@@ -22,7 +22,6 @@
     <!-- Library of Virtual Reality -->
     <script type="text/javascript" charset="UTF-8" src="../../libs/aframe-master.js"></script>
     <script type="text/javascript" charset="UTF-8" src="../../libs/vr-interface.js"></script>
-    <script type="text/javascript" charset="UTF-8" src="../../libs/vr-grid.js"></script>
 
     <script>
         AFRAME.registerComponent('panel', {
@@ -30,40 +29,42 @@
                 const self = this;
                 const vrInterface = this.el.components['vr-interface'];
                 const models = this.el.querySelectorAll('.panelModel');
-                const clipboard = document.querySelector('#clipboard');
+                const clipboard = document.querySelector('#clipboard').object3D;
 
-                this.rotation = 0;
+                clipboard.data = { type: '', rotation: 0 };
 
                 vrInterface.addButton('rotate', '#rotateImage', rotate)
                 vrInterface.addButton('block', null, () => {
-                    addToClipboard('#blockModel');
+                    addToClipboard('block');
                     vrInterface.showMessage('Wire block added to clipboard')
                 });
                 vrInterface.addButton('t-block', null, () => {
-                    addToClipboard('#tblockModel');
+                    addToClipboard('tblock');
                     vrInterface.showMessage('Curved wire block added to clipboard')
                 });
                 vrInterface.addButton('led', null, () => {
-                    addToClipboard('#ledModel');
+                    addToClipboard('led');
                     vrInterface.showMessage('Lamp block added to clipboard')
                 });
                 vrInterface.addButton('battery', null, () => {
-                    addToClipboard('#batteryModel');
+                    addToClipboard('battery');
                     vrInterface.showMessage('Battery block added to clipboard')
                 });
 
                 function rotate() {
+                    clipboard.rotation.x += Math.PI * 0.5;
+                    clipboard.data.rotation -= Math.PI * 0.5;
+
                     for (let i = 0; i < models.length; i++) {
-                        models[i].object3D.rotation.x += (Math.PI * 0.5);
+                        models[i].object3D.rotation.x += Math.PI * 0.5;
                     }
-                    self.rotation -= 90;
-                    clipboard.setAttribute('rotation', { x: 0, y: self.rotation, z: 0 });
                 }
 
-                function addToClipboard(model) {
-                    clipboard.removeAttribute('gltf-model');
-                    clipboard.setAttribute('gltf-model', model);
-                    clipboard.setAttribute('rotation', { x: 0, y: self.rotation, z: 0 });
+                function addToClipboard(type) {
+                    clipboard.el.removeAttribute('gltf-model');
+
+                    clipboard.data.type = type;
+                    clipboard.el.setAttribute('gltf-model', `#${type}Model`);
                 }
             }
         });
@@ -72,28 +73,65 @@
             init: function () {
                 const vrGrid = this.el.components['vr-interface'];
                 const clipboard = document.querySelector('#clipboard').object3D;
-                const container = document.querySelector('#container');
+                const container = document.querySelector('#container').object3D;
+                const batteries = [];
+                const matrix = new Matrix(45);
+
+
+                for (let i = 0; i < 45; i++) {
+                    vrGrid.addButton(i, '#transparent', placeBlock);
+                }
+
 
                 function placeBlock(button) {
                     if (clipboard.children[0]) {
                         button.getWorldPosition(clipboard.children[0].position);
-                        clipboard.children[0].rotation.y = clipboard.rotation.y;
-                        clipboard.children[0].name = button.name;
-                        container.object3D.add(clipboard.children[0]);
 
+                        clipboard.children[0].name = button.name;
+                        clipboard.children[0].rotation.y = clipboard.data.rotation;
+
+                        matrix.set(button.name, clipboard.data.type);
+
+                        if (clipboard.data.type === 'battery') {
+                            batteries.push(clipboard.children[0]);
+                        }
+
+                        container.add(clipboard.children[0]);
                         clipboard.el.removeAttribute('gltf-model');
                     }
                     else {
-                        let block = container.object3D.getObjectByName(button.name);
+                        let block = container.getObjectByName(button.name);
                         if (block) {
-                            container.object3D.remove(block);
+                            container.remove(block);
+                        }
+                    }
+
+                }
+
+
+                function Matrix(length) {
+                    this.mat = new Array(length);
+
+                    this.get = function (i, j) {
+                        if (typeof j === 'undefined') {
+                            return this.mat[i];
+                        }
+                        else {
+                            return this.mat[9 * i + j]
+                        }
+                    }
+
+                    this.set = function (i, j, k) {
+                        if (typeof k === 'undefined') {
+                            console.log({ i, j })
+                            this.mat[i] = j;
+                        }
+                        else {
+                            this.mat[9 * i + j] = k;
                         }
                     }
                 }
 
-                for (let i = 0; i < 45; i++) {
-                    vrGrid.addButton(i.toString(), '#transparent', placeBlock);
-                }
             }
         });
     </script>
@@ -136,12 +174,14 @@
             grid>
         </a-entity>
 
-        <a-entity id="clipboard" visible="false"></a-entity>
         <a-entity id="container"></a-entity>
 
         <a-entity id="rig" position="0 0.1 0">
             <a-entity id="camera" camera position="0 1.6 0" look-controls="pointerLockEnabled: true"
-                wasd-controls="acceleration:150; fly: true; enabled: true"></a-entity>
+                wasd-controls="acceleration:150; fly: true; enabled: true">
+                <a-entity id="clipboard" position="0 0 -0.68" rotation="90 90 90" scale="0.3 0.3 0.3">
+                </a-entity>
+            </a-entity>
         </a-entity>
     </a-scene>
 
