@@ -38,8 +38,8 @@
                     addToClipboard('block');
                     vrInterface.showMessage('Wire block added to clipboard')
                 });
-                vrInterface.addButton('t-block', null, () => {
-                    addToClipboard('tblock');
+                vrInterface.addButton('l-block', null, () => {
+                    addToClipboard('lblock');
                     vrInterface.showMessage('Curved wire block added to clipboard')
                 });
                 vrInterface.addButton('led', null, () => {
@@ -53,7 +53,9 @@
 
                 function rotate() {
                     clipboard.rotation.x += Math.PI * 0.5;
-                    clipboard.data.rotation -= Math.PI * 0.5;
+
+                    if (clipboard.data.rotation === (-1.5 * Math.PI)) clipboard.data.rotation = 0;
+                    else clipboard.data.rotation -= Math.PI * 0.5;
 
                     for (let i = 0; i < models.length; i++) {
                         models[i].object3D.rotation.x += Math.PI * 0.5;
@@ -75,7 +77,7 @@
                 const clipboard = document.querySelector('#clipboard').object3D;
                 const container = document.querySelector('#container').object3D;
                 const batteries = [];
-                const matrix = new Matrix(45);
+                const matrix = new Array(45);
 
 
                 for (let i = 0; i < 45; i++) {
@@ -88,9 +90,10 @@
                         button.getWorldPosition(clipboard.children[0].position);
 
                         clipboard.children[0].name = button.name;
+                        clipboard.children[0].type = clipboard.data.type;
                         clipboard.children[0].rotation.y = clipboard.data.rotation;
 
-                        matrix.set(button.name, clipboard.data.type);
+                        matrix[button.name] = clipboard.children[0];
 
                         if (clipboard.data.type === 'battery') {
                             batteries.push(clipboard.children[0]);
@@ -98,40 +101,105 @@
 
                         container.add(clipboard.children[0]);
                         clipboard.el.removeAttribute('gltf-model');
+                        updateCircuit();
                     }
                     else {
                         let block = container.getObjectByName(button.name);
                         if (block) {
                             container.remove(block);
+                            matrix[button.name] = null;
+                            updateCircuit();
                         }
                     }
 
                 }
 
+                function updateCircuit() {
+                    if (batteries.length > 0) {
+                        let isCircuit = false;
+                        let pos, prevPos;
 
-                function Matrix(length) {
-                    this.mat = new Array(length);
+                        for (let i = 0; i < batteries.length; i++) {
+                            pos = batteries[i].name;
+                            prevPos = pos;
 
-                    this.get = function (i, j) {
-                        if (typeof j === 'undefined') {
-                            return this.mat[i];
-                        }
-                        else {
-                            return this.mat[9 * i + j]
-                        }
-                    }
+                            switch (batteries[i].rotation.y) {
+                                case 0:
+                                    pos += 9;
+                                    break;
+                                case -Math.PI:
+                                    pos -= 9;
+                                    break;
+                                case -Math.PI * 0.5:
+                                    pos -= 1;
+                                    break;
+                                default:
+                                    pos += 1;
+                            }
 
-                    this.set = function (i, j, k) {
-                        if (typeof k === 'undefined') {
-                            console.log({ i, j })
-                            this.mat[i] = j;
-                        }
-                        else {
-                            this.mat[9 * i + j] = k;
+                            while (matrix[pos] && blocksConnect(matrix[pos], prevPos) && matrix[pos] !== batteries[i]) {
+                                prevPos = pos;
+                                pos = nextPosition(matrix[pos]);
+                            }
                         }
                     }
                 }
 
+                function blocksConnect(obj, prevPos) {
+                    if (obj.type === 'lblock') {
+                        switch (obj.rotation.y) {
+                            case 0:
+                                return (obj.name - 1) === prevPos;
+                            case -Math.PI:
+                                return (obj.name + 1) === prevPos;
+                                break;
+                            case -Math.PI * 0.5:
+                                return (obj.name - 9) === prevPos;
+                            default:
+                                return (obj.name + 9) === prevPos;
+                        }
+                    }
+                    else if (obj.type === 'block') {
+                        switch (obj.rotation.y) {
+                            case 0:
+                                return (obj.name - 1) === prevPos;
+                            case -Math.PI:
+                                return (obj.name + 1) === prevPos;
+                            case -Math.PI * 0.5:
+                                return (obj.name - 9) === prevPos;
+                            default:
+                                return (obj.name + 9) === prevPos;
+                        }
+                    }
+                }
+
+                function nextPosition(obj) {
+                    if (obj.type === 'lblock') {
+                        switch (obj.rotation.y) {
+                            case 0:
+                                return obj.name - 9;
+                            case -Math.PI:
+                                return obj.name + 9;
+                                break;
+                            case -Math.PI * 0.5:
+                                return obj.name + 1;
+                            default:
+                                return obj.name - 1;
+                        }
+                    }
+                    else {
+                        switch (obj.rotation.y) {
+                            case 0:
+                                return obj.name + 1;
+                            case -Math.PI:
+                                return obj.name - 1;
+                            case -Math.PI * 0.5:
+                                return obj.name + 9;
+                            default:
+                                return obj.name - 9;
+                        }
+                    }
+                }
             }
         });
     </script>
@@ -142,7 +210,7 @@
         <a-assets timeout="3000">
             <a-asset-item id="tableModel" src="../../assets/models/table.glb"></a-asset-item>
             <a-asset-item id="blockModel" src="../../assets/models/circuits/block.glb"></a-asset-item>
-            <a-asset-item id="tblockModel" src="../../assets/models/circuits/l-block.glb"></a-asset-item>
+            <a-asset-item id="lblockModel" src="../../assets/models/circuits/l-block.glb"></a-asset-item>
             <a-asset-item id="batteryModel" src="../../assets/models/circuits/battery-block.glb"></a-asset-item>
             <a-asset-item id="ledModel" src="../../assets/models/circuits/led-block.glb"></a-asset-item>
 
@@ -163,7 +231,7 @@
             panel>
             <a-entity class="panelModel" gltf-model="#blockModel" position="-0.4 0 -1.45" rotation="90 90 90">
             </a-entity>
-            <a-entity class="panelModel" gltf-model="#tblockModel" position="0 0 -1.45" rotation="90 90 90"></a-entity>
+            <a-entity class="panelModel" gltf-model="#lblockModel" position="0 0 -1.45" rotation="90 90 90"></a-entity>
             <a-entity class="panelModel" gltf-model="#ledModel" position="0.4 0 -1.45" rotation="90 90 90"></a-entity>
             <a-entity class="panelModel" gltf-model="#batteryModel" position="0.8 0 -1.45" rotation="90 90 90">
             </a-entity>
