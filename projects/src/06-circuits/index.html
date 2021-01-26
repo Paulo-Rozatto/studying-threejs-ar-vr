@@ -128,11 +128,10 @@
                 function updateCircuit() {
                     if (batteries.length > 0) {
                         let isCircuit = false;
-                        let pos, prevPos;
+                        let pos;
 
                         for (let i = 0; i < batteries.length; i++) {
                             pos = batteries[i].name;
-                            prevPos = pos;
 
                             switch (batteries[i].rotation.y) {
                                 case 0:
@@ -148,12 +147,30 @@
                                     pos += 1;
                             }
 
-                            while (matrix[pos] && blocksConnect(matrix[pos], prevPos) && matrix[pos] !== batteries[i]) {
-                                prevPos = pos;
-                                pos = nextPosition(matrix[pos]);
-                            }
+                            checkIsConnected(batteries[i].name, pos);
                         }
                     }
+                }
+
+                function checkIsConnected(batteryPos, pos, prev) {
+                    let prevPos = prev || batteryPos;
+
+                    while (matrix[pos] && blocksConnect(matrix[pos], prevPos)) {
+                        prevPos = pos;
+                        pos = nextPosition(matrix[pos]);
+
+                        if (pos.length) {
+                            checkIsConnected(batteryPos, pos[1], prevPos);
+                            pos = pos[0];
+                        }
+
+                        if (pos == batteryPos) {
+                            console.log(true);
+                            return true;
+                        }
+                    }
+                    console.log(false);
+                    return false;
                 }
 
                 function blocksConnect(obj, prevPos) {
@@ -163,11 +180,22 @@
                                 return (obj.name - 1) === prevPos;
                             case -Math.PI:
                                 return (obj.name + 1) === prevPos;
-                                break;
                             case -Math.PI * 0.5:
                                 return (obj.name - 9) === prevPos;
                             default:
                                 return (obj.name + 9) === prevPos;
+                        }
+                    }
+                    else if (obj.type === 'receptor') {
+                        switch (obj.rotation.y) {
+                            case 0:
+                                return (obj.name + 9) === prevPos || (obj.name + 1) === prevPos;
+                            case -Math.PI:
+                                return (obj.name - 9) === prevPos || (obj.name - 1) === prevPos;
+                            case -Math.PI * 0.5:
+                                return (obj.name - 1) === prevPos || (obj.name + 9) === prevPos;
+                            default:
+                                return (obj.name + 1) === prevPos || (obj.name - 9) === prevPos;
                         }
                     }
                     else {
@@ -196,6 +224,31 @@
                                 return obj.name + 1;
                             default:
                                 return obj.name - 1;
+                        }
+                    }
+                    if (obj.type === 'divisor') {
+                        switch (obj.rotation.y) {
+                            case 0:
+                                return [obj.name - 9, obj.name + 1];
+                            case -Math.PI:
+                                return [obj.name + 9, obj.name - 1];
+                                break;
+                            case -Math.PI * 0.5:
+                                return [obj.name + 1, obj.name + 9];
+                            default:
+                                return [obj.name - 1, obje.name - 9];
+                        }
+                    }
+                    else if (obj.type === 'receptor') {
+                        switch (obj.rotation.y) {
+                            case 0:
+                                return obj.name - 1;
+                            case -Math.PI:
+                                return obj.name + 1;
+                            case -Math.PI * 0.5:
+                                return obj.name - 9;
+                            default:
+                                return obj.name + 9;
                         }
                     }
                     else {
