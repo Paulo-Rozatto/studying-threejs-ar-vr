@@ -88,6 +88,7 @@
                 const clipboard = document.querySelector('#clipboard').object3D;
                 const container = document.querySelector('#container').object3D;
                 const batteries = [];
+                let actionBlocks = [];
                 const matrix = new Array(45);
 
 
@@ -118,7 +119,11 @@
                         let block = container.getObjectByName(button.name);
                         if (block) {
                             container.remove(block);
-                            matrix[button.name] = null;
+                            matrix[block.name] = null;
+
+                            if (block.type == 'battery') {
+                                batteries.splice(batteries.indexOf(button), 1)
+                            }
                             updateCircuit();
                         }
                     }
@@ -126,8 +131,11 @@
                 }
 
                 function updateCircuit() {
+                    for (let i = 0; i < actionBlocks.length; i++) {
+                        actionBlocks[i].scale.set(1, 1, 1)
+                    }
+
                     if (batteries.length > 0) {
-                        let isCircuit = false;
                         let pos;
 
                         for (let i = 0; i < batteries.length; i++) {
@@ -147,6 +155,7 @@
                                     pos += 1;
                             }
 
+                            actionBlocks = [];
                             checkIsConnected(batteries[i].name, pos);
                         }
                     }
@@ -154,8 +163,14 @@
 
                 function checkIsConnected(batteryPos, pos, prev) {
                     let prevPos = prev || batteryPos;
+                    let specialBlocks = [];
 
                     while (matrix[pos] && blocksConnect(matrix[pos], prevPos)) {
+                        if (matrix[pos].type === 'led') {
+                            specialBlocks.push(matrix[pos]);
+                            actionBlocks.push(matrix[pos])
+                        }
+
                         prevPos = pos;
                         pos = nextPosition(matrix[pos]);
 
@@ -165,11 +180,14 @@
                         }
 
                         if (pos == batteryPos) {
-                            console.log(true);
+                            for (let i = 0; i < specialBlocks.length; i++) {
+                                specialBlocks[i].scale.set(1.4, 1.4, 1.4)
+                            }
                             return true;
                         }
                     }
-                    console.log(false);
+
+
                     return false;
                 }
 
