@@ -461,17 +461,29 @@ AFRAME.registerComponent('vr-interface', {
   showSideText: function (text) {
     const sideText = this.sideText.object3D;
 
-    if (!this.sideText.object3D.visible) {
-      this.sideText.object3D.visible = true;
+    if (!sideText.visible) {
+      sideText.visible = true;
     }
 
     text = text.split('\n');
 
     sideText.el.setAttribute('text', { value: text.join('\n') });
-    sideText.children[1].scale.x = text.reduce((prev, curr) => curr.length > prev.length ? curr : prev).length * 0.0275;
-    sideText.children[1].scale.y = text.length * 0.05;
 
-    this.positionateSideText();
+    sideText.el.addEventListener('loaded', () => {
+      console.log('!')
+      updateSideText(this);
+      sideText.hasLoaded = true;
+    }, { once: true })
+
+    if (sideText.hasLoaded) {
+      updateSideText(this);
+    }
+
+    function updateSideText(parent) {
+      sideText.children[1].scale.x = text.reduce((prev, curr) => curr.length > prev.length ? curr : prev).length * 0.0275;
+      sideText.children[1].scale.y = text.length * 0.05;
+      parent.positionateSideText();
+    }
   },
   hideSideText: function () {
     this.sideText.object3D.visible = false;
@@ -517,8 +529,7 @@ AFRAME.registerComponent('vr-interface', {
   positionateSideText: function () {
     const sideText = this.sideText.object3D;
 
-    let offset = (this.data.dimension.y - 1) * (this.data.buttonSize.x + this.data.gap.x) + 0.01;
-    sideText.position.x = sideText.children[1].scale.x * 0.5 + offset
+    sideText.position.x = this.buttons[this.data.dimension.y - 1].position.x + this.data.buttonSize.x * 0.5 + this.data.gap.x + sideText.children[1].scale.x * 0.5 + 0.02;
     sideText.position.z = this.buttons[0].position.z;
   },
   positionateBorder: function (button) {
