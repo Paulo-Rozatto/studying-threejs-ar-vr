@@ -33,31 +33,30 @@
 
                 clipboard.data = { type: '', rotation: 0 };
 
-
-                vrInterface.addButton('wire', null, () => {
+                vrInterface.addButton('wire', '#wire', () => {
                     addToClipboard('wire');
                     vrInterface.showMessage('Wire block added to clipboard');
                 });
-                vrInterface.addButton('l-block', null, () => {
+                vrInterface.addButton('l-block', '#lwire', () => {
                     addToClipboard('lblock');
                     vrInterface.showMessage('Curved wire block added to clipboard');
                 });
-                vrInterface.addButton('divisor-block', null, () => {
+                vrInterface.addButton('divisor-block', '#split', () => {
                     addToClipboard('divisor');
-                    vrInterface.showMessage('Divisor block added to clipboard');
+                    vrInterface.showMessage('Split wire block added to clipboard');
                 });
-                vrInterface.addButton('receptor-block', null, () => {
+                vrInterface.addButton('receptor-block', '#union', () => {
                     addToClipboard('receptor');
-                    vrInterface.showMessage('Receptor block added to clipboard');
+                    vrInterface.showMessage('Union wire block added to clipboard');
                 });
 
                 vrInterface.addButton('rotate', '#rotateImage', rotate);
 
-                vrInterface.addButton('led', null, () => {
+                vrInterface.addButton('led', '#lamp', () => {
                     addToClipboard('led');
                     vrInterface.showMessage('Lamp block added to clipboard');
                 });
-                vrInterface.addButton('battery', null, () => {
+                vrInterface.addButton('battery', '#battery', () => {
                     addToClipboard('battery');
                     vrInterface.showMessage('Battery block added to clipboard');
                 });
@@ -93,7 +92,7 @@
 
 
                 for (let i = 0; i < 45; i++) {
-                    vrGrid.addButton(i, '#transparent', placeBlock);
+                    vrGrid.addButton(i, null, placeBlock);
                 }
 
 
@@ -299,7 +298,12 @@
             <a-asset-item id="ledModel" src="../../assets/models/circuits/led-block.glb"></a-asset-item>
 
             <img id="rotateImage" src="img/rotate.png">
-            <img id="transparent" src="img/transparent.png">
+            <img id="wire" src="img/wire.png">
+            <img id="lwire" src="img/l-wire.png">
+            <img id="split" src="img/split-wire.png">
+            <img id="union" src="img/union-wire.png">
+            <img id="lamp" src="img/lamp.png">
+            <img id="battery" src="img/battery.png">
         </a-assets>
 
         <a-entity light="type: ambient; color: #fff; intensity: 0.3"></a-entity>
@@ -313,17 +317,17 @@
         <a-entity
             vr-interface="dimension: 1 5; orbits: 1.5; theta: 0; rho: 0; buttonSize: 0.4 0.4; gap: 0 0; border: 1 #6d7584; movementBar: false; transparency: true;"
             panel>
-            <a-entity class="panelModel" gltf-model="#wireModel" position="-0.8 0 -1.45" rotation="90 90 90">
+            <a-entity class="panelModel" gltf-model="#wireModel" position="-0.8 0 -1.5" rotation="90 90 90">
             </a-entity>
-            <a-entity class="panelModel" gltf-model="#lblockModel" position="-0.4 0 -1.45" rotation="90 90 90">
+            <a-entity class="panelModel" gltf-model="#lblockModel" position="-0.4 0 -1.5" rotation="90 90 90">
             </a-entity>
-            <a-entity class="panelModel" gltf-model="#divisorModel" position="0 0 -1.45" rotation="90 90 90">
+            <a-entity class="panelModel" gltf-model="#divisorModel" position="0 0 -1.5" rotation="90 90 90">
             </a-entity>
-            <a-entity class="panelModel" gltf-model="#receptorModel" position="0.4 0 -1.45" rotation="90 90 90">
+            <a-entity class="panelModel" gltf-model="#receptorModel" position="0.4 0 -1.5" rotation="90 90 90">
             </a-entity>
-            <a-entity class="panelModel" gltf-model="#ledModel" position="-0.8 -0.4 -1.45" rotation="90 90 90">
+            <a-entity class="panelModel" gltf-model="#ledModel" position="-0.8 -0.4 -1.5" rotation="90 90 90">
             </a-entity>
-            <a-entity class="panelModel" gltf-model="#batteryModel" position="-0.4 -0.4 -1.45" rotation="90 90 90">
+            <a-entity class="panelModel" gltf-model="#batteryModel" position="-0.4 -0.4 -1.5" rotation="90 90 90">
             </a-entity>
         </a-entity>
 

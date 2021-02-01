@@ -186,7 +186,7 @@ AFRAME.registerComponent('vr-interface', {
       this.cursor = document.createElement('a-entity');
       this.cursor.id = 'vrInterface-cursor';
       this.cursor.setAttribute('cursor', { fuse: true, fuseTimeout: 1000, });
-      this.cursor.setAttribute('raycaster', { near: data.raycaster.near, far: data.raycaster.far, objects: '.vrInterface-button', showLine: true });
+      this.cursor.setAttribute('raycaster', { near: data.raycaster.near, far: data.raycaster.far, objects: '.vrInterface-button' });
       this.cursor.setAttribute('position', { x: data.cursorPosition.x, y: data.cursorPosition.y, z: data.cursorPosition.z });
       this.cursor.setAttribute('geometry', { primitive: 'ring', radiusInner: 0.005, radiusOuter: 0.01 });
       this.cursor.setAttribute('material', { color: data.cursorColor, shader: 'flat', depthTest: true });
@@ -463,17 +463,16 @@ AFRAME.registerComponent('vr-interface', {
 
     if (!sideText.visible) {
       sideText.visible = true;
+
+      sideText.el.addEventListener('loaded', () => {
+        updateSideText(this);
+        sideText.hasLoaded = true;
+      }, { once: true })
     }
 
     text = text.split('\n');
 
     sideText.el.setAttribute('text', { value: text.join('\n') });
-
-    sideText.el.addEventListener('loaded', () => {
-      console.log('!')
-      updateSideText(this);
-      sideText.hasLoaded = true;
-    }, { once: true })
 
     if (sideText.hasLoaded) {
       updateSideText(this);
