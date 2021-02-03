@@ -52,10 +52,15 @@
 
                 vrInterface.addButton('rotate', '#rotateImage', rotate);
 
-                vrInterface.addButton('led', '#lamp', () => {
-                    addToClipboard('led');
+                vrInterface.addButton('lamp', '#lamp', () => {
+                    addToClipboard('lamp');
                     vrInterface.showMessage('Lamp block added to clipboard');
                 });
+                vrInterface.addButton('fan', '#fan', () => {
+                    addToClipboard('fan');
+                    vrInterface.showMessage('Fan block added to clipboard');
+                });
+
                 vrInterface.addButton('battery', '#battery', () => {
                     addToClipboard('battery');
                     vrInterface.showMessage('Battery block added to clipboard');
@@ -96,7 +101,7 @@
                 const clipboard = document.querySelector('#clipboard').object3D;
                 const container = document.querySelector('#container').object3D;
                 const batteries = [];
-                let actionBlocks = [];
+                this.actionBlocks = [];
                 const matrix = new Array(45);
 
 
@@ -140,7 +145,7 @@
                                         clipboard.data.rotation -= Math.PI * 0.5;
                                         placeBlock(vrGrid.buttons[13])
 
-                                        addToClipboard('led');
+                                        addToClipboard('lamp');
                                         setTimeout(() => {
                                             placeBlock(vrGrid.buttons[22])
                                             clipboard.data.rotation = save;
@@ -169,6 +174,12 @@
                         if (clipboard.data.type === 'battery') {
                             batteries.push(clipboard.children[0]);
                         }
+                        else if (clipboard.data.type === 'lamp') {
+                            clipboard.children[0].action = lampAction;
+                        }
+                        else if (clipboard.data.type === 'fan') {
+                            clipboard.children[0].action = fanAction;
+                        }
 
                         container.add(clipboard.children[0]);
                         clipboard.el.removeAttribute('gltf-model');
@@ -189,9 +200,10 @@
 
                 }
 
+                const self = this;
                 function updateCircuit() {
-                    for (let i = 0; i < actionBlocks.length; i++) {
-                        actionBlocks[i].children[2].material.emissive.set('#000000');
+                    for (let i = 0; i < self.actionBlocks.length; i++) {
+                        self.actionBlocks[i].action(false);
                     }
 
                     if (batteries.length > 0) {
@@ -214,7 +226,7 @@
                                     pos += 1;
                             }
 
-                            actionBlocks = [];
+                            self.actionBlocks = [];
                             checkIsConnected(batteries[i].name, pos);
                         }
                     }
@@ -225,9 +237,9 @@
                     let specialBlocks = [];
 
                     while (matrix[pos] && blocksConnect(matrix[pos], prevPos)) {
-                        if (matrix[pos].type === 'led') {
+                        if (matrix[pos].action) {
                             specialBlocks.push(matrix[pos]);
-                            actionBlocks.push(matrix[pos])
+                            self.actionBlocks.push(matrix[pos])
                         }
 
                         prevPos = pos;
@@ -240,7 +252,7 @@
 
                         if (pos == batteryPos) {
                             for (let i = 0; i < specialBlocks.length; i++) {
-                                specialBlocks[i].children[2].material.emissive.set('#993333');
+                                specialBlocks[i].action(true);
                             }
                             return true;
                         }
@@ -341,7 +353,31 @@
                         }
                     }
                 }
-            }
+
+                function lampAction(isOn) {
+                    if (isOn) {
+                        this.children[2].material.emissive.set('#883333');
+                    }
+                    else {
+                        this.children[2].material.emissive.set('#000000');
+                    }
+                }
+
+                this.fans = [];
+                function fanAction(isOn) {
+                    if (isOn) {
+                        self.fans.push(this);
+                    }
+                    else {
+                        self.fans.splice(self.fans.indexOf(this), 1);
+                    }
+                }
+            },
+            tick: function (time, delta) {
+                if (this.fans.length > 0) {
+                    this.fans[0].children[2].rotation.y -= delta * 0.005;
+                }
+            },
         });
     </script>
 </head>
@@ -355,7 +391,8 @@
             <a-asset-item id="divisorModel" src="../../assets/models/circuits/divisor-block.glb"></a-asset-item>
             <a-asset-item id="receptorModel" src="../../assets/models/circuits/receptor-block.glb"></a-asset-item>
             <a-asset-item id="batteryModel" src="../../assets/models/circuits/battery-block.glb"></a-asset-item>
-            <a-asset-item id="ledModel" src="../../assets/models/circuits/lamp-block.glb"></a-asset-item>
+            <a-asset-item id="lampModel" src="../../assets/models/circuits/lamp-block.glb"></a-asset-item>
+            <a-asset-item id="fanModel" src="../../assets/models/circuits/fan-block.glb"></a-asset-item>
 
             <img id="rotateImage" src="img/rotate.png">
             <img id="wire" src="img/wire.png">
@@ -363,6 +400,7 @@
             <img id="split" src="img/split-wire.png">
             <img id="union" src="img/union-wire.png">
             <img id="lamp" src="img/lamp.png">
+            <img id="fan" src="img/fan.png">
             <img id="battery" src="img/battery.png">
             <img id="testing" src="img/testing.png">
         </a-assets>
@@ -386,9 +424,11 @@
             </a-entity>
             <a-entity class="panelModel" gltf-model="#receptorModel" position="0.4 0 -1.5" rotation="90 90 90">
             </a-entity>
-            <a-entity class="panelModel" gltf-model="#ledModel" position="-0.8 -0.4 -1.5" rotation="90 90 90">
+            <a-entity class="panelModel" gltf-model="#lampModel" position="-0.8 -0.4 -1.5" rotation="90 90 90">
             </a-entity>
-            <a-entity class="panelModel" gltf-model="#batteryModel" position="-0.4 -0.4 -1.5" rotation="90 90 90">
+            <a-entity class="panelModel" gltf-model="#fanModel" position="-0.4 -0.4 -1.5" rotation="90 90 90">
+            </a-entity>
+            <a-entity class="panelModel" gltf-model="#batteryModel" position="0 -0.4 -1.5" rotation="90 90 90">
             </a-entity>
         </a-entity>
 
