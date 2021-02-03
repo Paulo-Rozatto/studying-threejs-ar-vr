@@ -61,6 +61,15 @@
                     vrInterface.showMessage('Battery block added to clipboard');
                 });
 
+                vrInterface.addButton('testing', '#testing', () => {
+                    if (clipboard.debugCircuit) {
+                        clipboard.debugCircuit();
+                    }
+                    else {
+                        vrInterface.showMessage('Debug circuit can be executed only once');
+                    }
+                });
+
                 function rotate() {
                     clipboard.rotation.x += Math.PI * 0.5;
 
@@ -95,6 +104,57 @@
                     vrGrid.addButton(i, null, placeBlock);
                 }
 
+                // ---- Testing: manually placing blocks
+                clipboard.debugCircuit = function () {
+                    let save = clipboard.data.rotation || 0;
+                    clipboard.data.rotation = 0;
+
+                    function addToClipboard(type) {
+                        clipboard.el.removeAttribute('gltf-model');
+
+                        clipboard.data.type = type;
+                        clipboard.el.setAttribute('gltf-model', `#${type}Model`);
+                    }
+
+                    addToClipboard('battery');
+                    setTimeout(() => {
+                        clipboard.data.type = 'battery';
+                        placeBlock(vrGrid.buttons[21])
+
+                        addToClipboard('lblock');
+                        setTimeout(() => {
+                            placeBlock(vrGrid.buttons[31])
+
+                            addToClipboard('lblock');
+                            setTimeout(() => {
+                                clipboard.data.rotation -= Math.PI * 0.5;
+                                placeBlock(vrGrid.buttons[30])
+
+                                addToClipboard('lblock');
+                                setTimeout(() => {
+                                    clipboard.data.rotation -= Math.PI * 0.5;
+                                    placeBlock(vrGrid.buttons[12])
+
+                                    addToClipboard('lblock');
+                                    setTimeout(() => {
+                                        clipboard.data.rotation -= Math.PI * 0.5;
+                                        placeBlock(vrGrid.buttons[13])
+
+                                        addToClipboard('led');
+                                        setTimeout(() => {
+                                            placeBlock(vrGrid.buttons[22])
+                                            clipboard.data.rotation = save;
+                                        }, 50);
+                                    }, 50);
+                                }, 50);
+                            }, 50);
+                        }, 50);
+                    }, 50);
+
+                    // ---- End of Testing: manually placing blocks
+
+                    clipboard.debugCircuit = null;
+                }
 
                 function placeBlock(button) {
                     if (clipboard.children[0]) {
@@ -131,7 +191,7 @@
 
                 function updateCircuit() {
                     for (let i = 0; i < actionBlocks.length; i++) {
-                        actionBlocks[i].scale.set(1, 1, 1)
+                        actionBlocks[i].children[2].material.emissive.set('#000000');
                     }
 
                     if (batteries.length > 0) {
@@ -180,7 +240,7 @@
 
                         if (pos == batteryPos) {
                             for (let i = 0; i < specialBlocks.length; i++) {
-                                specialBlocks[i].scale.set(1.4, 1.4, 1.4)
+                                specialBlocks[i].children[2].material.emissive.set('#993333');
                             }
                             return true;
                         }
@@ -295,7 +355,7 @@
             <a-asset-item id="divisorModel" src="../../assets/models/circuits/divisor-block.glb"></a-asset-item>
             <a-asset-item id="receptorModel" src="../../assets/models/circuits/receptor-block.glb"></a-asset-item>
             <a-asset-item id="batteryModel" src="../../assets/models/circuits/battery-block.glb"></a-asset-item>
-            <a-asset-item id="ledModel" src="../../assets/models/circuits/led-block.glb"></a-asset-item>
+            <a-asset-item id="ledModel" src="../../assets/models/circuits/lamp-block.glb"></a-asset-item>
 
             <img id="rotateImage" src="img/rotate.png">
             <img id="wire" src="img/wire.png">
@@ -304,6 +364,7 @@
             <img id="union" src="img/union-wire.png">
             <img id="lamp" src="img/lamp.png">
             <img id="battery" src="img/battery.png">
+            <img id="testing" src="img/testing.png">
         </a-assets>
 
         <a-entity light="type: ambient; color: #fff; intensity: 0.3"></a-entity>
