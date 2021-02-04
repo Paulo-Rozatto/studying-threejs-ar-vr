@@ -104,6 +104,7 @@ AFRAME.registerComponent('vr-interface', {
     },
     messageColor: { type: 'color', default: 'white' },
     messageBG: { type: 'color', default: '#232323' },
+    messageSize: { type: 'number', default: 1 },
     cursorColor: { type: 'color', default: 'white' },
     cursorPosition: { type: 'vec3', default: { x: 0, y: 0, z: -0.9 } },
     raycaster: {
@@ -197,15 +198,15 @@ AFRAME.registerComponent('vr-interface', {
     }
 
     this.message = document.createElement('a-entity');
-    this.message.setAttribute('text', { align: 'center', width: 1, height: 1, color: new THREE.Color(data.messageColor) });
-    this.message.setAttribute('geometry', { primitive: 'plane', height: 0.1, width: 1 });
+    this.message.setAttribute('text', { align: 'center', width: data.messageSize, height: data.messageSize, color: new THREE.Color(data.messageColor) });
+    this.message.setAttribute('geometry', { primitive: 'plane', height: data.messageSize * 0.1, width: data.messageSize });
     this.message.setAttribute('material', { color: new THREE.Color(data.messageBG), transparent: data.transparency, opacity: data.transparency ? 0.75 : 1 });
     this.message.object3D.visible = false;
     this.buttonGroup.appendChild(this.message);
 
     this.sideText = document.createElement('a-entity');
-    this.sideText.setAttribute('text', { align: 'center', width: 1, height: 1, color: new THREE.Color(data.messageColor) });
-    this.sideText.setAttribute('geometry', { primitive: 'plane', height: 1, width: 1 });
+    this.sideText.setAttribute('text', { align: 'center', width: data.messageSize, height: data.messageSize, transparent: true, color: new THREE.Color(data.messageColor) });
+    this.sideText.setAttribute('geometry', { primitive: 'plane', height: data.messageSize, width: data.messageSize });
     this.sideText.setAttribute('material', { color: new THREE.Color(data.messageBG), transparent: data.transparency, opacity: data.transparency ? 0.75 : 1 });
     this.sideText.object3D.visible = false;
     this.buttonGroup.appendChild(this.sideText);
@@ -225,6 +226,7 @@ AFRAME.registerComponent('vr-interface', {
     this.isLoaded = false;
     this.el.sceneEl.addEventListener('loaded', () => {
       self.isLoaded = true;
+      // self.sideText.object3D.children[1].position.z -= 0.1;
       self.updatePosition();
     }, { once: true });
 
@@ -450,7 +452,7 @@ AFRAME.registerComponent('vr-interface', {
     }
 
     msg.el.setAttribute('text', { value: text });
-    msg.children[1].scale.x = text.length * 0.025;
+    msg.children[1].scale.x = text.length * 0.0275;
 
     this.positionateMessage(this.pos);
 
@@ -512,23 +514,23 @@ AFRAME.registerComponent('vr-interface', {
   positionateMessage: function (pos) {
     const msg = this.message.object3D;
 
-    msg.position.copy(this.buttons[0].position);
-
     if (pos === 'top') {
+      msg.position.copy(this.buttons[0].position);
       msg.position.x += this.data.buttonSize.x * 0.5 * (this.data.dimension.y - 1);
-      msg.position.y += this.data.buttonSize.y / 2 + 0.06;
+      msg.position.y += this.data.buttonSize.y + (this.data.messageSize * 0.1 - this.data.buttonSize.y) * 0.5 + 0.02;
     }
     else if (pos === 'bottom') {
-      let offset = (this.data.dimension.x - 1) * (this.data.buttonSize.y + this.data.gap.y);
+      msg.position.copy(this.buttons[(this.data.dimension.x - 1) * this.data.dimension.y].position);
 
       msg.position.x += this.data.buttonSize.x * 0.5 * (this.data.dimension.y - 1);
-      msg.position.y -= this.data.buttonSize.y / 2 + 0.06 + offset;
+      msg.position.y -= this.data.buttonSize.y + (this.data.messageSize * 0.1 - this.data.buttonSize.y) * 0.5 + 0.02;
     }
   },
   positionateSideText: function () {
     const sideText = this.sideText.object3D;
 
-    sideText.position.x = this.buttons[this.data.dimension.y - 1].position.x + this.data.buttonSize.x * 0.5 + this.data.gap.x + sideText.children[1].scale.x * 0.5 + 0.02;
+    // position x of the button more to the right + horizontal size of a button + half of (scaled sideText size - horizontal size of a button) + constant gap
+    sideText.position.x = this.buttons[this.data.dimension.y - 1].position.x + this.data.buttonSize.x + (sideText.children[1].scale.x * this.data.messageSize - this.data.buttonSize.x) * 0.5 + 0.02;
     sideText.position.z = this.buttons[0].position.z;
   },
   positionateBorder: function (button) {

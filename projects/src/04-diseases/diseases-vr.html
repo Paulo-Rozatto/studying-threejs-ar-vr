@@ -176,7 +176,7 @@
                 const vrInterface = entity.components["vr-interface"];
                 this.text = 'mensagem de teste ai';
 
-                vrInterface.addButton('next', '#next', function () { console.log(self.text) });
+                vrInterface.addButton('next', '#next', function () { vrInterface.showMessage('NEXT') });
                 vrInterface.addButton('rotLeft', '#rotLeft');
                 vrInterface.addButton('rotRight', '#rotRight', () => { });
                 vrInterface.showSideText('teste 1\ teste 2\n teste 3 teste 4\n teste 5 teste 6')
@@ -223,7 +223,7 @@
         </a-entity>
 
         <a-entity
-            vr-interface="dimension: 3 2; orbits: 1 1.5 2; theta: 90; rho: 0 ; transparency: true; gap: 0.01 0.01; border: 1.2 #6d7584;"
+            vr-interface="dimension: 5 1; orbits: 1 1.5 2; theta: 90; rho: 0 ; transparency: true; gap: 0.01 0.01; border: 1.2 #6d7584; messageColor: blue; messageSize: 2"
             test>
         </a-entity>
     </a-scene>
