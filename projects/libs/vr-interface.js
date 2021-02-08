@@ -102,6 +102,8 @@ AFRAME.registerComponent('vr-interface', {
       default: 'top',
       oneof: ['top', 'bottom', 'left', 'right'],
     },
+    sideTextSize: { type: 'vec2', default: { x: 0.75, y: 1 } },
+    sideTextRotation: { type: 'number', default: 0 },
     messageColor: { type: 'color', default: 'white' },
     messageBG: { type: 'color', default: '#232323' },
     messageSize: { type: 'number', default: 1 },
@@ -204,12 +206,14 @@ AFRAME.registerComponent('vr-interface', {
     this.message.object3D.visible = false;
     this.buttonGroup.appendChild(this.message);
 
+    this.pivot = document.createElement('a-entity');
     this.sideText = document.createElement('a-entity');
     this.sideText.setAttribute('text', { align: 'center', width: data.messageSize, height: data.messageSize, transparent: true, color: new THREE.Color(data.messageColor) });
-    this.sideText.setAttribute('geometry', { primitive: 'plane', height: data.messageSize, width: data.messageSize });
+    this.sideText.setAttribute('geometry', { primitive: 'plane', height: data.sideTextSize.y, width: data.sideTextSize.x });
     this.sideText.setAttribute('material', { color: new THREE.Color(data.messageBG), transparent: data.transparency, opacity: data.transparency ? 0.75 : 1 });
     this.sideText.object3D.visible = false;
-    this.buttonGroup.appendChild(this.sideText);
+    this.pivot.appendChild(this.sideText);
+    this.buttonGroup.appendChild(this.pivot);
 
     if (data.border.color) {
       this.borderMaterial = new THREE.LineBasicMaterial({
@@ -230,7 +234,7 @@ AFRAME.registerComponent('vr-interface', {
       self.updatePosition();
     }, { once: true });
 
-    this.el.addEventListener('click', (evt) => self.clickHandle(evt)); // click == fuse click
+    this.el.addEventListener('click', (evt) => self.handleClick(evt)); // click == fuse click
   },
   tick: function () {
     if (this.isToChangeTheta) {
@@ -243,7 +247,7 @@ AFRAME.registerComponent('vr-interface', {
       this.buttonGroup.object3D.rotation.x = this.data.rho;
     }
   },
-  clickHandle: function (evt) {
+  handleClick: function (evt) {
     let name = evt.detail.intersection.object.name;
 
     if (name === 'orbitButton') {
@@ -528,10 +532,13 @@ AFRAME.registerComponent('vr-interface', {
   },
   positionateSideText: function () {
     const sideText = this.sideText.object3D;
+    const pivot = this.pivot.object3D;
 
-    // position x of the button more to the right + horizontal size of a button + half of (scaled sideText size - horizontal size of a button) + constant gap
-    sideText.position.x = this.buttons[this.data.dimension.y - 1].position.x + this.data.buttonSize.x + (sideText.children[1].scale.x * this.data.messageSize - this.data.buttonSize.x) * 0.5 + 0.02;
-    sideText.position.z = this.buttons[0].position.z;
+    pivot.position.z = this.buttons[0].position.z;
+    pivot.position.x = this.buttons[this.data.dimension.y - 1].position.x + this.data.buttonSize.x * 0.5 + 0.02;
+    pivot.rotation.y = this.data.sideTextRotation * Math.PI / 180;
+
+    sideText.position.x = + sideText.children[1].scale.x * this.data.messageSize * 0.5;
   },
   positionateBorder: function (button) {
     button.border.scale.copy(button.scale);

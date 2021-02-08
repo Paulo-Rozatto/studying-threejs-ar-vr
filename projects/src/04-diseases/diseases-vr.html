@@ -169,7 +169,7 @@
             }
         });
 
-        AFRAME.registerComponent('test', {
+        AFRAME.registerComponent('config', {
             init: function () {
                 const self = this;
                 const entity = document.querySelector('[vr-interface]');
@@ -223,8 +223,8 @@
         </a-entity>
 
         <a-entity
-            vr-interface="dimension: 5 1; orbits: 1 1.5 2; theta: 90; rho: 0 ; transparency: true; gap: 0.01 0.01; border: 1.2 #6d7584; messageColor: blue; messageSize: 2"
-            test>
+            vr-interface="messageSize: 1; sideTextSize: 0.75 1 ; sideTextRotation: -25; dimension: 3 2; orbits: 1 1.5 2; transparency: true; gap: 0.01 0.01; border: 1.2 #6d7584;"
+            config>
         </a-entity>
     </a-scene>
 

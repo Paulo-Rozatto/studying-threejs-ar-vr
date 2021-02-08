@@ -1,116 +1,113 @@
-/*
-  Usage:
-  - Import vr-interface to your code:
-    <script type="text/javascript" charset="UTF-8" src="path/to/vr-interface.js"></script>
-
-  - Call it in an aframe entity and pass the options to config like the example below:
-      <a-entity vr-interface="dimension: 3 2; theta: 90; rho: 0; transparency: true; gap: 0.01 0.01; border: 1.2 #6d7584;"</a-entity>
-
-  - To add buttons and use functions create a component in your code
-    AFRAME.registerComponent('my-component', {
-      init: function () {
-        const vrInterface = document.querySelector('[vr-interface]').components['vr-interface'];
-
-        vrInterface.addButton('myButton', '#myTexture', function() {
-          vrInterface.showMessage('Button pressed');
-        });
-
-        vrInterface.addButton('myButton2', '#myTexture2', function() {
-          vrInterface.showMessage('Button 2 pressed', 'bottom');
-        });
-
-        vrInterface.addButton('myButtonRotate', '#myTexture3', function(){
-          vrInterface.updatePostion({theta: 180, rho: 15})
-        });
-      },
-    });
-
-  Properties:
-  - visible: visibilty of the interface;
-  - orbits: distances from the camera;
-  - theta: horizontal rotation in degrees;
-  - rho: vertical rotation in degrees;
-  - movementBar: whether to display move bar or not;
-  - updatePos: whether it is move vr interface with the camera or not;
-  - rotation: button rotation in Y-Axis in degrees;
-  - dimension: number of lines and columns of the imaginary matrix in which the buttons will be placed;
-  - centralize: whether to align buttons to the center, if false they are aligned to the top-left; 
-  - buttonSize: individual button size;
-  - transparency: whether the textures have transparency;
-  - gap: distance beteween the buttons in the x and y axis;
-  - messagePos: default position of the message box when it's called;
-  - messageColor: text color of the message box;
-  - messageBG: background color of the message box;
-  - cursorColor: defines the color of the aim cursor;
-  - cursorPosition: defines the positon of the aim cursor, usually it doesn't need to change;
-  - raycaster: defines near and far properties of the raycaster;
-  - border: thickness and color of button border, if nothing is set, no border is added.
-
-  Functions:
-  - addButton(buttonName, idOfTexture, callback) - adds a button to the interface
-  - showMessage(message, position) - shows message, position parameter is optional
-  - showSideText() - shows a permanent multiline message to the right of the interface
-  - hideSideText() - hides side text
-  - updatePosition({radius, theta, rho}) - should be called if the camera position changes or if you want to change one parameter. All parameters are optional.
-  - hide() - hide the interface
-  - show() - make interface visible
-  
-  Observations:
-  - Setting the dimension property correctly is important for displaying the vr interface elements correctly;
-*/
-
-AFRAME.registerComponent('vr-grid', {
+AFRAME.registerComponent('vr-interface', {
   schema: {
-    dimension: { type: 'vec2', default: { x: 1, y: 1 } },
-    referencePoint: { type: 'vec3', default: { x: 0, y: 1, z: -1 } },
+    dimension: {
+      type: 'vec2',
+      default: { x: 1, y: 1 }
+    },
     orbits: {
-      default: [1.1],
+      default: [1],
       parse: function (value) {
-        let orbits;
         if (typeof value === 'string') {
-          orbits = value.split(' ').map(v => parseFloat(v)).filter(v => typeof v === 'number')
+          value = value.split(' ');
         }
-        else if (Array.isArray(value)) {
-          orbits = value.map(v => parseFloat(v)).filter(v => typeof v === 'number')
+        if (Array.isArray(value)) {
+          value = value.map(v => parseFloat(v)).filter(v => !isNaN(v));
+
+          if (value.length > 0) return value;
         }
-        else {
-          orbits = [1];
-        }
-        return orbits;
+        console.warn('Invalid arguments passed to orbits. Using default value of 1.')
+        return [1];
       },
       stringify: function (value) {
         return value.join(' ');
       }
     },
-    theta: { type: 'number', default: 90 },
-    rho: { type: 'number', default: 0 },
-    movementBar: { type: 'bool', default: true },
-    updatePos: { type: 'bool', default: false },
-    centralize: { type: 'bool', default: true },
-    buttonSize: { type: 'vec2', default: { x: 0.30, y: 0.20 } },
-    transparency: { type: 'bool', default: false },
-    visible: { type: 'bool', default: true },
-    gap: { type: 'vec2', default: { x: 0.00, y: 0.00 } },
-    messagePos: {
-      default: 'top',
-      oneof: ['top', 'bottom', 'left', 'right'],
-    },
-    messageColor: { type: 'color', default: 'white' },
-    messageBG: { type: 'color', default: '#232323' },
-    cursorColor: { type: 'color', default: 'white' },
-    cursorPosition: { type: 'vec3', default: { x: 0, y: 0, z: -0.9 } },
-    raycaster: {
-      default: { near: 0, far: null },
+    theta: {
+      type: 'number',
+      default: 90,
       parse: function (value) {
+        return value * Math.PI / 180 // deg to rad
+      }
+    },
+    rho: {
+      type: 'number',
+      default: 90,
+      parse: function (value) {
+        return value * Math.PI / 180 // deg to rad
+      }
+    },
+    movementBar: {
+      type: 'bool',
+      default: true,
+    },
+    inWorldPosition: {
+      type: 'vec3',
+      default: null,
+    },
+    inWorldRotation: {
+      type: 'vec3',
+      default: { x: 0, y: 0, z: 0 },
+      parse: function (value) {
+        value.x = value.x * Math.PI / 180;
+        value.y = value.y * Math.PI / 180;
+        value.z = value.z * Math.PI / 180;
+      }
+    },
+    buttonConf: {
+      default: { x: 0.3, y: 0.2, transparent: true },
+      parse: function (value) {
+        if (!value) return this.default;
+
         if (typeof value === 'string') {
-          let props = value.split(' ');
-          return { near: props[0], far: props[1] }
+          value = value.split(' ');
+
+          value[0] = parseFloat(value[0]);
+          if (isNaN(value[1])) {
+            console.warn('Invalid argument: expected a number for button width.')
+            value[0] = this.default.x;
+          }
+
+          value[1] = parseFloat(value[1]);
+          if (isNaN(value[1])) {
+            console.warn('Invalid argument: expected a number for button height.')
+            value[0] = this.default.x;
+          }
+
+          if (value[2]) {
+            if (value[2] === 'true') { value[2] = true; }
+            else if (value[2] === 'false') { value[2] = false; }
+            else {
+              console.warn('Invalid argument: expected boolean for button transparency.');
+              value[2] = this.default.transparent;
+            }
+          }
+          else { value[2] = this.default.transparent; }
+
+          return { x: value[0], y: value[1], transparent: value[3] };
+
         }
-        return value;
+
+        if (!value.x || isNaN(value.x)) {
+          console.warn('Invalid argument: expected a number for button width.')
+          value.x = this.default.x;
+        }
+        if (!value.y || isNaN(value.y)) {
+          console.warn('Invalid argument: expected a number for button height.')
+          value.x = this.default.x;
+        }
+        if (value.transparent && typeof value.transparent !== 'boolean') {
+          console.warn('Invalid argument: expected boolean for button transparency.');
+          value.transparent = this.default.transparent;
+        }
+        return { x: value.x, y: value.y, transparent: value.transparent }
       },
       stringify: function (value) {
-        return `${value.near} ${value.far}`
+        return `${value.x} ${value.y} ${value.transparent}`
       }
+    },
+    gap: {
+      type: 'vec2',
+      default: { x: 0.00, y: 0.00 }
     },
     border: {
       default: { thickness: 1, color: null },
@@ -125,454 +122,337 @@ AFRAME.registerComponent('vr-grid', {
         return `${value.thickness} ${value.color}`
       }
     },
-  },
+    message: {
+      default: { width: 1, height: 1, color: 'white', backgroundColor: '#232323' },
+      parse: function (value) {
+        if (typeof value === 'string') {
+          value.split(' ');
 
+          value[0] = parseFloat(value[0]);
+          if (isNaN(value[0])) {
+            console.warn('Invalid argument: expected a number for message width.');
+            value[0] = this.default.width;
+          }
+
+          value[1] = parseFloat(value[1]);
+          if (isNaN(value[1])) {
+            console.warn('Invalid argument: expected a number for message height.');
+            value[1] = this.default.height;
+          }
+
+          value[2] = value[2] || this.default.color;
+          value[3] = value[3] || this.default.backgroundColor;
+
+          return { width: value[0], height: value[1], color: value[2], backgroundColor: value[3] };
+        }
+
+        if (value.width) {
+          value.width = parseFloat(value.width);
+          if (isNaN(value.width)) {
+            console.warn('Invalid argument: expected a number for message width.');
+            value.width = this.default.width;
+          }
+        }
+        else {
+          value.width = this.default.width;
+        }
+
+        if (value.height) {
+          value.height = parseFloat(value.height);
+          if (isNaN(value.height)) {
+            console.warn('Invalid argument: expected a number for message height.');
+            value.width = this.default.height;
+          }
+        }
+        else {
+          value.height = this.default.height;
+        }
+
+        value.color = value.color || this.default.color;
+        value.backgroundColor = value.backgroundColor || this.default.backgroundColor;
+
+        return { width: value.width, height: value.height, color: value.color, backgroundColor: value.backgroundColor };
+      },
+      stringify: function (value) {
+        return `${value.width} ${value.height} ${value.color} ${value.backgroundColor}`
+      }
+    },
+    sideText: {
+      default: { width: 1, height: 1, color: 'white', backgroundColor: '#232323' },
+      parse: function (value) {
+        if (typeof value === 'string') {
+          value.split(' ');
+
+          value[0] = parseFloat(value[0]);
+          if (isNaN(value[0])) {
+            console.warn('Invalid argument: expected a number for message width.');
+            value[0] = this.default.width;
+          }
+
+          value[1] = parseFloat(value[1]);
+          if (isNaN(value[1])) {
+            console.warn('Invalid argument: expected a number for message height.');
+            value[1] = this.default.height;
+          }
+
+          value[2] = value[2] || this.default.color;
+          value[3] = value[3] || this.default.backgroundColor;
+
+          return { width: value[0], height: value[1], color: value[2], backgroundColor: value[3] };
+        }
+
+        if (value.width) {
+          value.width = parseFloat(value.width);
+          if (isNaN(value.width)) {
+            console.warn('Invalid argument: expected a number for message width.');
+            value.width = this.default.width;
+          }
+        }
+        else {
+          value.width = this.default.width;
+        }
+
+        if (value.height) {
+          value.height = parseFloat(value.height);
+          if (isNaN(value.height)) {
+            console.warn('Invalid argument: expected a number for message height.');
+            value.width = this.default.height;
+          }
+        }
+        else {
+          value.height = this.default.height;
+        }
+
+        value.color = value.color || this.default.color;
+        value.backgroundColor = value.backgroundColor || this.default.backgroundColor;
+
+        return { width: value.width, height: value.height, color: value.color, backgroundColor: value.backgroundColor };
+      },
+      stringify: function (value) {
+        return `${value.width} ${value.height} ${value.color} ${value.backgroundColor}`
+      }
+    },
+    cursor: {
+      default: { color: 'white', position: { x: 0, y: 0, z: -1 } },
+      parse: function (value) {
+        if (typeof value === 'string') {
+          value.split(' ');
+
+          value[0] = value[0] || this.default.color;
+
+          if (isNaN(value[1])) {
+            console.warn('Invalid argument: expected a number for cursor x-position');
+          }
+          value[1] = value[1] || this.default.x;
+
+          if (value[2] && isNaN(value[2])) {
+            console.warn('Invalid argument: expected a number for cursor y-position');
+          }
+          value[2] = value[2] || this.default.x;
+
+          if (value[3] && isNaN(value[3])) {
+            console.warn('Invalid argument: expected a number for cursor z-position');
+          }
+          value[3] = value[3] || this.default.x;
+
+          return { color: value[0], position: { x: value[1], y: value[2], z: value[3] } }
+        }
+
+        value.color = value.color || this.default.color;
+
+        if (value.position) {
+          value.position.x = parseFloat(value.position.x);
+          if (isNaN(value.position.x)) {
+            console.warn('Invalid argument: expected a number for cursor x-position');
+            value.position.x = this.default.x;
+          }
+
+          value.position.y = parseFloat(value.position.y);
+          if (isNaN(value.position.y)) {
+            console.warn('Invalid argument: expected a number for cursor y-position');
+            value.position.y = this.default.y;
+          }
+
+          value.position.z = parseFloat(value.position.z);
+          if (isNaN(value.position.z)) {
+            console.warn('Invalid argument: expected a number for cursor z-position');
+            value.position.x = this.default.z;
+          }
+        }
+        else {
+          value.position = this.default.position;
+        }
+
+        return { color: value.color, position: { x: value.position.x, y: value.position.y, z: value.position.z } }
+      }
+    },
+    raycaster: {
+      default: { near: 0, far: null },
+      parse: function (value) {
+        if (typeof value === 'string') {
+          let props = value.split(' ');
+          return { near: props[0], far: props[1] }
+        }
+        return value;
+      },
+      stringify: function (value) {
+        return `${value.near} ${value.far}`
+      }
+    }
+  },
   init: function () {
     const self = this;
     const data = this.data;
 
-    this.buttons = [];
-    this.buttonGeometry = new THREE.PlaneGeometry(1, 1);
     this.rig = document.querySelector('#rig');
     this.camera = document.querySelector('[camera]');
-    this.oldCameraPos = new THREE.Vector3().copy(this.camera.object3D.position);
-    this.toleratedDifference = 0.01;
     this.referencePoint = new THREE.Vector3();
 
-    this.orbitIndex = 0;
-    this.radius = data.orbits[this.orbitIndex];
+    this.buttons = [];
+    this.btnGeo = new THREE.PlaneGeometry(1, 1);
 
-    if (typeof data.raycaster.far === 'null') {
-      data.raycaster.far = this.radius;
-      data.raycaster.far = this.radius / 2;
+    // inner is used for group for vertical rotation
+    this.innerGroup = document.createElement('a-entity');
+
+    // outer group is used for horizontal rotation
+    this.outerGroup = document.createElement('a-entity');
+    this.outerGroup.appendChild(this.innerGroup);
+    this.el.appendChild(this.outerGroup);
+
+    // if inWorld position is not defined, use orbit mode, otherwise use world mode
+    this.positioning = isNaN(data.inWorldPosition.x) ? 'orbit' : 'world';
+
+    if (this.positioning === 'orbit') {
+      this.orbitIndex = 0;
+      this.radius = data.orbits[this.orbitIndex];
+
+      this.innerGroup.object3D.rotation.x = data.rho;
+      this.outerGroup.object3D.rotation.y = data.theta;
+
+      if (typeof data.raycaster.far === 'null') {
+        data.raycaster.far = this.radius;
+      }
+    }
+    else {
+      // movement bar supports only orbit mode
+      data.movementBar = false;
+
+      this.innerGroup.object3D.position.copy(data.inWorldPosition);
+      this.innerGroup.object3D.rotation.copy(data.inWorldRotation);
+
+      if (typeof data.raycaster.far === 'null') {
+        data.raycaster.far = this.innerGroup.object3D.position.distanceTo(this.camera.position);
+      }
     }
 
-    this.buttonGroup = document.createElement('a-entity');
-    this.el.appendChild(this.buttonGroup);
+    if (document.querySelector('#vrInterface-cursor') === null) {
+      this.cursor = document.createElement('a-entity');
+      this.cursor.id = 'vrInterface-cursor';
+      this.camera.appendChild(this.cursor);
+    }
 
     this.message = document.createElement('a-entity');
-    this.message.setAttribute('text', { align: 'center', width: 1, height: 1, color: new THREE.Color(data.messageColor) });
-    this.message.setAttribute('geometry', { primitive: 'plane', height: 0.1, width: 1 });
-    this.message.setAttribute('material', { color: new THREE.Color(data.messageBG), transparent: data.transparency, opacity: data.transparency ? 0.75 : 1 });
     this.message.object3D.visible = false;
-    this.buttonGroup.appendChild(this.message);
+    this.innerGroup.appendChild(this.message);
 
     this.sideText = document.createElement('a-entity');
-    this.sideText.setAttribute('text', { align: 'center', width: 1, height: 1, color: new THREE.Color(data.messageColor) });
-    this.sideText.setAttribute('geometry', { primitive: 'plane', height: 1, width: 1 });
-    this.sideText.setAttribute('material', { color: new THREE.Color(data.messageBG), transparent: data.transparency, opacity: data.transparency ? 0.75 : 1 });
     this.sideText.object3D.visible = false;
-    this.buttonGroup.appendChild(this.sideText);
+    this.innerGroup.appendChild(this.sideText);
 
     if (data.border.color) {
       this.borderMaterial = new THREE.LineBasicMaterial({
         color: new THREE.Color(data.border.color),
-        linewidth: data.border.thickness
-      })
+        linewidth: data.border.thickness,
+      });
     }
-
-    // converts deg to rad
-    data.theta = data.theta * Math.PI / 180;
-    data.rho = data.rho * Math.PI / 180;
-
-    this.el.object3D.rotation.y = data.theta;
-    this.buttonGroup.object3D.rotation.x = data.rho;
-
-    //--------------------Creating movement bar--------------------------------------------
-    this.isToChangeTheta = false;
-    this.isToChangeRho = false;
-
-    this.moveBar = document.createElement('a-entity');
 
     if (data.movementBar) {
-      this.buttonGroup.appendChild(this.moveBar);
-    }
+      this.movementBar = document.createElement('a-entity');
+      this.innerGroup.appendChild(this.movementBar);
 
-    const moveBarButtonGeometry = new THREE.PlaneGeometry(0.1, 0.1);
+      this.isToChangeTheta = false;
+      this.isToChangeRho = false;
 
-    // --- Orbits button
-    const oImage = new Image();
-    oImage.src = orbitImage();
-    const oTexture = new THREE.Texture();
-    oTexture.image = oImage;
-    oImage.onload = () => oTexture.needsUpdate = true;
-
-
-    this.orbitButton = document.createElement('a-entity');
-    this.orbitButton.setObject3D('orbitButton', new THREE.Mesh(
-      moveBarButtonGeometry,
-      new THREE.MeshBasicMaterial({ map: oTexture })
-    ));
-    this.orbitButton.object3D.position.y = 0.05;
-    this.orbitButton.object3D.children[0].name = 'orbitButton';
-    this.orbitButton.onClick = () => {
-      self.orbitIndex++;
-      if (self.orbitIndex >= data.orbits.length) {
-        self.orbitIndex = 0;
-      }
-      self.radius = data.orbits[self.orbitIndex];
-      self.updatePostion();
-    }
-    this.orbitButton.classList.add('vrInterface-button')
-    this.moveBar.appendChild(this.orbitButton);
-
-    // --- Horizontal movement button
-    const hImage = new Image();
-    hImage.src = horizontalImage();
-    const hTexture = new THREE.Texture();
-    hTexture.image = hImage;
-    hImage.onload = () => hTexture.needsUpdate = true;
-
-    this.horizMovButton = document.createElement('a-entity');
-    this.horizMovButton.setObject3D('horizMovButton', new THREE.Mesh(
-      moveBarButtonGeometry,
-      new THREE.MeshBasicMaterial({ map: hTexture, transparent: true })
-    ));
-    this.horizMovButton.object3D.position.y = -0.05;
-    this.horizMovButton.object3D.children[0].name = 'horizMovButton';
-    this.horizMovButton.onClick = () => {
-      self.isToChangeTheta = true;
-
-      self.stopButton.object3D.visible = true;
-      self.stopButton.object3D.position.set((data.dimension.y / 2 * data.buttonSize.x + 0.06), 0, 0.01);
-      self.stopButton.object3D.rotation.z = Math.PI / 2;
-      self.stopButton.classList.add('vrInterface-button');
-    }
-    this.horizMovButton.classList.add('vrInterface-button')
-    this.moveBar.appendChild(this.horizMovButton);
-
-    // --- Vertical movement button
-    const vImage = new Image();
-    vImage.src = verticalImage();
-    const vTexture = new THREE.Texture();
-    vTexture.image = vImage;
-    vImage.onload = () => vTexture.needsUpdate = true;
-
-    this.vertiMovButton = document.createElement('a-entity');
-    this.vertiMovButton.setObject3D('vertiMovButton', new THREE.Mesh(
-      moveBarButtonGeometry,
-      new THREE.MeshBasicMaterial({ map: vTexture, transparent: true })
-    ));
-    this.vertiMovButton.object3D.position.y = -0.15;
-    this.vertiMovButton.object3D.children[0].name = 'vertiMovButton';
-    this.vertiMovButton.onClick = () => {
-      self.isToChangeRho = true;
-
-      self.stopButton.object3D.visible = true;
-      self.stopButton.object3D.position.set(
-        (data.dimension.y / 2 * data.buttonSize.x + 0.06),
-        (-data.dimension.x + 1) * data.buttonSize.y / 2,
-        0.01
-      );
-      self.stopButton.object3D.rotation.z = 0;
-      self.stopButton.classList.add('vrInterface-button');
-    }
-    this.vertiMovButton.classList.add('vrInterface-button')
-    this.moveBar.appendChild(this.vertiMovButton);
-
-    // -
-    const sImage = new Image();
-    sImage.src = stopImage();
-    const sTexture = new THREE.Texture();
-    sTexture.image = sImage;
-    sImage.onload = () => sTexture.needsUpdate = true;
-
-    this.stopButton = document.createElement('a-entity');
-    this.stopButton.setObject3D('stopButton', new THREE.Mesh(
-      moveBarButtonGeometry,
-      new THREE.MeshBasicMaterial({ map: sTexture, transparent: true })
-    ));
-    this.stopButton.object3D.children[0].name = 'stopButton';
-    this.stopButton.object3D.visible = false;
-    this.stopButton.onClick = () => {
-      self.isToChangeTheta = false;
-      self.isToChangeRho = false;
-
-      self.stopButton.object3D.visible = false;
-      self.stopButton.classList.remove('vrInterface-button');
-    }
-    this.moveBar.appendChild(this.stopButton);
-
-    //--------------------------------------------------------------------
-    this.isLoaded = false;
-    this.el.sceneEl.addEventListener('loaded', () => {
-      self.isLoaded = true;
-      self.updatePostion();
-    }, { once: true });
-
-    this.el.addEventListener('click', (evt) => self.clickHandle(evt)); // click == fuse click
-  },
-  tick: function () {
-    if (this.data.updatePos) {
-      this.camera.object3D.getWorldPosition(this.referencePoint);
-
-      if (Math.abs(this.oldCameraPos.x - this.referencePoint.x) > this.toleratedDifference
-        || Math.abs(this.oldCameraPos.y - this.referencePoint.y) > this.toleratedDifference
-        || Math.abs(this.oldCameraPos.z - this.referencePoint.z) > this.toleratedDifference
-      ) {
-        this.updatePostion();
-      }
-    }
-
-    if (this.isToChangeTheta) {
-      this.data.theta = this.camera.object3D.rotation.y + this.rig.object3D.rotation.y;
-      this.el.object3D.rotation.y = this.data.theta;
-    }
-
-    if (this.isToChangeRho) {
-      this.data.rho = this.camera.object3D.rotation.x;
-      this.buttonGroup.object3D.rotation.x = this.data.rho;
-    }
-  },
-  update: function (oldData) { },
-  clickHandle: function (evt) {
-    let name = evt.detail.intersection.object.name;
-
-    if (name === 'orbitButton') {
-      this.orbitButton.onClick();
-    }
-    else if (name === 'horizMovButton') {
-      this.horizMovButton.onClick();
-    }
-    else if (name === 'vertiMovButton') {
-      this.vertiMovButton.onClick();
-    }
-    else if (name === 'stopButton') {
-      this.stopButton.onClick();
-    }
-    else if (!this.isToChangeTheta && !this.isToChangeRho) {
-      for (let button of this.buttons) {
-        if (button.name === name && typeof button.onClick === 'function') {
-          button.onClick();
+      this.orbitButton = makeMoveButton(
+        'orbitButton',
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAADJ0lEQVRYw92Xv4sTQRTHFzzLxUIIot0JKVKeXCWB/APHFZJgcYHDxisChq3cM4VguHZD0gUbtQhBIYhbSK64YBAiKSRBmEC2yQ8xhdmw2UVudXe+FmZ/JGaT6FwhbjW/8sm8N9/35g0Hxo9DiWP4sv84IBQ7FERROIyF/gIQychkbNoAYJtjImcifwLghfqEAtZ02Gm1OsOpBdBJXeA3BPDZrg17VJMS278GthNSbWTD7mb5TQApQqHX0gt2h9I1HZSk1gLCsgmjEltmb6xiwJTDqwFxBXZjP8jn+w0bSnwVQFChSXzwsfOSBlUIBhwb6B+sVs5BH8ZxEEAwQKLrtBclMITlgLgKsrtevbsEanwZIKygP/f/fLJYbbbbzWoxOeeWaB9KeAlAhua3P1oaWE7MW4OSH32gQf4dkDJtyRcKZQ3QW5WcKOYqLR3Qyr5gkGwztQjgCRreRo96oEphx+nuFBSK3pFnXAOEXwBkqeHp58SAmp/TciivwjjxFGXQ7DyA76Li/f4cZG/R+XsE5x6hgi4/BxBs3dX/kYHmkuiPNGG4VsR0W5gD1FFzF/ZAlmaPCEHPnaih7gdEJnbamSpDdfa/dfrikt8KFWWnnbYnER8gQ0eOz6IazTurXgNn132EPNUcPYRGNOMDyJ4FJSgO6zkFQG77zkLxhF+D7AMQOCLiByg4ax5NAeDLPY9QwMARiwTiAUJjKzEbT1q6qx/u7mcAMJ64Azu6lZw1E9Y45AJi5nSWP7kiWj6jb30CgB/P3IEWirPW9tSMuYBDe+isqPoExXHc1SoFQM+uuQKqOlND+9AFCOg4w03k5k//6XcAeD/r5dB0JjoQXIDo7bsNcUE/EgUwnXVEtD1rxI0Ad0YA0FgNWGFC8isAfLy52oRgJ96fAMCHG9xqJwYe44MpALy7su4Yg4T00ACA0621QgqQ8uNvAPBma72UA4LpLQD6ktskmJaH82WZ0hfcRuEckFC4V0Vus4TCnNLYkypzWme+WNivNubLlf16Zy8wmEsc9iKLvcxjLzTZS132Ypu93L+ABwf7k+cCHl0X8ez7T56+GwF+Am1c2iRVXhf/AAAAAElFTkSuQmCC',
+        0.05,
+        () => {
+          self.orbitIndex++;
+          if (self.orbitIndex >= data.orbits.length) self.orbitIndex = 0;
+          self.radius = data.orbits[self.orbitIndex];
+          self.updatePosition();
         }
+      );
+
+      this.horizontalButton = makeMoveButton(
+        'horizontalButton',
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAABO0lEQVRYw+3WrQ7CQAwH8D3NPcAsT4CYnMSDQeM3g5snqAlCcDgMDoeZwS1BzBEIZpBAlj+CqXH9uBASxNVe90u29doGWARfxAKBBzzggV8BUUznx5ECKFIaSAsZSMABSESg4oFKAnLwAHIe6NUSUPdYYAsJwJYDRk8ZeI4Y4AAZwIEGptAAmFKAOemAkyGAJXQAlnagf9MCt74V2L1PMR+SMW9TdjZg3EAdzdgClHCI8hPI4BRZFzAXN+BiOkBYuwF12H2F3A3IPz9i5fJ8ZfkLiQuQ2AqpaA9XKRmrNqWwVmL80JbyI7Zfpo0W2BC3MbzqgGtINZSZDpjRLe2oAY5MT5w0MtBMuLa+l4E9OxeiuwTcI360rSVgLcxGc+aBs5Gmc8YDmbxglBxQKjaUAbfiDPye6AEP/C3wAjQlXixnoVFmAAAAAElFTkSuQmCC',
+        -0.05,
+        () => {
+          self.isToChangeTheta = true;
+
+          self.stopButton.object3D.visible = true;
+          self.stopButton.object3D.position.set(
+            (data.dimension.y / 2 * data.buttonSize.x + 0.06),
+            0,
+            0.01);
+          self.stopButton.object3D.rotation.z = Math.PI / 2;
+          self.stopButton.classList.add('vrInterface-button');
+        }
+      );
+
+      this.verticalButton = makeMoveButton(
+        'verticalButton',
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAAA2klEQVRYw2P4v5yBArD8P8OoAUPAAFM1igzgXfzl3UQKDGh+8h8I7hSQaUDYxf8Q8PeoJxkGmO789R8Ovq1SI9EA3tkf/qOA110kGVD54D8GuJZFtAH+p//+xwJ+77MlygC1jd//4wBfFvMSNmDim/94wJNmAgbE3/lPAFz0x2tAaCsSWAvTNA9ZNJT4lNgKMyCNzKQ8asCoAaMGjBowasCoAZQaQHHVRnHlSnH1ToUGBuVNHCo0sqjQzKO8oUmFpi4VGttUaO5T3uEY7bURacD55RSA80ADKAQAlbbCnlvwDscAAAAASUVORK5CYII=',
+        -0.15,
+        () => {
+          self.isToChangeRho = true;
+
+          self.stopButton.object3D.visible = true;
+          self.stopButton.object3D.position.set(
+            (data.dimension.y / 2 * data.buttonSize.x + 0.06),
+            (-data.dimension.x + 1) * data.buttonSize.y / 2,
+            0.01
+          );
+          self.stopButton.object3D.rotation.z = 0;
+          self.stopButton.classList.add('vrInterface-button');
+        }
+      );
+
+      this.stopButton = makeMoveButton(
+        'stopButton',
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAAAS1BMVEX/AAD/Li7/RUX/R0f/S0v/T0//XV3/bW3/c3P/dXX/lJT/l5f/p6f/wcH/zMz/z8//1tb/19f/4+P/5eX/7e3/9PT/9fX//f3///9m19XwAAAAx0lEQVRYw+3XyRKCMBAE0IgbQhDELf//pR5Ey5DpmUr10ZkjVf1OzJKQyAppjESNKaQYiIoOOKABx/OU19BUAad78c/P2wpAyANBBsS8LIjAO3/pfqq/AUEClvwm+3gAggCIeSiUAMgjoQBgHghrQMnLwgpQ86KQA62e/woNAq5G/iMMCHhY+UWYFOC5N/q3t4CdAXQOOPAnANtMXDvTA4UeafRQ5cc6v1j41cYvV3698wcGf+LwRxZ/5vGHpl/rDlQD9OObrBdJNVKVGSgnwAAAAABJRU5ErkJggg==',
+        -0.25,
+        () => {
+
+        }
+      );
+
+      function makeMoveButton(name, img64, yPos, callback) {
+        const image = new Image();
+        const texture = new THREE.Texture();
+
+        image.src = img64;
+        texture.image = image;
+        image.onload = () => texture.needsUpdate = true;
+
+        const button = document.createElement('a-entity');
+        button.setObject3D(name, new THREE.Mesh(
+          self.btnGeo,
+          new THREE.MeshBasicMaterial({ map: texture })
+        ));
+        button.object3D.position.y = yPos;
+        button.object3D.scale.set(data.button.width * 0.1, data.button.height * 0.1);
+        button.object3D.children[0].name = name;
+        button.object3D.onClick = callback;
+        button.classList.add('vrInterface-button');
+        self.movementBar.appendChild(button);
+
+        return button;
       }
     }
   },
-  addButton: function (name, img, callback) {
-    const data = this.data;
-
-    if (data.dimension.x * data.dimension.y <= this.buttons.length) {
-      console.warn('VRInterface: Number of buttons doesn\'t match dimensions limits.')
-    }
-
-    let image = document.querySelector(img);
-    let texture = new THREE.Texture();
-
-    if (image) {
-      texture.image = image;
-      texture.needsUpdate = true;
-    }
-
-    let button = new THREE.Mesh(
-      this.buttonGeometry,
-      new THREE.MeshBasicMaterial({ map: texture, transparent: data.transparency })
-    );
-    button.name = name;
-    button.onClick = callback;
-    button.scale.set(data.buttonSize.x, data.buttonSize.y, 1);
-
-    this.positionate(button);
-
-    if (data.centralize) {
-      this.centralize(button);
-    }
-
-    const entity = document.createElement('a-entity');
-    entity.setObject3D(button.name, button);
-
-    if (this.borderMaterial) { // if there's a material, the user wants a border
-      let border = new THREE.LineSegments(
-        new THREE.EdgesGeometry(button.geometry),
-        this.borderMaterial
-      )
-      button.border = border;
-      this.positionateBorder(button);
-      this.buttonGroup.setObject3D(button.name + '-border', border);
-    }
-
-    entity.classList.add('vrInterface-button');
-    this.buttons.push(button);
-    this.buttonGroup.appendChild(entity);
-  },
-  showMessage: function (text, pos) {
-    const msg = this.message.object3D;
-
-    if (!pos && pos !== 'top' && pos !== 'bottom') {
-      this.pos = this.data.messagePos;
-    }
-    else {
-      this.pos = pos;
-    }
-
-    msg.el.setAttribute('text', { value: text });
-    msg.children[1].scale.x = text.length * 0.025;
-
-    this.positionateMessage(this.pos);
-
-    msg.visible = true;
-    clearTimeout(this.timeout);
-    this.timeout = setTimeout(() => msg.visible = false, 3000);
-  },
-  showSideText: function (text) {
-    const sideText = this.sideText.object3D;
-
-    if (!this.sideText.object3D.visible) {
-      this.sideText.object3D.visible = true;
-    }
-
-    text = text.split('\n');
-
-    sideText.el.setAttribute('text', { value: text.join('\n') });
-    sideText.children[1].scale.x = text.reduce((prev, curr) => curr.length > prev.length ? curr : prev).length * 0.0275;
-    sideText.children[1].scale.y = text.length * 0.05;
-
-    this.positionateSideText();
-  },
-  hideSideText: function () {
-    this.sideText.object3D.visible = false;
-  },
-  positionate: function (button, length) {
-    /*
-      The buttons are placed in negative z-axis, where the camere is looking by default.
-      To determine the button position, it's used the following formulas
-      x = x0 + rcos(rho)cos(theta)
-      y = y0 + rsin(rho)
-      z = z0 + rcos(rho)sin(theta)
-   
-      As the camera is looking to negative z-axis, theta = 90 deg, and z0 = 0
-      x = x0
-      y = y0 + rsin(rho)
-      z = -rcos(rho)
-   
-      As the buttons are inclined at the angle of rho, it's need alignment correction in y-axis and z-axis
-      y = y0 + rsin(rho) - lineIndex * buttonHeight * cos(rho)
-      z = -rcos(rho) - lineIndex * buttonHeight * sin(rho)
-     */
-    const data = this.data;
-
-    let n = typeof length === 'number' ? length : this.buttons.length; // index of the n-th button, checks if length was passed as parameter
-    let i = Math.trunc(n / data.dimension.y); // index of the line
-    let j = n - data.dimension.y * i; // index of the column
-
-    // button.rotation.x = data.rho;
-
-    button.position.set(
-      j * (data.buttonSize.x + data.gap.x),
-      - (i * (data.buttonSize.y + data.gap.y)), //* Math.cos(data.rho)),
-      -this.radius  //- (i * (data.buttonSize.y + data.gap.y) * Math.sin(data.rho))
-    );
-  },
-  positionateMessage: function (pos) {
-    const msg = this.message.object3D;
-
-    msg.position.copy(this.buttons[0].position);
-
-    if (pos === 'top') {
-      msg.position.x += this.data.buttonSize.x * 0.5 * (this.data.dimension.y - 1);
-      msg.position.y += this.data.buttonSize.y / 2 + 0.06;
-    }
-    else if (pos === 'bottom') {
-      let offset = (this.data.dimension.x - 1) * (this.data.buttonSize.y + this.data.gap.y);
-
-      msg.position.x += this.data.buttonSize.x * 0.5 * (this.data.dimension.y - 1);
-      msg.position.y -= this.data.buttonSize.y / 2 + 0.06 + offset;
-    }
-  },
-  positionateSideText: function () {
-    const sideText = this.sideText.object3D;
-
-    let offset = (this.data.dimension.y - 1) * (this.data.buttonSize.x + this.data.gap.x) + 0.01;
-    sideText.position.x = sideText.children[1].scale.x * 0.5 + offset
-    sideText.position.z = this.buttons[0].position.z;
-  },
-  positionateBorder: function (button) {
-    button.border.scale.copy(button.scale);
-    button.border.position.copy(button.position);
-    button.border.rotation.copy(button.rotation);
-  },
-  centralize: function (button) {
-    button.position.y += this.data.buttonSize.y * 0.5 * (this.data.dimension.x - 1) * Math.cos(this.data.rho); // data.dimension.x == lines
-    button.position.x -= this.data.buttonSize.x * 0.5 * (this.data.dimension.y - 1); // data.dimension.y == columns
-  },
-  decentralize: function (button) {
-    button.position.y -= this.data.buttonSize.y * 0.5 * (this.data.dimension.x - 1); // data.dimension.x == lines
-    button.position.x += this.data.buttonSize.x * 0.5 * (this.data.dimension.y - 1); // data.dimension.y == columns
-  },
-  updatePostion: function (args) {
-    if (args) {
-      if (typeof args.radius === 'number') {
-        this.radius = args.radius;
-        this.data.raycaster.far = args.radius;
-        this.cursor.setAttribute('raycaster', { far: this.data.raycaster.far, near: this.data.raycaster.far / 2 });
-      }
-      if (typeof args.theta === 'number') {
-        this.data.theta = args.theta * Math.PI / 180;
-        this.el.object3D.rotation.y = this.data.theta;
-      }
-      if (typeof args.rho === 'number') {
-        this.data.rho = args.rho * Math.PI / 180;
-      }
-    }
-
-    if (this.rig) {
-      this.rig.object3D.getWorldPosition(this.referencePoint);
-      this.referencePoint.y += this.camera.object3D.position.y;
-    }
-    else {
-      this.camera.object3D.getWorldPosition(this.referencePoint);
-    }
-    this.oldCameraPos.copy(this.referencePoint);
-
-    this.el.object3D.position.x = this.data.referencePoint.x;
-    this.el.object3D.position.y = this.data.referencePoint.y;
-    this.el.object3D.position.z = this.data.referencePoint.z;
-
-    for (let k = 0; k < this.buttons.length; k++) {
-      this.positionate(this.buttons[k], k);
-      if (this.data.centralize) this.centralize(this.buttons[k]);
-      this.positionateBorder(this.buttons[k]);
-    }
-
-    if (this.message.object3D.visible) {
-      this.positionateMessage(this.pos);
-    }
-
-    if (this.sideText.object3D.visible) {
-      this.positionateSideText();
-    }
-
-    if (this.data.movementBar) {
-      this.moveBar.object3D.position.x = this.buttons[0].position.x - this.data.buttonSize.x / 2 - 0.06;
-      this.moveBar.object3D.position.y = this.buttons[0].position.y;
-      this.moveBar.object3D.position.z = this.buttons[0].position.z;
-      this.moveBar.object3D.rotation.x = this.buttons[0].rotation.x;
-    }
-
-  },
-  show: function () {
-    this.data.visible = true;
-    this.el.object3D.visible = true;
-    this.cursor.setAttribute('raycaster', { near: this.data.raycaster.near, far: this.data.raycaster.far });
-  },
-  hide: function () {
-    this.data.visible = false;
-    this.el.object3D.visible = false;
-    this.cursor.setAttribute('raycaster', { near: 0, far: 0 });
-  }
+  update: function () { },
+  tick: function () { },
 });
-
-function orbitImage() {
-  return `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAADJ0lEQVRYw92Xv4sTQRTHFzzLxUIIot0JKVKeXCWB/APHFZJgcYHDxisChq3cM4VguHZD0gUbtQhBIYhbSK64YBAiKSRBmEC2yQ8xhdmw2UVudXe+FmZ/JGaT6FwhbjW/8sm8N9/35g0Hxo9DiWP4sv84IBQ7FERROIyF/gIQychkbNoAYJtjImcifwLghfqEAtZ02Gm1OsOpBdBJXeA3BPDZrg17VJMS278GthNSbWTD7mb5TQApQqHX0gt2h9I1HZSk1gLCsgmjEltmb6xiwJTDqwFxBXZjP8jn+w0bSnwVQFChSXzwsfOSBlUIBhwb6B+sVs5BH8ZxEEAwQKLrtBclMITlgLgKsrtevbsEanwZIKygP/f/fLJYbbbbzWoxOeeWaB9KeAlAhua3P1oaWE7MW4OSH32gQf4dkDJtyRcKZQ3QW5WcKOYqLR3Qyr5gkGwztQjgCRreRo96oEphx+nuFBSK3pFnXAOEXwBkqeHp58SAmp/TciivwjjxFGXQ7DyA76Li/f4cZG/R+XsE5x6hgi4/BxBs3dX/kYHmkuiPNGG4VsR0W5gD1FFzF/ZAlmaPCEHPnaih7gdEJnbamSpDdfa/dfrikt8KFWWnnbYnER8gQ0eOz6IazTurXgNn132EPNUcPYRGNOMDyJ4FJSgO6zkFQG77zkLxhF+D7AMQOCLiByg4ax5NAeDLPY9QwMARiwTiAUJjKzEbT1q6qx/u7mcAMJ64Azu6lZw1E9Y45AJi5nSWP7kiWj6jb30CgB/P3IEWirPW9tSMuYBDe+isqPoExXHc1SoFQM+uuQKqOlND+9AFCOg4w03k5k//6XcAeD/r5dB0JjoQXIDo7bsNcUE/EgUwnXVEtD1rxI0Ad0YA0FgNWGFC8isAfLy52oRgJ96fAMCHG9xqJwYe44MpALy7su4Yg4T00ACA0621QgqQ8uNvAPBma72UA4LpLQD6ktskmJaH82WZ0hfcRuEckFC4V0Vus4TCnNLYkypzWme+WNivNubLlf16Zy8wmEsc9iKLvcxjLzTZS132Ypu93L+ABwf7k+cCHl0X8ez7T56+GwF+Am1c2iRVXhf/AAAAAElFTkSuQmCC`;
-}
-
-function horizontalImage() {
-  return `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAABO0lEQVRYw+3WrQ7CQAwH8D3NPcAsT4CYnMSDQeM3g5snqAlCcDgMDoeZwS1BzBEIZpBAlj+CqXH9uBASxNVe90u29doGWARfxAKBBzzggV8BUUznx5ECKFIaSAsZSMABSESg4oFKAnLwAHIe6NUSUPdYYAsJwJYDRk8ZeI4Y4AAZwIEGptAAmFKAOemAkyGAJXQAlnagf9MCt74V2L1PMR+SMW9TdjZg3EAdzdgClHCI8hPI4BRZFzAXN+BiOkBYuwF12H2F3A3IPz9i5fJ8ZfkLiQuQ2AqpaA9XKRmrNqWwVmL80JbyI7Zfpo0W2BC3MbzqgGtINZSZDpjRLe2oAY5MT5w0MtBMuLa+l4E9OxeiuwTcI360rSVgLcxGc+aBs5Gmc8YDmbxglBxQKjaUAbfiDPye6AEP/C3wAjQlXixnoVFmAAAAAElFTkSuQmCC`;
-}
-
-function verticalImage() {
-  return `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAAA2klEQVRYw2P4v5yBArD8P8OoAUPAAFM1igzgXfzl3UQKDGh+8h8I7hSQaUDYxf8Q8PeoJxkGmO789R8Ovq1SI9EA3tkf/qOA110kGVD54D8GuJZFtAH+p//+xwJ+77MlygC1jd//4wBfFvMSNmDim/94wJNmAgbE3/lPAFz0x2tAaCsSWAvTNA9ZNJT4lNgKMyCNzKQ8asCoAaMGjBowasCoAZQaQHHVRnHlSnH1ToUGBuVNHCo0sqjQzKO8oUmFpi4VGttUaO5T3uEY7bURacD55RSA80ADKAQAlbbCnlvwDscAAAAASUVORK5CYII=`;
-}
-
-function stopImage() {
-  return `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAAAS1BMVEX/AAD/Li7/RUX/R0f/S0v/T0//XV3/bW3/c3P/dXX/lJT/l5f/p6f/wcH/zMz/z8//1tb/19f/4+P/5eX/7e3/9PT/9fX//f3///9m19XwAAAAx0lEQVRYw+3XyRKCMBAE0IgbQhDELf//pR5Ey5DpmUr10ZkjVf1OzJKQyAppjESNKaQYiIoOOKABx/OU19BUAad78c/P2wpAyANBBsS8LIjAO3/pfqq/AUEClvwm+3gAggCIeSiUAMgjoQBgHghrQMnLwgpQ86KQA62e/woNAq5G/iMMCHhY+UWYFOC5N/q3t4CdAXQOOPAnANtMXDvTA4UeafRQ5cc6v1j41cYvV3698wcGf+LwRxZ/5vGHpl/rDlQD9OObrBdJNVKVGSgnwAAAAABJRU5ErkJggg==`;
-}
