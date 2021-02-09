@@ -162,6 +162,16 @@
                 }
 
                 function placeBlock(button) {
+                    let block = container.getObjectByName(button.name);
+                    if (block) {
+                        container.remove(block);
+                        matrix[block.name] = null;
+
+                        if (block.type == 'battery') {
+                            batteries.splice(batteries.indexOf(button), 1)
+                        }
+                    }
+
                     if (clipboard.children[0]) {
                         button.getWorldPosition(clipboard.children[0].position);
 
@@ -183,21 +193,8 @@
 
                         container.add(clipboard.children[0]);
                         clipboard.el.removeAttribute('gltf-model');
-                        updateCircuit();
                     }
-                    else {
-                        let block = container.getObjectByName(button.name);
-                        if (block) {
-                            container.remove(block);
-                            matrix[block.name] = null;
-
-                            if (block.type == 'battery') {
-                                batteries.splice(batteries.indexOf(button), 1)
-                            }
-                            updateCircuit();
-                        }
-                    }
-
+                    updateCircuit();
                 }
 
                 const self = this;
