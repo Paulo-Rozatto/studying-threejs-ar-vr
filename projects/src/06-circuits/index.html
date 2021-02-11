@@ -41,14 +41,13 @@
                     addToClipboard('lblock');
                     vrInterface.showMessage('Curved wire block added to clipboard');
                 });
-                vrInterface.addButton('divisor-block', '#split', () => {
-                    // addToClipboard('divisor');
-                    // vrInterface.showMessage('Split wire block added to clipboard');
-                    vrInterface.showMessage('Split ');
+                vrInterface.addButton('t-block', '#twire', () => {
+                    addToClipboard('tblock');
+                    vrInterface.showMessage('T-shaped wire block added to clipboard');
                 });
-                vrInterface.addButton('receptor-block', '#union', () => {
-                    addToClipboard('receptor');
-                    vrInterface.showMessage('Union wire block added to clipboard');
+                vrInterface.addButton('battery', '#battery', () => {
+                    addToClipboard('battery');
+                    vrInterface.showMessage('Battery block added to clipboard');
                 });
 
                 vrInterface.addButton('rotate', '#rotateImage', rotate);
@@ -60,11 +59,6 @@
                 vrInterface.addButton('fan', '#fan', () => {
                     addToClipboard('fan');
                     vrInterface.showMessage('Fan block added to clipboard');
-                });
-
-                vrInterface.addButton('battery', '#battery', () => {
-                    addToClipboard('battery');
-                    vrInterface.showMessage('Battery block added to clipboard');
                 });
 
                 vrInterface.addButton('testing', '#testing', () => {
@@ -255,8 +249,6 @@
                     let specialBlocks = prevBlocks || [];
                     let aux;
 
-                    if (prevBlocks) console.log({ specialBlocks });
-
                     while (matrix[pos] && blocksConnect(matrix[pos], prevPos)) {
                         if (matrix[pos].action) {
                             specialBlocks.push(matrix[pos]);
@@ -266,7 +258,6 @@
                         aux = prevPos
                         prevPos = pos;
                         pos = nextPosition(matrix[pos], aux);
-                        console.log('prev: ' + prevPos + ' pos: ' + pos);
 
                         if (pos.length) {
                             checkIsConnected(batteryPos, pos[1], prevPos, [...specialBlocks]);
@@ -277,12 +268,10 @@
                             for (let i = 0; i < specialBlocks.length; i++) {
                                 specialBlocks[i].action(true);
                             }
-                            console.log('- true -', specialBlocks);
                             return true;
                         }
                     }
 
-                    console.log('- false -');
                     return false;
                 }
 
@@ -299,7 +288,7 @@
                                 return (obj.pos + 9) === prevPos || (obj.pos - 1) === prevPos;
                         }
                     }
-                    else if (obj.type === 'receptor') {
+                    else if (obj.type === 'tblock') {
                         switch (obj.rotation.y) {
                             case 0:
                                 return (obj.pos + 9) === prevPos || (obj.pos + 1) === prevPos || (obj.pos - 1) === prevPos;
@@ -355,7 +344,7 @@
                                 return [obj.pos - 1, obj.pos - 9];
                         }
                     }
-                    else if (obj.type === 'receptor') {
+                    else if (obj.type === 'tblock') {
                         switch (obj.rotation.y) {
                             case 0:
                                 if (obj.pos + 1 === prevPos) return [obj.pos + 9, obj.pos - 1];
@@ -400,7 +389,6 @@
                 this.fans = [];
                 function fanAction(isOn) {
                     if (isOn) {
-                        console.log('action', isOn);
                         self.fans.push(this);
                     }
                     else {
@@ -424,8 +412,7 @@
             <a-asset-item id="tableModel" src="../../assets/models/table.glb"></a-asset-item>
             <a-asset-item id="wireModel" src="../../assets/models/circuits/wire-block.glb"></a-asset-item>
             <a-asset-item id="lblockModel" src="../../assets/models/circuits/l-block.glb"></a-asset-item>
-            <a-asset-item id="divisorModel" src="../../assets/models/circuits/divisor-block.glb"></a-asset-item>
-            <a-asset-item id="receptorModel" src="../../assets/models/circuits/receptor-block.glb"></a-asset-item>
+            <a-asset-item id="tblockModel" src="../../assets/models/circuits/t-block.glb"></a-asset-item>
             <a-asset-item id="batteryModel" src="../../assets/models/circuits/battery-block.glb"></a-asset-item>
             <a-asset-item id="lampModel" src="../../assets/models/circuits/lamp-block.glb"></a-asset-item>
             <a-asset-item id="fanModel" src="../../assets/models/circuits/fan-block.glb"></a-asset-item>
@@ -433,8 +420,7 @@
             <img id="rotateImage" src="img/rotate.png">
             <img id="wire" src="img/wire.png">
             <img id="lwire" src="img/l-wire.png">
-            <img id="split" src="img/split-wire.png">
-            <img id="union" src="img/union-wire.png">
+            <img id="twire" src="img/t-wire.png">
             <img id="lamp" src="img/lamp.png">
             <img id="fan" src="img/fan.png">
             <img id="battery" src="img/battery.png">
@@ -456,15 +442,13 @@
             </a-entity>
             <a-entity class="panelModel" gltf-model="#lblockModel" position="-0.4 0 -1.5" rotation="90 90 90">
             </a-entity>
-            <a-entity class="panelModel" gltf-model="#divisorModel" position="0 0 -1.5" rotation="90 90 90">
+            <a-entity class="panelModel" gltf-model="#tblockModel" position="0 0 -1.5" rotation="90 90 90">
             </a-entity>
-            <a-entity class="panelModel" gltf-model="#receptorModel" position="0.4 0 -1.5" rotation="90 90 90">
+            <a-entity class="panelModel" gltf-model="#batteryModel" position="0.4 0 -1.5" rotation="90 90 90">
             </a-entity>
             <a-entity class="panelModel" gltf-model="#lampModel" position="-0.8 -0.4 -1.5" rotation="90 90 90">
             </a-entity>
             <a-entity class="panelModel" gltf-model="#fanModel" position="-0.4 -0.4 -1.5" rotation="90 90 90">
-            </a-entity>
-            <a-entity class="panelModel" gltf-model="#batteryModel" position="0 -0.4 -1.5" rotation="90 90 90">
             </a-entity>
         </a-entity>
 
