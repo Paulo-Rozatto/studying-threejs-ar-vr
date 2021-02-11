@@ -539,6 +539,7 @@ AFRAME.registerComponent('vr-interface', {
     pivot.rotation.y = this.data.sideTextRotation * Math.PI / 180;
 
     sideText.position.x = + sideText.children[1].scale.x * this.data.messageSize * 0.5;
+    // sideText.position.x = + sideText.children[1].scale.x * this.data.sideTextSize.x * 0.5;
   },
   positionateBorder: function (button) {
     button.border.scale.copy(button.scale);

@@ -28,7 +28,7 @@
             init: function () {
                 const self = this;
                 const vrInterface = this.el.components['vr-interface'];
-                const models = this.el.querySelectorAll('.panelModel');
+                this.models = this.el.querySelectorAll('.panelModel');
                 const clipboard = document.querySelector('#clipboard').object3D;
 
                 clipboard.data = { type: '', rotation: 0 };
@@ -42,8 +42,9 @@
                     vrInterface.showMessage('Curved wire block added to clipboard');
                 });
                 vrInterface.addButton('divisor-block', '#split', () => {
-                    addToClipboard('divisor');
-                    vrInterface.showMessage('Split wire block added to clipboard');
+                    // addToClipboard('divisor');
+                    // vrInterface.showMessage('Split wire block added to clipboard');
+                    vrInterface.showMessage('Split ');
                 });
                 vrInterface.addButton('receptor-block', '#union', () => {
                     addToClipboard('receptor');
@@ -81,9 +82,9 @@
                     if (clipboard.data.rotation === (-1.5 * Math.PI)) clipboard.data.rotation = 0;
                     else clipboard.data.rotation -= Math.PI * 0.5;
 
-                    for (let i = 0; i < models.length; i++) {
-                        models[i].object3D.rotation.x += Math.PI * 0.5;
-                    }
+                    self.rotate = true;
+                    self.deltaCont = 100;
+                    self.rotCont = 0;
                 }
 
                 function addToClipboard(type) {
@@ -91,6 +92,23 @@
 
                     clipboard.data.type = type;
                     clipboard.el.setAttribute('gltf-model', `#${type}Model`);
+                }
+            },
+            tick: function (time, delta) {
+                if (this.rotate) {
+                    if (this.deltaCont >= 15 && this.rotCont < 10) {
+                        for (let i = 0; i < this.models.length; i++) {
+                            this.models[i].object3D.rotation.x += Math.PI * 0.05;
+                        }
+                        this.deltaCont = 0;
+                        this.rotCont++;
+                        if (this.rotCont >= 10) {
+                            this.rotate = false;
+                        }
+                    }
+                    else {
+                        this.deltaCont += delta;
+                    }
                 }
             }
         });
@@ -113,6 +131,7 @@
                 clipboard.debugCircuit = function () {
                     let save = clipboard.data.rotation || 0;
                     clipboard.data.rotation = 0;
+                    clipboard.visible = false;
 
                     function addToClipboard(type) {
                         clipboard.el.removeAttribute('gltf-model');
@@ -149,6 +168,7 @@
                                         setTimeout(() => {
                                             placeBlock(vrGrid.buttons[22])
                                             clipboard.data.rotation = save;
+                                            clipboard.visible = true;
                                         }, 50);
                                     }, 50);
                                 }, 50);
@@ -158,14 +178,14 @@
 
                     // ---- End of Testing: manually placing blocks
 
-                    clipboard.debugCircuit = null;
+                    // clipboard.debugCircuit = null;
                 }
 
                 function placeBlock(button) {
                     let block = container.getObjectByName(button.name);
                     if (block) {
                         container.remove(block);
-                        matrix[block.name] = null;
+                        matrix[block.pos] = null;
 
                         if (block.type == 'battery') {
                             batteries.splice(batteries.indexOf(button), 1)
@@ -176,6 +196,7 @@
                         button.getWorldPosition(clipboard.children[0].position);
 
                         clipboard.children[0].name = button.name;
+                        clipboard.children[0].pos = button.name;
                         clipboard.children[0].type = clipboard.data.type;
                         clipboard.children[0].rotation.y = clipboard.data.rotation;
 
@@ -207,7 +228,7 @@
                         let pos;
 
                         for (let i = 0; i < batteries.length; i++) {
-                            pos = batteries[i].name;
+                            pos = batteries[i].pos;
 
                             switch (batteries[i].rotation.y) {
                                 case 0:
@@ -224,14 +245,17 @@
                             }
 
                             self.actionBlocks = [];
-                            checkIsConnected(batteries[i].name, pos);
+                            checkIsConnected(batteries[i].pos, pos);
                         }
                     }
                 }
 
-                function checkIsConnected(batteryPos, pos, prev) {
+                function checkIsConnected(batteryPos, pos, prev, prevBlocks) {
                     let prevPos = prev || batteryPos;
-                    let specialBlocks = [];
+                    let specialBlocks = prevBlocks || [];
+                    let aux;
+
+                    if (prevBlocks) console.log({ specialBlocks });
 
                     while (matrix[pos] && blocksConnect(matrix[pos], prevPos)) {
                         if (matrix[pos].action) {
@@ -239,11 +263,13 @@
                             self.actionBlocks.push(matrix[pos])
                         }
 
+                        aux = prevPos
                         prevPos = pos;
-                        pos = nextPosition(matrix[pos]);
+                        pos = nextPosition(matrix[pos], aux);
+                        console.log('prev: ' + prevPos + ' pos: ' + pos);
 
                         if (pos.length) {
-                            checkIsConnected(batteryPos, pos[1], prevPos);
+                            checkIsConnected(batteryPos, pos[1], prevPos, [...specialBlocks]);
                             pos = pos[0];
                         }
 
@@ -251,11 +277,12 @@
                             for (let i = 0; i < specialBlocks.length; i++) {
                                 specialBlocks[i].action(true);
                             }
+                            console.log('- true -', specialBlocks);
                             return true;
                         }
                     }
 
-
+                    console.log('- false -');
                     return false;
                 }
 
@@ -263,90 +290,100 @@
                     if (obj.type === 'lblock') {
                         switch (obj.rotation.y) {
                             case 0:
-                                return (obj.name - 1) === prevPos;
+                                return (obj.pos - 1) === prevPos || (obj.pos - 9) === prevPos;
                             case -Math.PI:
-                                return (obj.name + 1) === prevPos;
+                                return (obj.pos + 1) === prevPos || (obj.pos + 9) === prevPos;
                             case -Math.PI * 0.5:
-                                return (obj.name - 9) === prevPos;
+                                return (obj.pos - 9) === prevPos || (obj.pos + 1) === prevPos;
                             default:
-                                return (obj.name + 9) === prevPos;
+                                return (obj.pos + 9) === prevPos || (obj.pos - 1) === prevPos;
                         }
                     }
                     else if (obj.type === 'receptor') {
                         switch (obj.rotation.y) {
                             case 0:
-                                return (obj.name + 9) === prevPos || (obj.name + 1) === prevPos;
+                                return (obj.pos + 9) === prevPos || (obj.pos + 1) === prevPos || (obj.pos - 1) === prevPos;
                             case -Math.PI:
-                                return (obj.name - 9) === prevPos || (obj.name - 1) === prevPos;
+                                return (obj.pos - 9) === prevPos || (obj.pos - 1) === prevPos || (obj.pos + 1) === prevPos;
                             case -Math.PI * 0.5:
-                                return (obj.name - 1) === prevPos || (obj.name + 9) === prevPos;
+                                return (obj.pos - 1) === prevPos || (obj.pos + 9) === prevPos || (obj.pos - 9) === prevPos;
                             default:
-                                return (obj.name + 1) === prevPos || (obj.name - 9) === prevPos;
+                                return (obj.pos + 1) === prevPos || (obj.pos - 9) === prevPos || (obj.pos + 9) === prevPos;
                         }
                     }
                     else {
                         switch (obj.rotation.y) {
                             case 0:
-                                return (obj.name - 1) === prevPos;
                             case -Math.PI:
-                                return (obj.name + 1) === prevPos;
+                                return (obj.pos - 1) === prevPos || (obj.pos + 1) === prevPos;
                             case -Math.PI * 0.5:
-                                return (obj.name - 9) === prevPos;
+                                return (obj.pos + 9) === prevPos;
                             default:
-                                return (obj.name + 9) === prevPos;
+                                return (obj.pos + 9) === prevPos;
                         }
                     }
                 }
 
-                function nextPosition(obj) {
+                function nextPosition(obj, prevPos) {
                     if (obj.type === 'lblock') {
                         switch (obj.rotation.y) {
                             case 0:
-                                return obj.name - 9;
+                                if (obj.pos - 1 == prevPos) return obj.pos - 9;
+                                else return obj.pos - 1;
                             case -Math.PI:
-                                return obj.name + 9;
-                                break;
+                                if (obj.pos + 1 == prevPos) return obj.pos + 9;
+                                else return obj.pos + 1;
                             case -Math.PI * 0.5:
-                                return obj.name + 1;
+                                if (obj.pos - 9 == prevPos) return obj.pos + 1;
+                                else return obj.pos - 9;
                             default:
-                                return obj.name - 1;
+                                if (obj.pos + 9 == prevPos) return obj.pos - 1;
+                                else return obj.pos + 9;
                         }
                     }
                     if (obj.type === 'divisor') {
                         switch (obj.rotation.y) {
                             case 0:
-                                return [obj.name - 9, obj.name + 1];
+                                if (obj.pos + 9 === prevPos) return [obj.pos - 1, obj.pos + 1];
+                                if (obj.pos + 1 === prevPos) return [obj.pos - 9, obj.pos - 1];
                             case -Math.PI:
-                                return [obj.name + 9, obj.name - 1];
+                                return [obj.pos + 9, obj.pos - 1];
                                 break;
                             case -Math.PI * 0.5:
-                                return [obj.name + 1, obj.name + 9];
+                                return [obj.pos + 1, obj.pos + 9];
                             default:
-                                return [obj.name - 1, obje.name - 9];
+                                return [obj.pos - 1, obj.pos - 9];
                         }
                     }
                     else if (obj.type === 'receptor') {
                         switch (obj.rotation.y) {
                             case 0:
-                                return obj.name - 1;
+                                if (obj.pos + 1 === prevPos) return [obj.pos + 9, obj.pos - 1];
+                                if (obj.pos - 1 === prevPos) return [obj.pos + 9, obj.pos + 1];
+                                if (obj.pos + 9 === prevPos) return [obj.pos - 1, obj.pos + 1];
                             case -Math.PI:
-                                return obj.name + 1;
+                                if (obj.pos + 1 === prevPos) return [obj.pos - 9, obj.pos - 1];
+                                if (obj.pos - 1 === prevPos) return [obj.pos - 9, obj.pos + 1];
+                                if (obj.pos - 9 === prevPos) return [obj.pos - 1, obj.pos + 1];
                             case -Math.PI * 0.5:
-                                return obj.name - 9;
+                                if (obj.pos + 9 === prevPos) return [obj.pos - 1, obj.pos - 9];
+                                if (obj.pos - 9 === prevPos) return [obj.pos + 9, obj.pos - 1];
+                                if (obj.pos - 1 === prevPos) return [obj.pos + 9, obj.pos - 9];
                             default:
-                                return obj.name + 9;
+                                if (obj.pos + 9 === prevPos) return [obj.pos + 1, obj.pos - 9];
+                                if (obj.pos - 9 === prevPos) return [obj.pos + 1, obj.pos + 9];
+                                if (obj.pos + 1 === prevPos) return [obj.pos + 9, obj.pos - 9];
                         }
                     }
                     else {
                         switch (obj.rotation.y) {
                             case 0:
-                                return obj.name + 1;
                             case -Math.PI:
-                                return obj.name - 1;
-                            case -Math.PI * 0.5:
-                                return obj.name + 9;
+                                if (obj.pos - 1 == prevPos) return obj.pos + 1;
+                                else return obj.pos - 1;
                             default:
-                                return obj.name - 9;
+                                if (obj.pos - 9 == prevPos) return obj.pos + 9;
+                                else return obj.pos - 9;
                         }
                     }
                 }
@@ -363,6 +400,7 @@
                 this.fans = [];
                 function fanAction(isOn) {
                     if (isOn) {
+                        console.log('action', isOn);
                         self.fans.push(this);
                     }
                     else {
@@ -372,7 +410,8 @@
             },
             tick: function (time, delta) {
                 if (this.fans.length > 0) {
-                    this.fans[0].children[2].rotation.y -= delta * 0.005;
+                    for (let i = 0; i < this.fans.length; i++)
+                        this.fans[i].children[2].rotation.y -= delta * 0.005;
                 }
             },
         });
