@@ -87,6 +87,32 @@
                     clipboard.data.type = type;
                     clipboard.el.setAttribute('gltf-model', `#${type}Model`);
                 }
+
+                window.addEventListener('keydown', (event) => {
+                    switch (event.key) {
+                        case "1":
+                            addToClipboard('wire')
+                            break;
+                        case "2":
+                            addToClipboard('lblock')
+                            break;
+                        case "3":
+                            addToClipboard('tblock')
+                            break;
+                        case "4":
+                            addToClipboard('battery')
+                            break;
+                        case "5":
+                            addToClipboard('lamp')
+                            break;
+                        default:
+                            break;
+                    }
+                });
+
+                window.addEventListener('wheel', (event) => {
+                    if (!this.rotate) rotate();
+                })
             },
             tick: function (time, delta) {
                 if (this.rotate) {
@@ -115,6 +141,7 @@
                 const batteries = [];
                 this.actionBlocks = [];
                 const matrix = new Array(45);
+                this.energy = 0;
 
 
                 for (let i = 0; i < 45; i++) {
@@ -184,6 +211,7 @@
                         if (block.type == 'battery') {
                             batteries.splice(batteries.indexOf(button), 1)
                         }
+                        if (!clipboard.children[0]) updateCircuit();
                     }
 
                     if (clipboard.children[0]) {
@@ -208,8 +236,8 @@
 
                         container.add(clipboard.children[0]);
                         clipboard.el.removeAttribute('gltf-model');
+                        updateCircuit();
                     }
-                    updateCircuit();
                 }
 
                 const self = this;
@@ -221,58 +249,73 @@
                     if (batteries.length > 0) {
                         let pos;
 
+                        for (let i = 0; i < container.children.length; i++) {
+                            container.children[i].visited = false;
+                            container.children[i].isConnected = false;
+                        }
+
                         for (let i = 0; i < batteries.length; i++) {
+                            if (batteries[i].visited) continue;
+
                             pos = batteries[i].pos;
 
                             switch (batteries[i].rotation.y) {
                                 case 0:
+                                case -Math.PI:
                                     pos += 9;
                                     break;
-                                case -Math.PI:
-                                    pos -= 9;
-                                    break;
-                                case -Math.PI * 0.5:
-                                    pos -= 1;
-                                    break;
                                 default:
-                                    pos += 1;
+                                    pos -= 1;
                             }
 
                             self.actionBlocks = [];
-                            checkIsConnected(batteries[i].pos, pos);
+                            self.energy = 10;
+                            self.contTblocks = 0;
+                            self.queue = [];
+                            checkConnections(batteries[i].pos, pos);
                         }
                     }
                 }
 
-                function checkIsConnected(batteryPos, pos, prev, prevBlocks) {
-                    let prevPos = prev || batteryPos;
-                    let specialBlocks = prevBlocks || [];
-                    let aux;
+                function checkConnections(batteryPos, pos, prevPos, firstPos) {
+                    if (pos == batteryPos) return true;
+                    if (!matrix[pos]) return false;
+                    if (matrix[pos].visited) {
+                        return blocksConnect(matrix[pos], prevPos) && (matrix[pos].isConnected || pos == firstPos);
+                    }
 
-                    while (matrix[pos] && blocksConnect(matrix[pos], prevPos)) {
-                        if (matrix[pos].action) {
-                            specialBlocks.push(matrix[pos]);
-                            self.actionBlocks.push(matrix[pos])
-                        }
+                    if (!prevPos) prevPos = batteryPos;
+                    if (!firstPos) firstPos = pos;
+                    if (matrix[pos].type == 'battery') matrix[pos].visited = true;
 
-                        aux = prevPos
+                    let isConnected = false;
+
+                    if (blocksConnect(matrix[pos], prevPos)) {
+
+                        let aux = prevPos;
                         prevPos = pos;
                         pos = nextPosition(matrix[pos], aux);
 
                         if (pos.length) {
-                            checkIsConnected(batteryPos, pos[1], prevPos, [...specialBlocks]);
-                            pos = pos[0];
+                            matrix[prevPos].visited = true;
+                            isConnected = checkConnections(batteryPos, pos[0], prevPos, firstPos);
+                            matrix[prevPos].isConnected = isConnected;
+
+                            isConnected = checkConnections(batteryPos, pos[1], prevPos, firstPos) || isConnected;
+                            matrix[prevPos].isConnected = isConnected;
+                        }
+                        else {
+                            isConnected = checkConnections(batteryPos, pos, prevPos, firstPos);
+                            matrix[prevPos].isConnected = isConnected;
                         }
 
-                        if (pos == batteryPos) {
-                            for (let i = 0; i < specialBlocks.length; i++) {
-                                specialBlocks[i].action(true);
-                            }
-                            return true;
+                        if (matrix[prevPos].action) {
+                            matrix[prevPos].action(isConnected);
+                            self.actionBlocks.push(matrix[prevPos]);
                         }
                     }
 
-                    return false;
+                    return isConnected;
                 }
 
                 function blocksConnect(obj, prevPos) {
@@ -305,10 +348,8 @@
                             case 0:
                             case -Math.PI:
                                 return (obj.pos - 1) === prevPos || (obj.pos + 1) === prevPos;
-                            case -Math.PI * 0.5:
-                                return (obj.pos + 9) === prevPos;
                             default:
-                                return (obj.pos + 9) === prevPos;
+                                return (obj.pos + 9) === prevPos || (obj.pos - 9) === prevPos;
                         }
                     }
                 }
@@ -347,20 +388,20 @@
                     else if (obj.type === 'tblock') {
                         switch (obj.rotation.y) {
                             case 0:
-                                if (obj.pos + 1 === prevPos) return [obj.pos + 9, obj.pos - 1];
-                                if (obj.pos - 1 === prevPos) return [obj.pos + 9, obj.pos + 1];
-                                if (obj.pos + 9 === prevPos) return [obj.pos - 1, obj.pos + 1];
+                                if (obj.pos + 1 === prevPos) return [obj.pos - 1, obj.pos + 9];
+                                if (obj.pos - 1 === prevPos) return [obj.pos + 1, obj.pos + 9];
+                                if (obj.pos + 9 === prevPos) return [obj.pos + 1, obj.pos - 1];
                             case -Math.PI:
-                                if (obj.pos + 1 === prevPos) return [obj.pos - 9, obj.pos - 1];
-                                if (obj.pos - 1 === prevPos) return [obj.pos - 9, obj.pos + 1];
-                                if (obj.pos - 9 === prevPos) return [obj.pos - 1, obj.pos + 1];
+                                if (obj.pos + 1 === prevPos) return [obj.pos - 1, obj.pos - 9];
+                                if (obj.pos - 1 === prevPos) return [obj.pos + 1, obj.pos - 9];
+                                if (obj.pos - 9 === prevPos) return [obj.pos + 1, obj.pos - 1];
                             case -Math.PI * 0.5:
-                                if (obj.pos + 9 === prevPos) return [obj.pos - 1, obj.pos - 9];
+                                if (obj.pos + 9 === prevPos) return [obj.pos - 9, obj.pos - 1];
                                 if (obj.pos - 9 === prevPos) return [obj.pos + 9, obj.pos - 1];
                                 if (obj.pos - 1 === prevPos) return [obj.pos + 9, obj.pos - 9];
                             default:
-                                if (obj.pos + 9 === prevPos) return [obj.pos + 1, obj.pos - 9];
-                                if (obj.pos - 9 === prevPos) return [obj.pos + 1, obj.pos + 9];
+                                if (obj.pos + 9 === prevPos) return [obj.pos - 9, obj.pos + 1];
+                                if (obj.pos - 9 === prevPos) return [obj.pos + 9, obj.pos + 1];
                                 if (obj.pos + 1 === prevPos) return [obj.pos + 9, obj.pos - 9];
                         }
                     }
@@ -389,7 +430,8 @@
                 this.fans = [];
                 function fanAction(isOn) {
                     if (isOn) {
-                        self.fans.push(this);
+                        if (self.fans.indexOf(this) === -1)
+                            self.fans.push(this);
                     }
                     else {
                         self.fans.splice(self.fans.indexOf(this), 1);
