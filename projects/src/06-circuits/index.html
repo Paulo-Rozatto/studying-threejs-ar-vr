@@ -276,14 +276,13 @@
                         matrix[block.pos] = null;
 
                         if (block.type == 'battery') {
-                            batteries.splice(batteries.indexOf(button), 1)
+                            batteries.splice(batteries.indexOf(block), 1)
                         }
                         if (!clipboard.obj) updateCircuit();
                     }
 
                     if (clipboard.obj) {
                         block = clipboard.obj.clone();
-                        // block = block.children[0];
                         button.getWorldPosition(block.position);
 
                         block.name = button.name;
@@ -339,7 +338,7 @@
                 }
 
                 function checkConnections(batteryPos, pos, prevPos, firstPos) {
-                    if (pos == batteryPos) return true;
+                    if (pos == batteryPos) return blocksConnect(matrix[pos], prevPos);
                     if (!matrix[pos]) return false;
                     if (matrix[pos].visited) {
                         return blocksConnect(matrix[pos], prevPos) && (matrix[pos].isConnected || pos == firstPos);
