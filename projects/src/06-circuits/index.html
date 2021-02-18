@@ -70,11 +70,18 @@
                     }
                 });
 
-                function rotate() {
-                    clipboard.rotation.x += Math.PI * 0.5;
+                this.clipboardRotation = clipboard.rotation;
+                this.rotationDirection = 1;
+                function rotate(rotationDirection = 1) {
+                    self.rotationDirection = rotationDirection;
 
-                    if (clipboard.data.rotation === (-1.5 * Math.PI)) clipboard.data.rotation = 0;
-                    else clipboard.data.rotation -= Math.PI * 0.5;
+                    clipboard.data.rotation -= Math.PI * 0.5 * self.rotationDirection;
+                    if (clipboard.data.rotation > 0) {
+                        clipboard.data.rotation -= Math.PI * 2;
+                    }
+                    else if (clipboard.data.rotation === (-2 * Math.PI)) {
+                        clipboard.data.rotation = 0;
+                    }
 
                     self.rotate = true;
                     self.deltaCont = 100;
@@ -105,21 +112,25 @@
                         case "5":
                             addToClipboard('lamp')
                             break;
+                        case "6":
+                            addToClipboard('fan');
+                            break;
                         default:
                             break;
                     }
                 });
 
                 window.addEventListener('wheel', (event) => {
-                    if (!this.rotate) rotate();
+                    if (!this.rotate) rotate(event.deltaY < 0 ? -1 : 1);
                 })
             },
             tick: function (time, delta) {
                 if (this.rotate) {
                     if (this.deltaCont >= 15 && this.rotCont < 10) {
                         for (let i = 0; i < this.models.length; i++) {
-                            this.models[i].object3D.rotation.x += Math.PI * 0.05;
+                            this.models[i].object3D.rotation.x += Math.PI * 0.05 * this.rotationDirection;
                         }
+                        this.clipboardRotation.x += Math.PI * 0.05 * this.rotationDirection;
                         this.deltaCont = 0;
                         this.rotCont++;
                         if (this.rotCont >= 10) {
