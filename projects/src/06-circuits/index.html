@@ -230,11 +230,13 @@
 
                     addToClipboard('battery');
                     setTimeout(() => {
+                        clipboard.data.rotation -= Math.PI * 0.5;
                         clipboard.data.type = 'battery';
                         placeBlock(vrGrid.buttons[21])
 
                         addToClipboard('lblock');
                         setTimeout(() => {
+                            clipboard.data.rotation = 0;
                             placeBlock(vrGrid.buttons[31])
 
                             addToClipboard('lblock');
@@ -383,10 +385,9 @@
                         switch (obj.rotation.y) {
                             case 0:
                             case -Math.PI:
-                                return obj.pos - 9 === prevPos;
-                                break;
+                                return obj.pos + 1 === prevPos;
                             default:
-                                obj.pos + 1 === prevPos;
+                                return obj.pos - 9 === prevPos;
                         }
                     }
                     else if (obj.type === 'lblock') {
@@ -429,10 +430,9 @@
                         switch (obj.rotation.y) {
                             case 0:
                             case -Math.PI:
-                                return obj.pos + 9;
-                                break;
-                            default:
                                 return obj.pos - 1;
+                            default:
+                                return obj.pos + 9;
                         }
                     }
                     else if (obj.type === 'lblock') {
