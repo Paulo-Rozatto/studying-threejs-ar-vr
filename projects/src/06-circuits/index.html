@@ -45,12 +45,18 @@
                     addToClipboard('tblock');
                     vrInterface.showMessage('T-shaped wire block added to clipboard');
                 });
-                vrInterface.addButton('battery', '#battery', () => {
-                    addToClipboard('battery');
-                    vrInterface.showMessage('Battery block added to clipboard');
-                });
 
                 vrInterface.addButton('rotate', '#rotateImage', () => rotate());
+
+                vrInterface.addButton('testing', '#testing', () => {
+                    if (clipboard.debugCircuit) {
+                        clipboard.debugCircuit();
+                    }
+                    else {
+                        vrInterface.showMessage('Debug circuit can be executed only once');
+                    }
+                });
+
 
                 vrInterface.addButton('lamp', '#lamp', () => {
                     addToClipboard('lamp');
@@ -61,14 +67,12 @@
                     vrInterface.showMessage('Fan block added to clipboard');
                 });
 
-                vrInterface.addButton('testing', '#testing', () => {
-                    if (clipboard.debugCircuit) {
-                        clipboard.debugCircuit();
-                    }
-                    else {
-                        vrInterface.showMessage('Debug circuit can be executed only once');
-                    }
+                vrInterface.addButton('battery', '#battery', () => {
+                    addToClipboard('battery');
+                    vrInterface.showMessage('Battery block added to clipboard');
                 });
+
+                vrInterface.addButton('dispose', '#binImage', () => clearClipboard())
 
                 this.clipboardRotation = clipboard.rotation;
                 this.rotationDirection = 1;
@@ -123,6 +127,13 @@
                     clipboard.obj = clipboard.children[index];
                 }
 
+                function clearClipboard() {
+                    for (let i = 0; i < clipboard.children.length; i++) {
+                        clipboard.children[i].visible = false;
+                    }
+                    clipboard.obj = null;
+                }
+
                 window.addEventListener('keydown', (event) => {
                     switch (event.key) {
                         case "1":
@@ -135,14 +146,16 @@
                             addToClipboard('tblock')
                             break;
                         case "4":
-                            addToClipboard('battery')
-                            break;
-                        case "5":
                             addToClipboard('lamp')
                             break;
-                        case "6":
-                            addToClipboard('fan');
+                        case "5":
+                            addToClipboard('fan')
                             break;
+                        case "6":
+                            addToClipboard('battery');
+                            break;
+                        case "0":
+                            clearClipboard();
                         default:
                             break;
                     }
@@ -258,6 +271,8 @@
                                         setTimeout(() => {
                                             placeBlock(vrGrid.buttons[22])
                                             clipboard.data.rotation = save;
+                                            clipboard.children[4].visible = false;
+                                            clipboard.obj = null
                                             clipboard.visible = true;
                                         }, 50);
                                     }, 50);
@@ -540,6 +555,7 @@
             <a-asset-item id="fanModel" src="../../assets/models/circuits/fan-block.glb"></a-asset-item>
 
             <img id="rotateImage" src="img/rotate.png">
+            <img id="binImage" src="../../assets/icons/vr-interface/bin.png">
             <img id="wire" src="img/wire.png">
             <img id="lwire" src="img/l-wire.png">
             <img id="twire" src="img/t-wire.png">
@@ -558,7 +574,7 @@
 
         <a-plane position="0 1.5 -1.51" width="2.1" height="1" color="#4D3100"></a-plane>
         <a-entity
-            vr-interface="dimension: 1 5; orbits: 1.5; theta: 0; rho: 0; buttonSize: 0.4 0.4; gap: 0 0; border: 1 #6d7584; movementBar: false; transparency: true;"
+            vr-interface="dimension: 1 5; orbits: 1.5; theta: 0; rho: 0; buttonSize: 0.4 0.4; gap: 0 0; border: 2 #343434; movementBar: false; transparency: true;"
             panel>
             <a-entity class="panelModel" gltf-model="#wireModel" position="-0.8 0 -1.5" rotation="90 90 90">
             </a-entity>
@@ -566,11 +582,11 @@
             </a-entity>
             <a-entity class="panelModel" gltf-model="#tblockModel" position="0 0 -1.5" rotation="90 90 90">
             </a-entity>
-            <a-entity class="panelModel" gltf-model="#batteryModel" position="0.4 0 -1.5" rotation="90 90 90">
-            </a-entity>
             <a-entity class="panelModel" gltf-model="#lampModel" position="-0.8 -0.4 -1.5" rotation="90 90 90">
             </a-entity>
             <a-entity class="panelModel" gltf-model="#fanModel" position="-0.4 -0.4 -1.5" rotation="90 90 90">
+            </a-entity>
+            <a-entity class="panelModel" gltf-model="#batteryModel" position="0 -0.4 -1.5" rotation="90 90 90">
             </a-entity>
         </a-entity>
 
