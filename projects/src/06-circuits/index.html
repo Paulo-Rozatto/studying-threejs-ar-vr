@@ -50,7 +50,7 @@
                     vrInterface.showMessage('Battery block added to clipboard');
                 });
 
-                vrInterface.addButton('rotate', '#rotateImage', rotate);
+                vrInterface.addButton('rotate', '#rotateImage', () => rotate());
 
                 vrInterface.addButton('lamp', '#lamp', () => {
                     addToClipboard('lamp');
