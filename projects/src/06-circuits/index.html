@@ -48,16 +48,6 @@
 
                 vrInterface.addButton('rotate', '#rotateImage', () => rotate());
 
-                vrInterface.addButton('testing', '#testing', () => {
-                    if (clipboard.debugCircuit) {
-                        clipboard.debugCircuit();
-                    }
-                    else {
-                        vrInterface.showMessage('Debug circuit can be executed only once');
-                    }
-                });
-
-
                 vrInterface.addButton('lamp', '#lamp', () => {
                     addToClipboard('lamp');
                     vrInterface.showMessage('Lamp block added to clipboard');
@@ -200,92 +190,6 @@
                     vrGrid.addButton(i, null, placeBlock);
                 }
 
-                // ---- Testing: manually placing blocks
-                clipboard.debugCircuit = function () {
-                    let save = clipboard.data.rotation || 0;
-                    clipboard.data.rotation = 0;
-                    clipboard.visible = false;
-
-                    function addToClipboard(type) {
-                        let index;
-                        switch (type) {
-                            case 'wire':
-                                index = 0;
-                                break;
-                            case 'lblock':
-                                index = 1;
-                                break;
-                            case 'tblock':
-                                index = 2;
-                                break;
-                            case 'battery':
-                                index = 3;
-                                break;
-                            case 'lamp':
-                                index = 4;
-                                break;
-                            case 'fan':
-                                index = 5;
-                                break;
-                            default:
-                                index = 0;
-                                break;
-                        }
-
-                        for (let i = 0; i < clipboard.children.length; i++) {
-                            clipboard.children[i].visible = false;
-                        }
-                        clipboard.children[index].visible = true;
-
-                        clipboard.data.type = type;
-                        clipboard.obj = clipboard.children[index];
-                    }
-
-                    addToClipboard('battery');
-                    setTimeout(() => {
-                        clipboard.data.rotation -= Math.PI * 0.5;
-                        clipboard.data.type = 'battery';
-                        placeBlock(vrGrid.buttons[21])
-
-                        addToClipboard('lblock');
-                        setTimeout(() => {
-                            clipboard.data.rotation = 0;
-                            placeBlock(vrGrid.buttons[31])
-
-                            addToClipboard('lblock');
-                            setTimeout(() => {
-                                clipboard.data.rotation -= Math.PI * 0.5;
-                                placeBlock(vrGrid.buttons[30])
-
-                                addToClipboard('lblock');
-                                setTimeout(() => {
-                                    clipboard.data.rotation -= Math.PI * 0.5;
-                                    placeBlock(vrGrid.buttons[12])
-
-                                    addToClipboard('lblock');
-                                    setTimeout(() => {
-                                        clipboard.data.rotation -= Math.PI * 0.5;
-                                        placeBlock(vrGrid.buttons[13])
-
-                                        addToClipboard('lamp');
-                                        setTimeout(() => {
-                                            placeBlock(vrGrid.buttons[22])
-                                            clipboard.data.rotation = save;
-                                            clipboard.children[4].visible = false;
-                                            clipboard.obj = null
-                                            clipboard.visible = true;
-                                        }, 50);
-                                    }, 50);
-                                }, 50);
-                            }, 50);
-                        }, 50);
-                    }, 50);
-
-                    // ---- End of Testing: manually placing blocks
-
-                    // clipboard.debugCircuit = null;
-                }
-
                 function placeBlock(button) {
                     let block = container.getObjectByName(button.name);
                     if (block) {
@@ -314,7 +218,7 @@
                             batteries.push(block);
                         }
                         else if (clipboard.data.type === 'lamp') {
-                            block.children[0].children[2].material = clipboard.obj.children[0].children[2].material.clone();
+                            block.children[0].children[3].material = clipboard.obj.children[0].children[3].material.clone();
                             block.action = lampAction;
                         }
                         else if (clipboard.data.type === 'fan') {
@@ -515,10 +419,10 @@
 
                 function lampAction(isOn) {
                     if (isOn) {
-                        this.children[0].children[2].material.emissive.set('#883333');
+                        this.children[0].children[3].material.emissive.set('#C44A47');
                     }
                     else {
-                        this.children[0].children[2].material.emissive.set('#000000');
+                        this.children[0].children[3].material.emissive.set('#000000');
                     }
                 }
 
@@ -536,7 +440,7 @@
             tick: function (time, delta) {
                 if (this.fans.length > 0) {
                     for (let i = 0; i < this.fans.length; i++)
-                        this.fans[i].children[0].children[2].rotation.y -= delta * 0.005;
+                        this.fans[i].children[0].children[3].rotation.y -= delta * 0.005;
                 }
             },
         });
@@ -554,44 +458,45 @@
             <a-asset-item id="lampModel" src="../../assets/models/circuits/lamp-block.glb"></a-asset-item>
             <a-asset-item id="fanModel" src="../../assets/models/circuits/fan-block.glb"></a-asset-item>
 
-            <img id="rotateImage" src="img/rotate.png">
-            <img id="binImage" src="../../assets/icons/vr-interface/bin.png">
+            <img id="rotateImage" src="img/rotate1.png">
+            <img id="binImage" src="img/bin.png">
             <img id="wire" src="img/wire.png">
             <img id="lwire" src="img/l-wire.png">
             <img id="twire" src="img/t-wire.png">
             <img id="lamp" src="img/lamp.png">
             <img id="fan" src="img/fan.png">
             <img id="battery" src="img/battery.png">
-            <img id="testing" src="img/testing.png">
         </a-assets>
 
         <a-entity light="type: ambient; color: #fff; intensity: 0.3"></a-entity>
         <a-entity light="color: #fff" position="-15 110 30"></a-entity>
 
-        <a-entity id="table" gltf-model="#tableModel" position="0 -0.03 -0.75" scale="1 1 1.05"></a-entity>
+
+        <a-entity id="table" gltf-model="#tableModel" position="0 -0.04 -0.75" scale="1 1 1.05">
+        </a-entity>
 
         <a-plane position="0 0 0" rotation="-90 0 0" width="10" height="10" color="#A1ACB3"></a-plane>
 
-        <a-plane position="0 1.5 -1.51" width="2.1" height="1" color="#4D3100"></a-plane>
+        <a-plane position="0 1.45 -1.35" width="2.1" height="1" color="#4D3100"></a-plane>
         <a-entity
-            vr-interface="dimension: 1 5; orbits: 1.5; theta: 0; rho: 0; buttonSize: 0.4 0.4; gap: 0 0; border: 2 #343434; movementBar: false; transparency: true;"
+            vr-interface="dimension: 2 4; worldPosition:-0.045 1.45 -1.30; buttonSize: 0.4 0.4; gap: 0.03 0.03; border: 2 #362211; movementBar: false; transparency: true;"
             panel>
-            <a-entity class="panelModel" gltf-model="#wireModel" position="-0.8 0 -1.5" rotation="90 90 90">
+            <a-entity class="panelModel" gltf-model="#wireModel" position="-0.65 1.65 -1.30" rotation="90 90 90">
             </a-entity>
-            <a-entity class="panelModel" gltf-model="#lblockModel" position="-0.4 0 -1.5" rotation="90 90 90">
+            <a-entity class="panelModel" gltf-model="#lblockModel" position="-0.18 1.65 -1.30" rotation="90 90 90">
             </a-entity>
-            <a-entity class="panelModel" gltf-model="#tblockModel" position="0 0 -1.5" rotation="90 90 90">
+            <a-entity class="panelModel" gltf-model="#tblockModel" position="0.22 1.68 -1.30" rotation="90 90 90">
             </a-entity>
-            <a-entity class="panelModel" gltf-model="#lampModel" position="-0.8 -0.4 -1.5" rotation="90 90 90">
+            <a-entity class="panelModel" gltf-model="#lampModel" position="-0.65 1.25 -1.30" rotation="90 90 90">
             </a-entity>
-            <a-entity class="panelModel" gltf-model="#fanModel" position="-0.4 -0.4 -1.5" rotation="90 90 90">
+            <a-entity class="panelModel" gltf-model="#fanModel" position="-0.22 1.25 -1.30" rotation="90 90 90">
             </a-entity>
-            <a-entity class="panelModel" gltf-model="#batteryModel" position="0 -0.4 -1.5" rotation="90 90 90">
+            <a-entity class="panelModel" gltf-model="#batteryModel" position="0.21 1.25 -1.30" rotation="90 90 90">
             </a-entity>
         </a-entity>
 
         <a-entity
-            vr-interface="dimension: 5 9; worldPosition: 0 0.975 -0.75; rotation: -90 0 0; transparency: true; buttonSize: 0.2 0.2; border: 5 #6d7584; cursorPosition: 0 0 -0.65"
+            vr-interface="dimension: 5 9; worldPosition: 0 0.975 -0.75; rotation: -90 0 0; transparency: true; buttonSize: 0.2 0.2; border: 5 #362211; cursorPosition: 0 0 -0.65"
             grid>
         </a-entity>
 
