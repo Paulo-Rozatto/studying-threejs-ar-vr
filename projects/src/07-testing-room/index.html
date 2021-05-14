@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Testing Room VR</title>
+
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+
+    <!-- Library of Virtual Reality -->
+    <script type="text/javascript" charset="UTF-8" src="../../libs/aframe-master.js"></script>
+    <script type="text/javascript" charset="UTF-8" src="../../libs/vr-interface.js"></script>
+
+    <script>
+        AFRAME.registerComponent('config', {
+            init: function () {
+                const self = this;
+                const vrInterface = this.el.components['vr-interface'];
+
+                vrInterface.addButton('b1', '#b1');
+                vrInterface.addButton('b2', '#b2');
+                vrInterface.addButton('b3', '#b3');
+                vrInterface.addButton('b4', '#b4');
+                // vrInterface.addButton('b5', '#b5');
+            }
+
+        });
+    </script>
+</head>
+
+<body>
+    <a-scene main_scene id="scene" renderer="colorManagement: true;" background="color: #343434">
+        <a-assets>
+            <img id="b1" src="img/action1.png">
+            <img id="b2" src="img/action2.png">
+            <img id="b3" src="img/action3.png">
+            <img id="b4" src="img/action4.png">
+        </a-assets>
+
+        <a-entity light="type: ambient; color: #fff; intensity: 0.3"></a-entity>
+        <a-entity light="color: #fff" position="-15 110 30"></a-entity>
+
+        <a-entity
+            vr-interface="dimension: 2 2; orbits: 1; gap: 0.01 0.01; buttonSize: 0.2 0.2; border: 1 #f2f2f2; transparency: true;"
+            config>
+        </a-entity>
+
+        <a-plane id="floor" rotation="-90 0 0" color="#645434" height="15" width="15"></a-plane>
+
+        <a-plane id="wall-1" rotation="0 0 0" position="0 1.5 -7.5" color="#777777" height="3" width="15"></a-plane>
+        <a-plane id="wall-2" rotation="0 180 0" position="0 1.5 7.5" color="#777777" height="3" width="15"></a-plane>
+        <a-plane id="wall-3" rotation="0 90 0" position="-7.5 1.5 0" color="#777777" height="3" width="15"></a-plane>
+        <a-plane id="wall-3" rotation="0 -90 0" position="7.5 1.5 0" color="#777777" height="3" width="15"></a-plane>
+
+        <a-entity id="rig" position="0 0 0">
+            <a-entity id="camera" camera position="0 1.6 0" look-controls="pointerLockEnabled: true"
+                wasd-controls="acceleration:150; fly: false; enabled: true">
+            </a-entity>
+        </a-entity>
+    </a-scene>
+
+</body>
+
+</html>
