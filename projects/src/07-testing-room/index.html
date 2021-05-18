@@ -29,7 +29,7 @@
                 const self = this;
                 const vrInterface = this.el.components['vr-interface'];
 
-                vrInterface.addButton('b1', '#b1', () => { vrInterface.showMessage('É  é ê Í í ó ô Ç ç Ã ã teste aqui') });
+                vrInterface.addButton('b1', '#b1', () => { vrInterface.showMessage('button 1') });
                 vrInterface.addButton('b2', '#b2');
                 vrInterface.addButton('b3', '#b3');
                 vrInterface.addButton('b4', '#b4');
@@ -86,9 +86,8 @@
             </a-entity>
         </a-entity>
 
-        <a-entity
-            vr-interface="dimension: 2 2; orbits: 1; theta: 0; gap: 0.01 0.01; buttonSize: 0.2 0.2; border: 1 #f2f2f2; transparency: true;"
-            config>
+        <a-entity vr-interface="dimension: 2 2; orbits: 1; theta: 0; gap: 0.01 0.01; buttonSize: 0.2 0.2; border: 1 #f2f2f2; transparency: true;
+            font: roboto-msdf.json; negate: false;" config>
         </a-entity>
     </a-scene>
 
