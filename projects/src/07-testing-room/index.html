@@ -29,12 +29,25 @@
                 const self = this;
                 const vrInterface = this.el.components['vr-interface'];
 
-                vrInterface.addButton('b1', '#b1');
+                vrInterface.addButton('b1', '#b1', () => { vrInterface.showMessage('É  é ê Í í ó ô Ç ç Ã ã teste aqui') });
                 vrInterface.addButton('b2', '#b2');
                 vrInterface.addButton('b3', '#b3');
                 vrInterface.addButton('b4', '#b4');
-                // vrInterface.addButton('b5', '#b5');
-            }
+
+                const s = document.querySelector('#sphere').object3D.children[0];
+                const edges = new THREE.EdgesGeometry(s.geometry);
+                const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xffffff }));
+                line.position.y = 1.6;
+                this.el.sceneEl.setObject3D("sphere", line);
+
+                const man = document.querySelector('#man').object3D;
+                console.log(man);
+                this.head = man.children[0]//.children[5];
+                console.log(this.head);
+            },
+            // tick: function (time, delta) {
+            //     this.head.rotation.y += 0.6 * delta;
+            // }
 
         });
     </script>
@@ -43,31 +56,39 @@
 <body>
     <a-scene main_scene id="scene" renderer="colorManagement: true;" background="color: #343434">
         <a-assets>
+            <a-asset-item id="manModel" src="man.glb"></a-asset-item>
+
             <img id="b1" src="img/action1.png">
             <img id="b2" src="img/action2.png">
             <img id="b3" src="img/action3.png">
             <img id="b4" src="img/action4.png">
         </a-assets>
 
+        <a-entity id="man" gltf-model="#manModel"></a-entity>
+
         <a-entity light="type: ambient; color: #fff; intensity: 0.3"></a-entity>
         <a-entity light="color: #fff" position="-15 110 30"></a-entity>
 
-        <a-entity
-            vr-interface="dimension: 2 2; orbits: 1; gap: 0.01 0.01; buttonSize: 0.2 0.2; border: 1 #f2f2f2; transparency: true;"
-            config>
-        </a-entity>
+        <a-plane id="floor" rotation="-90 0 0" color="#645434" height="10" width="10"></a-plane>
 
-        <a-plane id="floor" rotation="-90 0 0" color="#645434" height="15" width="15"></a-plane>
+        <a-sphere id="sphere" radius="1.1" material="side: back; repeat: 2 2;  transparent: true; opacity: 0.7;"
+            position="0 1.6 0" visible="false">
+        </a-sphere>
 
-        <a-plane id="wall-1" rotation="0 0 0" position="0 1.5 -7.5" color="#777777" height="3" width="15"></a-plane>
-        <a-plane id="wall-2" rotation="0 180 0" position="0 1.5 7.5" color="#777777" height="3" width="15"></a-plane>
-        <a-plane id="wall-3" rotation="0 90 0" position="-7.5 1.5 0" color="#777777" height="3" width="15"></a-plane>
-        <a-plane id="wall-3" rotation="0 -90 0" position="7.5 1.5 0" color="#777777" height="3" width="15"></a-plane>
+        <a-plane id="wall-1" rotation="0 0 0" position="0 1.5 -5" color="#777777" height="3" width="10"></a-plane>
+        <a-plane id="wall-2" rotation="0 180 0" position="0 1.5 5" color="#777777" height="3" width="10"></a-plane>
+        <a-plane id="wall-3" rotation="0 90 0" position="-5 1.5 0" color="#777777" height="3" width="10"></a-plane>
+        <a-plane id="wall-3" rotation="0 -90 0" position="5 1.5 0" color="#777777" height="3" width="10"></a-plane>
 
         <a-entity id="rig" position="0 0 0">
             <a-entity id="camera" camera position="0 1.6 0" look-controls="pointerLockEnabled: true"
                 wasd-controls="acceleration:150; fly: false; enabled: true">
             </a-entity>
+        </a-entity>
+
+        <a-entity
+            vr-interface="dimension: 2 2; orbits: 1; theta: 0; gap: 0.01 0.01; buttonSize: 0.2 0.2; border: 1 #f2f2f2; transparency: true;"
+            config>
         </a-entity>
     </a-scene>
 
