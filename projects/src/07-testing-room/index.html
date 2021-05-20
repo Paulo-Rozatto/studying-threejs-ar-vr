@@ -28,11 +28,33 @@
             init: function () {
                 const self = this;
                 const vrInterface = this.el.components['vr-interface'];
+                this.exampleInterface = document.querySelector('#example').components['vr-interface'];
 
-                vrInterface.addButton('b1', '#b1', () => { vrInterface.showMessage('button 1') });
-                vrInterface.addButton('b2', '#b2');
-                vrInterface.addButton('b3', '#b3');
-                vrInterface.addButton('b4', '#b4');
+                const messages = [
+                    `OrBI é uma interface com usuário desenhada para realidade virtual.
+                    OrBI é posicionada em relaçao ao usuário e pode ser movida uma esfera imaginária também posicionada ao redor do usuário,
+                    como no exemplo à direita.`,
+                    `Nesse teste, será pedido para posicionar interface em algumas posições difertentes para se avaliar a precisão da OrBI e sua facilade
+                    de uso.`
+                ]
+                let msgIndex = 0;
+
+                vrInterface.addButton('b1', '#b1', () => {
+                    // vrInterface.showMessage('button 1')
+                    if (msgIndex < 2) {
+                        msgIndex++;
+                        vrInterface.showSideText(messages[msgIndex]);
+                    }
+                });
+                vrInterface.showSideText(messages[0]);
+                // vrInterface.addButton('b2', '#b2');
+                // vrInterface.addButton('b3', '#b3');
+                // vrInterface.addButton('b4', '#b4');
+
+                this.exampleInterface.addButton('b1', '#b1', () => { vrInterface.showMessage('button 1') });
+                this.exampleInterface.addButton('b2', '#b2');
+                this.exampleInterface.addButton('b3', '#b3');
+                this.exampleInterface.addButton('b4', '#b4');
 
                 const s = document.querySelector('#sphere').object3D.children[0];
                 const edges = new THREE.EdgesGeometry(s.geometry);
@@ -40,14 +62,48 @@
                 line.position.y = 1.6;
                 this.el.sceneEl.setObject3D("sphere", line);
 
-                const man = document.querySelector('#man').object3D;
-                console.log(man);
-                this.head = man.children[0]//.children[5];
-                console.log(this.head);
+                const manEl = document.querySelector('#man');
+                manEl.addEventListener('model-loaded', () => {
+                    self.head = manEl.object3D.children[0].children[5];
+                    document.querySelector('#rig').setAttribute('position', '-2 0 2');
+                    vrInterface.updatePosition();
+                });
+
+                this.sum = 0;
+                this.ishorizontalTurn = 2;
+                this.isVerticalTurn = 0;
             },
-            // tick: function (time, delta) {
-            //     this.head.rotation.y += 0.6 * delta;
-            // }
+            update: function () { },
+            tick: function (time, delta) {
+                if (this.head) {
+                    if (this.ishorizontalTurn > 0) {
+                        this.sum += delta * 0.001
+                        this.head.rotation.y = Math.sin(this.sum);
+                        this.exampleInterface.el.object3D.rotation.y = this.head.rotation.y;
+
+                        if (this.head.rotation.y < 0.01 && this.head.rotation.y > -0.01) {
+                            this.ishorizontalTurn -= 1;
+
+                            if (this.ishorizontalTurn == 0) {
+                                this.isVerticalTurn = 2;
+                            }
+                        }
+                    }
+                    else if (this.isVerticalTurn > 0) {
+                        this.sum += delta * 0.001
+                        this.head.rotation.x = Math.sin(this.sum);
+                        this.exampleInterface.buttonGroup.object3D.rotation.x = this.head.rotation.x;
+
+                        if (this.head.rotation.x < 0.01 && this.head.rotation.x > -0.01) {
+                            this.isVerticalTurn -= 1;
+
+                            if (this.isVerticalTurn == 0) {
+                                this.ishorizontalTurn = 2;
+                            }
+                        }
+                    }
+                }
+            }
 
         });
     </script>
@@ -64,7 +120,7 @@
             <img id="b4" src="img/action4.png">
         </a-assets>
 
-        <a-entity id="man" gltf-model="#manModel"></a-entity>
+        <a-entity id="man" gltf-model="#manModel" test></a-entity>
 
         <a-entity light="type: ambient; color: #fff; intensity: 0.3"></a-entity>
         <a-entity light="color: #fff" position="-15 110 30"></a-entity>
@@ -86,9 +142,14 @@
             </a-entity>
         </a-entity>
 
-        <a-entity vr-interface="dimension: 2 2; orbits: 1; theta: 0; gap: 0.01 0.01; buttonSize: 0.2 0.2; border: 1 #f2f2f2; transparency: true;
-            font: roboto-msdf.json; negate: false;" config>
+        <a-entity id="example" vr-interface="dimension: 2 2; orbits: 1; theta: 0; gap: 0.01 0.01; buttonSize: 0.2 0.2; border: 1 #f2f2f2; transparency: true;
+            font: roboto-msdf.json; negate: false;">
         </a-entity>
+
+        <a-entity vr-interface="dimension: 1 1; orbits: 1; theta: 40; sideTextRotation: -40; gap: 0.01 0.01; buttonSize: 0.2 0.2; border: 1 #f2f2f2; transparency: true;
+            font: roboto-msdf.json; negate: false; sideTextSize: 0.3 3" config>
+        </a-entity>
+
     </a-scene>
 
 </body>
