@@ -64,6 +64,9 @@
                         self.exampleInterface.showMessage('Mova a interface para direita')
                         line.visible = false;
                         document.querySelector('#ring').object3D.visible = true;
+                        const arrow = document.querySelector('#arrow').object3D.visible;
+                        console.log(arrow);
+                        document.querySelector('#arrow').object3D.visible = true;
 
                         self.isMoving = true;
                     }
@@ -139,10 +142,11 @@
                 }
 
                 if (this.isMoving) {
-                    console.log(this.exampleInterface.data.theta)
+                    // console.log(this.exampleInterface.data.theta)
                     if (this.exampleInterface.data.theta > -(Math.PI / 2 + 0.02) && this.exampleInterface.data.theta < -(Math.PI / 2 - 0.02)) {
-                        console.log('oi', this.square);
+                        // console.log('oi', this.square);
                         this.square.material.color = new THREE.Color(0x00ff00);
+                        document.querySelector('#arrow').object3D.visible = false;
                         this.isMoving = false;
                     }
                 }
@@ -162,6 +166,7 @@
             <img id="b2" src="img/action2.png">
             <img id="b3" src="img/action3.png">
             <img id="b4" src="img/action4.png">
+            <img id="arrowTexture" src="img/arrow.png">
         </a-assets>
 
         <a-entity id="man" gltf-model="#manModel" test></a-entity>
@@ -181,6 +186,11 @@
             visible="false">
         </a-ring>
 
+        <!-- <a-plane id="arrow" height="0.15" width="0.15" material="src: #arrowTexture; transparent: true;"
+            position="0.3 1.6 -1"
+            animation="property: material.opacity; dir: alternate; from: 0.66; to: 0.2; duration: 500; loop: true;">
+        </a-plane> -->
+
         <a-plane id="wall-1" rotation="0 0 0" position="0 1.5 -5" color="#777777" height="3" width="10"></a-plane>
         <a-plane id="wall-2" rotation="0 180 0" position="0 1.5 5" color="#777777" height="3" width="10"></a-plane>
         <a-plane id="wall-3" rotation="0 90 0" position="-5 1.5 0" color="#777777" height="3" width="10"></a-plane>
@@ -189,6 +199,12 @@
         <a-entity id="rig" position="0 0 0">
             <a-entity id="camera" camera position="0 1.6 0" look-controls="pointerLockEnabled: true"
                 wasd-controls="acceleration:150; fly: false; enabled: true">
+
+                <a-plane id="arrow" height="0.15" width="0.15" material="src: #arrowTexture; transparent: true;"
+                    position="0.3 0 -1"
+                    animation="property: material.opacity; dir: alternate; from: 0.66; to: 0.2; duration: 500; loop: true;"
+                    visible="false">
+                </a-plane>
             </a-entity>
         </a-entity>
 
