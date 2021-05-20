@@ -645,6 +645,9 @@ AFRAME.registerComponent('vr-interface', {
   hide: function () {
     this.data.visible = false;
     this.el.object3D.visible = false;
-    this.cursor.setAttribute('raycaster', { near: 0, far: 0 });
+
+    if (this.cursor) {
+      this.cursor.setAttribute('raycaster', { near: 0, far: 0 });
+    }
   }
 });
