@@ -167,6 +167,11 @@ AFRAME.registerComponent('vr-interface', {
     this.buttonGroup = document.createElement('a-entity');
     this.el.appendChild(this.buttonGroup);
 
+    this.orbitButtonCallback = null;
+    this.horizMovButtonCallback = null;
+    this.vertiMovButtonCallback = null;
+    this.stopButtonCallback = null;
+
     if (document.querySelector('#vrInterface-cursor') === null) {
       this.cursor = document.createElement('a-entity');
       this.cursor.id = 'vrInterface-cursor';
@@ -369,6 +374,9 @@ AFRAME.registerComponent('vr-interface', {
         if (self.orbitIndex >= data.orbits.length) self.orbitIndex = 0;
         self.radius = data.orbits[self.orbitIndex];
         self.updatePosition();
+
+        if (typeof self.orbitButtonCallback === 'function')
+          self.orbitButtonCallback();
       }
     );
 
@@ -386,6 +394,9 @@ AFRAME.registerComponent('vr-interface', {
           0.01);
         self.stopButton.rotation.z = Math.PI / 2;
         self.stopButton.el.classList.add('vrInterface-button');
+
+        if (typeof self.horizMovButtonCallback === 'function')
+          self.horizMovButtonCallback();
       }
     );
 
@@ -404,6 +415,9 @@ AFRAME.registerComponent('vr-interface', {
         );
         self.stopButton.rotation.z = 0;
         self.stopButton.el.classList.add('vrInterface-button');
+
+        if (typeof self.vertiMovButtonCallback === 'function')
+          self.vertiMovButtonCallback();
       }
     );
 
@@ -417,6 +431,9 @@ AFRAME.registerComponent('vr-interface', {
 
         self.stopButton.visible = false;
         self.stopButton.el.classList.remove('vrInterface-button');
+
+        if (typeof self.stopButtonCallback === 'function')
+          self.stopButtonCallback();
       }
     );
     this.stopButton.visible = false;

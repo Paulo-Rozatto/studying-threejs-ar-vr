@@ -77,7 +77,6 @@
                 this.testInterface.addButton('b3', '#b3');
                 this.testInterface.addButton('b4', '#b4');
 
-
                 const sphereEdges = new THREE.EdgesGeometry(new THREE.SphereGeometry(1.1, 18, 18));
                 const sphereWireframe = new THREE.LineSegments(sphereEdges, new THREE.LineBasicMaterial({ color: 0xffffff }));
                 sphereWireframe.position.y = 1.6;
@@ -85,11 +84,27 @@
 
                 const squareEdges = new THREE.EdgesGeometry(new THREE.PlaneGeometry(0.45, 0.45))
                 const squareWireframe = new THREE.LineSegments(squareEdges, new THREE.LineBasicMaterial({ color: 0xff0000 }));
-                squareWireframe.position.x = 1;
-                squareWireframe.position.y = 1.6;
-                squareWireframe.rotation.y = Math.PI / 2;
-                this.square = squareWireframe;
+                this.squareLocations = [
+                    { position: new THREE.Vector3(1, 1.6, 0), rotation: new THREE.Euler(0, Math.PI / 2, 0), theta: Math.PI / 2, rho: 0 },
+                    { position: new THREE.Vector3(0.71, 2.31, 0), rotation: new THREE.Euler(0.71, -Math.PI / 2, 0, 'YXZ'), theta: Math.PI / 2, rho: Math.PI / 4 },
+                    { position: new THREE.Vector3(0, 1.6, -1), rotation: new THREE.Euler(0, 0, 0), theta: 0, rho: 0 },
+                ];
+                squareWireframe.position.copy(this.squareLocations[0].position);
+                squareWireframe.rotation.copy(this.squareLocations[0].rotation);
                 this.el.sceneEl.setObject3D('square', squareWireframe);
+                this.square = squareWireframe;
+                this.squareIdx = 0;
+
+                this.testInterface.stopButtonCallback = () => {
+                    if (self.squareIdx < 2) {
+                        self.squareIdx++;
+                        squareWireframe.position.copy(this.squareLocations[this.squareIdx].position);
+                        squareWireframe.rotation.copy(this.squareLocations[this.squareIdx].rotation);
+
+                        self.isMoving = true;
+                        this.square.material.color = new THREE.Color(0xff0000);
+                    }
+                }
 
                 const manEl = document.querySelector('#man');
                 this.isToAnimateMan = false;
@@ -109,7 +124,8 @@
                 }
 
                 if (this.isMoving) {
-                    if (this.testInterface.data.theta > -(Math.PI / 2 + 0.02) && this.testInterface.data.theta < -(Math.PI / 2 - 0.02)) {
+                    if (this.testInterface.data.theta > -(this.squareLocations[this.squareIdx].theta + 0.02) && this.testInterface.data.theta < -(this.squareLocations[this.squareIdx].theta - 0.02)
+                        && this.testInterface.data.rho < (this.squareLocations[this.squareIdx].rho + 0.02) && this.testInterface.data.rho > (this.squareLocations[this.squareIdx].rho - 0.02)) {
                         this.square.material.color = new THREE.Color(0x00ff00);
                         document.querySelector('#arrow').object3D.visible = false;
                         this.isMoving = false;
