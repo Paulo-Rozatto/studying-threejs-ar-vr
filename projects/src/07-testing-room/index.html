@@ -27,13 +27,12 @@
         AFRAME.registerComponent('config', {
             init: function () {
                 const self = this;
+
                 this.isMoving = false;
+                this.timeSum = 0;
+                this.horizontalTurns = 2;
+                this.verticalTurns = 0;
 
-                const vrInterface = this.el.components['vr-interface'];
-                this.exampleInterface = document.querySelector('#example').components['vr-interface'];
-
-                const manEl = document.querySelector('#man');
-                let rig;
                 const messages = [
                     `OrBI é uma interface com usuário desenhada para realidade virtual.
                     OrBI é posicionada em relaçao ao usuário e pode ser movida uma esfera imaginária também posicionada ao redor do usuário,
@@ -44,6 +43,9 @@
                 ]
                 let msgIndex = 0;
 
+                const vrInterface = this.el.components['vr-interface'];
+                this.testInterface = document.querySelector('#example').components['vr-interface'];
+
                 vrInterface.addButton('next', '#next', () => {
                     msgIndex++;
                     if (msgIndex < 2) {
@@ -51,107 +53,97 @@
                     }
                     else if (msgIndex === 2) {
                         vrInterface.hide();
-                        manEl.object3D.visible = false;
+                        self.testInterface.showMessage('Mova a interface para direita')
 
-                        self.isVerticalTurn = 0;
-                        self.ishorizontalTurn = 0;
-                        self.exampleInterface.el.object3D.rotation.y = 0;
-                        self.exampleInterface.buttonGroup.object3D.rotation.x = 0;
+                        self.isToAnimateMan = false;
+                        self.isMoving = true;
+                        self.verticalTurns = 0;
+                        self.horizontalTurns = 0;
+                        self.testInterface.el.object3D.rotation.y = 0;
+                        self.testInterface.buttonGroup.object3D.rotation.x = 0;
 
                         self.rig.setAttribute('position', '0 0 0');
                         self.rig.setAttribute('rotation', '0 -40 0')
 
-                        self.exampleInterface.showMessage('Mova a interface para direita')
-                        line.visible = false;
-                        document.querySelector('#ring').object3D.visible = true;
-                        const arrow = document.querySelector('#arrow').object3D.visible;
-                        console.log(arrow);
+                        manEl.object3D.visible = false;
+                        sphereWireframe.visible = false;
                         document.querySelector('#arrow').object3D.visible = true;
-
-                        self.isMoving = true;
                     }
                 });
                 vrInterface.showSideText(messages[0]);
-                // vrInterface.addButton('b2', '#b2');
-                // vrInterface.addButton('b3', '#b3');
-                // vrInterface.addButton('b4', '#b4');
 
-                this.exampleInterface.addButton('b1', '#b1', () => { vrInterface.showMessage('button 1') });
-                this.exampleInterface.addButton('b2', '#b2');
-                this.exampleInterface.addButton('b3', '#b3');
-                this.exampleInterface.addButton('b4', '#b4');
+                this.testInterface.addButton('b1', '#b1', () => { vrInterface.showMessage('button 1') });
+                this.testInterface.addButton('b2', '#b2');
+                this.testInterface.addButton('b3', '#b3');
+                this.testInterface.addButton('b4', '#b4');
 
 
-                const s = document.querySelector('#sphere').object3D.children[0];
-                const edges = new THREE.EdgesGeometry(s.geometry);
-                const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xffffff }));
-                line.position.y = 1.6;
-                this.el.sceneEl.setObject3D("sphere", line);
+                const sphereEdges = new THREE.EdgesGeometry(new THREE.SphereGeometry(1.1, 18, 18));
+                const sphereWireframe = new THREE.LineSegments(sphereEdges, new THREE.LineBasicMaterial({ color: 0xffffff }));
+                sphereWireframe.position.y = 1.6;
+                this.el.sceneEl.setObject3D("sphere", sphereWireframe);
 
-                const square = new THREE.EdgesGeometry(new THREE.PlaneGeometry(0.45, 0.45))
-                const outline = new THREE.LineSegments(square, new THREE.LineBasicMaterial({ color: 0xff0000 }));
-                outline.position.x = 1;
-                outline.position.y = 1.6;
-                outline.rotation.y = Math.PI / 2;
-                this.square = outline;
-                this.el.sceneEl.setObject3D('square', outline);
+                const squareEdges = new THREE.EdgesGeometry(new THREE.PlaneGeometry(0.45, 0.45))
+                const squareWireframe = new THREE.LineSegments(squareEdges, new THREE.LineBasicMaterial({ color: 0xff0000 }));
+                squareWireframe.position.x = 1;
+                squareWireframe.position.y = 1.6;
+                squareWireframe.rotation.y = Math.PI / 2;
+                this.square = squareWireframe;
+                this.el.sceneEl.setObject3D('square', squareWireframe);
 
-                const circle = new THREE.EdgesGeometry(new THREE.CircleGeometry());
+                const manEl = document.querySelector('#man');
+                this.isToAnimateMan = false;
 
                 manEl.addEventListener('model-loaded', () => {
                     self.head = manEl.object3D.children[0].children[5];
+                    self.isToAnimateMan = true;
 
                     self.rig = document.querySelector('#rig');
                     self.rig.setAttribute('position', '-2 0 2');
                     vrInterface.updatePosition();
                 });
-
-                this.sum = 0;
-                this.ishorizontalTurn = 2;
-                this.isVerticalTurn = 0;
             },
-            update: function () { },
             tick: function (time, delta) {
-                if (this.head) {
-                    if (this.ishorizontalTurn > 0) {
-                        this.sum += delta * 0.001
-                        this.head.rotation.y = Math.sin(this.sum);
-                        this.exampleInterface.el.object3D.rotation.y = this.head.rotation.y;
-
-                        if (this.head.rotation.y < 0.01 && this.head.rotation.y > -0.01) {
-                            this.ishorizontalTurn -= 1;
-
-                            if (this.ishorizontalTurn == 0) {
-                                this.isVerticalTurn = 2;
-                            }
-                        }
-                    }
-                    else if (this.isVerticalTurn > 0) {
-                        this.sum += delta * 0.001
-                        this.head.rotation.x = Math.sin(this.sum);
-                        this.exampleInterface.buttonGroup.object3D.rotation.x = this.head.rotation.x;
-
-                        if (this.head.rotation.x < 0.01 && this.head.rotation.x > -0.01) {
-                            this.isVerticalTurn -= 1;
-
-                            if (this.isVerticalTurn == 0) {
-                                this.ishorizontalTurn = 2;
-                            }
-                        }
-                    }
+                if (this.isToAnimateMan) {
+                    this.manAnimation(delta);
                 }
 
                 if (this.isMoving) {
-                    // console.log(this.exampleInterface.data.theta)
-                    if (this.exampleInterface.data.theta > -(Math.PI / 2 + 0.02) && this.exampleInterface.data.theta < -(Math.PI / 2 - 0.02)) {
-                        // console.log('oi', this.square);
+                    if (this.testInterface.data.theta > -(Math.PI / 2 + 0.02) && this.testInterface.data.theta < -(Math.PI / 2 - 0.02)) {
                         this.square.material.color = new THREE.Color(0x00ff00);
                         document.querySelector('#arrow').object3D.visible = false;
                         this.isMoving = false;
                     }
                 }
-            }
+            },
+            manAnimation: function (delta) {
+                if (this.horizontalTurns > 0) {
+                    this.timeSum += delta * 0.001
+                    this.head.rotation.y = Math.sin(this.timeSum);
+                    this.testInterface.el.object3D.rotation.y = this.head.rotation.y;
 
+                    if (this.head.rotation.y < 0.01 && this.head.rotation.y > -0.01) {
+                        this.horizontalTurns -= 1;
+
+                        if (this.horizontalTurns == 0) {
+                            this.verticalTurns = 2;
+                        }
+                    }
+                }
+                else if (this.verticalTurns > 0) {
+                    this.timeSum += delta * 0.001
+                    this.head.rotation.x = Math.sin(this.timeSum);
+                    this.testInterface.buttonGroup.object3D.rotation.x = this.head.rotation.x;
+
+                    if (this.head.rotation.x < 0.01 && this.head.rotation.x > -0.01) {
+                        this.verticalTurns -= 1;
+
+                        if (this.verticalTurns == 0) {
+                            this.horizontalTurns = 2;
+                        }
+                    }
+                }
+            }
         });
     </script>
 </head>
@@ -176,21 +168,6 @@
 
         <a-plane id="floor" rotation="-90 0 0" color="#645434" height="10" width="10"></a-plane>
 
-        <a-sphere id="sphere" radius="1.1" material="side: back; repeat: 2 2;  transparent: true; opacity: 0.7;"
-            position="0 1.6 0" visible="false">
-        </a-sphere>
-
-        <a-ring id="ring" material="color: red; transparent: true; opacity: 0.66" radius-inner="0.03"
-            radius-outer="0.04" position="-0.23 1.65 -0.9"
-            animation="property: material.opacity; dir: alternate; from: 0.66; to: 0.2; duration: 800; loop: true;"
-            visible="false">
-        </a-ring>
-
-        <!-- <a-plane id="arrow" height="0.15" width="0.15" material="src: #arrowTexture; transparent: true;"
-            position="0.3 1.6 -1"
-            animation="property: material.opacity; dir: alternate; from: 0.66; to: 0.2; duration: 500; loop: true;">
-        </a-plane> -->
-
         <a-plane id="wall-1" rotation="0 0 0" position="0 1.5 -5" color="#777777" height="3" width="10"></a-plane>
         <a-plane id="wall-2" rotation="0 180 0" position="0 1.5 5" color="#777777" height="3" width="10"></a-plane>
         <a-plane id="wall-3" rotation="0 90 0" position="-5 1.5 0" color="#777777" height="3" width="10"></a-plane>
@@ -202,7 +179,7 @@
 
                 <a-plane id="arrow" height="0.15" width="0.15" material="src: #arrowTexture; transparent: true;"
                     position="0.3 0 -1"
-                    animation="property: material.opacity; dir: alternate; from: 0.66; to: 0.2; duration: 500; loop: true;"
+                    animation="property: material.opacity; dir: alternate; from: 0.66; to: 0.2; dur: 500; loop: true;"
                     visible="false">
                 </a-plane>
             </a-entity>
