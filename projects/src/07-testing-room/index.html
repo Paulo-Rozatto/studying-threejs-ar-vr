@@ -36,8 +36,8 @@
                 this.arrow = document.querySelector('#arrow').object3D;
 
                 const messages = [
-                    `OrBI é uma interface com usuário desenhada para realidade virtual.
-                    OrBI é posicionada em relaçao ao usuário e pode ser movida uma esfera imaginária também posicionada ao redor do usuário,
+                    `OrBI é uma interface com usuário pensada para realidade virtual.
+                    OrBI é posicionada em relação ao usuário e pode ser movida dentro de uma esfera imaginária,
                     como no exemplo à direita.`,
                     `Nesse teste, será pedido para posicionar interface em algumas posições difertentes para se avaliar a precisão da OrBI e sua facilade
                     de uso.
@@ -88,7 +88,7 @@
                 const squareWireframe = new THREE.LineSegments(squareEdges, new THREE.LineBasicMaterial({ color: 0xff0000 }));
                 this.squareLocations = [
                     { position: new THREE.Vector3(1, 1.6, 0), rotation: new THREE.Euler(0, Math.PI / 2, 0), theta: Math.PI / 2, rho: 0 },
-                    { position: new THREE.Vector3(0.71, 2.31, 0), rotation: new THREE.Euler(0.71, -Math.PI / 2, 0, 'YXZ'), theta: Math.PI / 2, rho: Math.PI / 4 },
+                    { position: new THREE.Vector3(0.87, 2.1, 0), rotation: new THREE.Euler(0.52, -Math.PI / 2, 0, 'YXZ'), theta: Math.PI / 2, rho: Math.PI / 6 },
                     { position: new THREE.Vector3(0, 1.6, -1), rotation: new THREE.Euler(0, 0, 0), theta: 0, rho: 0 },
                 ];
                 squareWireframe.position.copy(this.squareLocations[0].position);
@@ -217,7 +217,7 @@
             font: roboto-msdf.json; negate: false;">
         </a-entity>
 
-        <a-entity vr-interface="dimension: 1 1; orbits: 1; theta: 40; sideTextRotation: -40; gap: 0.01 0.01; buttonSize: 0.2 0.2; border: 1 #f2f2f2; transparency: true;
+        <a-entity vr-interface="dimension: 1 1; orbits: 1.25; theta: 40; sideTextRotation: -40; gap: 0.01 0.01; buttonSize: 0.2 0.2; border: 1 #f2f2f2; transparency: true;
             font: roboto-msdf.json; negate: false; sideTextSize: 0.3 3" config>
         </a-entity>
 
