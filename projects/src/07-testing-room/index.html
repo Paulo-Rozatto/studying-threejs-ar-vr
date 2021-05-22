@@ -30,6 +30,8 @@
 
                 this.isMoving = false;
                 this.timeSum = 0;
+                this.times = [0, 0, 0, 0];
+                this.timeIdx = 0;
                 this.horizontalTurns = 2;
                 this.verticalTurns = 0;
 
@@ -111,6 +113,15 @@
                         this.square.material.color.r = 1;
                         this.square.material.color.g = 0;
                     }
+
+                    if (self.timeIdx < 3) {
+                        console.log(self.times[self.timeIdx]);
+                        self.timeIdx++;
+                    }
+                    else {
+                        this.isMoving = false;
+                        console.log(this.times);
+                    }
                 }
 
                 const manEl = document.querySelector('#man');
@@ -131,6 +142,8 @@
                 }
 
                 if (this.isMoving) {
+                    this.times[this.timeIdx] += delta * 0.001;
+
                     if (this.testInterface.data.theta > -(this.squareLocations[this.squareIdx].theta + 0.02) && this.testInterface.data.theta < -(this.squareLocations[this.squareIdx].theta - 0.02)
                         && this.testInterface.data.rho < (this.squareLocations[this.squareIdx].rho + 0.02) && this.testInterface.data.rho > (this.squareLocations[this.squareIdx].rho - 0.02)) {
                         if (this.square.material.color.r = 1) {
