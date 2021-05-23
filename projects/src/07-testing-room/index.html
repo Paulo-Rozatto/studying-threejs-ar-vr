@@ -121,6 +121,7 @@
                     else {
                         this.isMoving = false;
                         console.log(this.times);
+                        sendData();
                     }
                 }
 
@@ -135,6 +136,15 @@
                     self.rig.setAttribute('position', '-2 0 2');
                     vrInterface.updatePosition();
                 });
+
+                function sendData() {
+                    console.log('sending...');
+                    console.log(self.times[0]);
+                    document.querySelector("#t1").value = self.times[0];
+                    document.querySelector("#t2").value = self.times[1];
+                    document.querySelector("#t3").value = self.times[2] + self.times[3];
+                    document.getElementById("gform").submit();
+                }
             },
             tick: function (time, delta) {
                 if (this.isToAnimateMan) {
@@ -236,6 +246,15 @@
 
     </a-scene>
 
+    <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
+
+    <form name="gform" id="gform" style="display: none;"
+        action="https://docs.google.com/forms/d/e/1FAIpQLSeiWQ0Fj772iYF2E5jtfZwNMyHJdALsS29X9nGJaj9zmjQCcQ/formResponse?"
+        target="hidden_iframe">
+        <input type="number" required name="entry.812011754" id="t1">
+        <input type="number" required name="entry.935117981" id="t2">
+        <input type="number" required name="entry.686162974" id="t3">
+    </form>
 </body>
 
 </html>
