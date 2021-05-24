@@ -31,6 +31,7 @@
                 this.isMoving = false;
                 this.timeSum = 0;
                 this.times = [0, 0, 0, 0];
+                this.distances = [0, 0, 0, 0];
                 this.timeIdx = 0;
                 this.horizontalTurns = 2;
                 this.verticalTurns = 0;
@@ -90,7 +91,7 @@
                 const squareWireframe = new THREE.LineSegments(squareEdges, new THREE.LineBasicMaterial({ color: 0xff0000 }));
                 this.squareLocations = [
                     { position: new THREE.Vector3(1, 1.6, 0), rotation: new THREE.Euler(0, Math.PI / 2, 0), theta: Math.PI / 2, rho: 0 },
-                    { position: new THREE.Vector3(0.87, 2.1, 0), rotation: new THREE.Euler(0.52, -Math.PI / 2, 0, 'YXZ'), theta: Math.PI / 2, rho: Math.PI / 6 },
+                    { position: new THREE.Vector3(Math.cos(Math.PI / 6), 2.1, 0), rotation: new THREE.Euler(0.52, -Math.PI / 2, 0, 'YXZ'), theta: Math.PI / 2, rho: Math.PI / 6 },
                     { position: new THREE.Vector3(0, 1.6, -1), rotation: new THREE.Euler(0, 0, 0), theta: 0, rho: 0 },
                 ];
                 squareWireframe.position.copy(this.squareLocations[0].position);
@@ -100,6 +101,24 @@
                 this.squareIdx = 0;
 
                 this.testInterface.stopButtonCallback = () => {
+                    if (self.timeIdx <= 3) {
+                        let theta = self.testInterface.data.theta;
+                        let rho = self.testInterface.data.rho;
+
+                        const x = -Math.sin(theta) * Math.cos(rho);
+                        const y = 1.6 + Math.sin(rho);
+                        const z = -Math.cos(theta) * Math.cos(rho);
+
+                        self.distances[self.timeIdx] = new THREE.Vector3(x, y, z).distanceTo(self.squareLocations[self.squareIdx].position);
+
+                        self.timeIdx++;
+
+                        if (self.timeIdx === 4) {
+                            this.isMoving = false;
+                            sendData();
+                        }
+                    }
+
                     if (self.squareIdx < 2) {
                         self.arrow.rotation.y = -Math.PI * 0.5;
                         self.arrow.rotation.z = 1.5 * self.arrow.rotation.z + Math.PI * 0.5;
@@ -112,16 +131,6 @@
 
                         this.square.material.color.r = 1;
                         this.square.material.color.g = 0;
-                    }
-
-                    if (self.timeIdx < 3) {
-                        console.log(self.times[self.timeIdx]);
-                        self.timeIdx++;
-                    }
-                    else {
-                        this.isMoving = false;
-                        console.log(this.times);
-                        sendData();
                     }
                 }
 
@@ -138,8 +147,10 @@
                 });
 
                 function sendData() {
-                    console.log('sending...');
-                    console.log(self.times[0]);
+                    document.querySelector("#d1").value = self.distances[0];
+                    document.querySelector("#d2").value = self.distances[1];
+                    document.querySelector("#d3").value = self.distances[3];
+
                     document.querySelector("#t1").value = self.times[0];
                     document.querySelector("#t2").value = self.times[1];
                     document.querySelector("#t3").value = self.times[2] + self.times[3];
@@ -251,9 +262,14 @@
     <form name="gform" id="gform" style="display: none;"
         action="https://docs.google.com/forms/d/e/1FAIpQLSeiWQ0Fj772iYF2E5jtfZwNMyHJdALsS29X9nGJaj9zmjQCcQ/formResponse?"
         target="hidden_iframe">
-        <input type="number" required name="entry.812011754" id="t1">
-        <input type="number" required name="entry.935117981" id="t2">
-        <input type="number" required name="entry.686162974" id="t3">
+        <input id="d1" type="number" name="entry.945692379">
+        <input id="t1" type="number" name="entry.812011754">
+
+        <input id="d2" type="number" name="entry.1617144705">
+        <input id="t2" type="number" name="entry.935117981">
+
+        <input id="d3" type="number" name="entry.1560648649">
+        <input id="t3" type="number" name="entry.686162974">
     </form>
 </body>
 
