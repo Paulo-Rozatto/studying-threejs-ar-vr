@@ -68,10 +68,18 @@
                         self.testInterface.buttonGroup.object3D.rotation.x = 0;
 
                         self.rig.setAttribute('position', '0 0 0');
-                        self.rig.setAttribute('rotation', '0 -40 0')
+                        self.rig.setAttribute('rotation', '0 -30 0')
 
                         manEl.object3D.visible = false;
-                        sphereWireframe.visible = false;
+
+                        function fadeOut() {
+                            if (sphereWireframe.material.opacity > 0) {
+                                sphereWireframe.material.opacity -= 0.1;
+                            }
+
+                            setTimeout(fadeOut, 100);
+                        }
+                        fadeOut();
                         self.arrow.visible = true;
                     }
                 });
@@ -83,7 +91,7 @@
                 this.testInterface.addButton('b4', '#b4');
 
                 const sphereEdges = new THREE.EdgesGeometry(new THREE.SphereGeometry(1.1, 18, 18));
-                const sphereWireframe = new THREE.LineSegments(sphereEdges, new THREE.LineBasicMaterial({ color: 0xffffff }));
+                const sphereWireframe = new THREE.LineSegments(sphereEdges, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true }));
                 sphereWireframe.position.y = 1.6;
                 this.el.sceneEl.setObject3D("sphere", sphereWireframe);
 
@@ -115,7 +123,7 @@
 
                         if (self.timeIdx === 4) {
                             this.isMoving = false;
-                            sendData();
+                            // sendData();
                         }
                     }
 
@@ -251,7 +259,7 @@
             font: roboto-msdf.json; negate: false;">
         </a-entity>
 
-        <a-entity vr-interface="dimension: 1 1; orbits: 1.25; theta: 27; sideTextRotation: -27; gap: 0.01 0.01; buttonSize: 0.2 0.2; border: 1 #f2f2f2; transparency: true;
+        <a-entity vr-interface="dimension: 1 1; orbits: 1.25; theta: 30; sideTextRotation: -30; gap: 0.01 0.01; buttonSize: 0.2 0.2; border: 1 #f2f2f2; transparency: true;
             font: roboto-msdf.json; negate: false; sideTextSize: 0.32 3" config>
         </a-entity>
 
