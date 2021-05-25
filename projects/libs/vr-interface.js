@@ -103,7 +103,6 @@ AFRAME.registerComponent('vr-interface', {
         result.y = parseFloat(obj[1]) * Math.PI / 180 || 0;
         result.z = parseFloat(obj[2]) * Math.PI / 180 || 0;
 
-        console.log(result);
         return result;
       }
     },
@@ -167,10 +166,13 @@ AFRAME.registerComponent('vr-interface', {
     this.buttonGroup = document.createElement('a-entity');
     this.el.appendChild(this.buttonGroup);
 
+    this.isClickBlocked = false;
+
     this.orbitButtonCallback = null;
     this.horizMovButtonCallback = null;
     this.vertiMovButtonCallback = null;
     this.stopButtonCallback = null;
+
 
     if (document.querySelector('#vrInterface-cursor') === null) {
       this.cursor = document.createElement('a-entity');
@@ -199,12 +201,10 @@ AFRAME.registerComponent('vr-interface', {
     const self = this;
     const data = this.data;
 
-    // console.log(data);
     if (typeof data.worldPosition.x === 'number') {
       this.positioning = 'world';
 
       data.movementBar = false;
-      console.log(data.rotation);
       this.buttonGroup.object3D.position.copy(data.worldPosition);
       this.buttonGroup.object3D.rotation.x = data.rotation.x;
       this.buttonGroup.object3D.rotation.y = data.rotation.y;
@@ -277,6 +277,13 @@ AFRAME.registerComponent('vr-interface', {
   handleClick: function (evt) {
     let name = evt.detail.intersection.object.name;
 
+    if (this.isClickBlocked) {
+      if (name === 'stopButton') {
+        this.stopButton.onClick();
+      }
+      return;
+    }
+
     if (name === 'orbitButton') {
       this.orbitButton.onClick();
     }
@@ -286,16 +293,13 @@ AFRAME.registerComponent('vr-interface', {
     else if (name === 'vertiMovButton') {
       this.vertiMovButton.onClick();
     }
-    else if (name === 'stopButton') {
-      this.stopButton.onClick();
-    }
-    // else if (!this.isToChangeTheta && !this.isToChangeRho) {
-    for (let button of this.buttons) {
-      if (button.name === name && typeof button.onClick === 'function') {
-        button.onClick(evt.detail.intersection.object);
+    else {
+      for (let button of this.buttons) {
+        if (button.name === name && typeof button.onClick === 'function') {
+          button.onClick(evt.detail.intersection.object);
+        }
       }
     }
-    // }
   },
   addButton: function (name, img, callback) {
     const data = this.data;
@@ -358,8 +362,8 @@ AFRAME.registerComponent('vr-interface', {
     const self = this;
     const data = this.data;
     const moveBarButtonGeometry = new THREE.PlaneGeometry(0.1, 0.1);
+    let sideTextVisibility;
 
-    // this.movementBar = document.createElement('a-entity');
     this.moveBar = document.createElement('a-entity');
 
     this.isToChangeTheta = false;
@@ -386,13 +390,14 @@ AFRAME.registerComponent('vr-interface', {
       -0.05,
       () => {
         self.isToChangeTheta = true;
+        self.isClickBlocked = true;
 
         self.stopButton.visible = true;
         self.stopButton.position.set(
           (data.dimension.y / 2 * data.buttonSize.x + 0.06),
-          0,
+          0.16,
           0.01);
-        self.stopButton.rotation.z = Math.PI / 2;
+        self.stopButton.rotation.y = 0;
         self.stopButton.el.classList.add('vrInterface-button');
 
         if (typeof self.horizMovButtonCallback === 'function')
@@ -406,14 +411,17 @@ AFRAME.registerComponent('vr-interface', {
       -0.15,
       () => {
         self.isToChangeRho = true;
+        self.isClickBlocked = true;
+
+        sideTextVisibility = self.sideText.object3D.visible === true; // need comparing to true, because it can be undefined and being undef makes it visible below in stop func for some reason
 
         self.stopButton.visible = true;
         self.stopButton.position.set(
-          (data.dimension.y / 2 * data.buttonSize.x + 0.06),
+          (data.dimension.y) * data.buttonSize.x + 0.14,
           (-data.dimension.x + 1) * data.buttonSize.y / 2,
-          0.01
+          0.05
         );
-        self.stopButton.rotation.z = 0;
+        self.stopButton.rotation.y = self.sideText.object3D.visible ? self.pivot.object3D.rotation.y : 0;
         self.stopButton.el.classList.add('vrInterface-button');
 
         if (typeof self.vertiMovButtonCallback === 'function')
@@ -428,6 +436,9 @@ AFRAME.registerComponent('vr-interface', {
       () => {
         self.isToChangeTheta = false;
         self.isToChangeRho = false;
+        self.isClickBlocked = false;
+
+        self.sideText.object3D.visible = sideTextVisibility;
 
         self.stopButton.visible = false;
         self.stopButton.el.classList.remove('vrInterface-button');
@@ -449,7 +460,6 @@ AFRAME.registerComponent('vr-interface', {
 
       const button = document.createElement('a-entity');
       button.setObject3D(name, new THREE.Mesh(
-        // self.buttonGeometry,
         moveBarButtonGeometry,
         new THREE.MeshBasicMaterial({ map: texture })
       ));
