@@ -88,19 +88,20 @@
                 this.testInterface.addButton('b2', '#b2');
                 this.testInterface.addButton('b3', '#b3');
                 this.testInterface.addButton('b4', '#b4');
+                this.auxPosition = new THREE.Vector3();
 
                 const sphereEdges = new THREE.EdgesGeometry(new THREE.SphereGeometry(1.1, 18, 18));
                 const sphereWireframe = new THREE.LineSegments(sphereEdges, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true }));
                 sphereWireframe.position.y = 1.6;
                 this.el.sceneEl.setObject3D("sphere", sphereWireframe);
 
+                this.squareLocations = [
+                    { position: new THREE.Vector3(1, 1.6, 0), rotation: new THREE.Euler(0, Math.PI / 2, 0) },
+                    { position: new THREE.Vector3(Math.cos(Math.PI / 6), 2.1, 0), rotation: new THREE.Euler(0.52, -Math.PI / 2, 0, 'YXZ') },
+                    { position: new THREE.Vector3(0, 1.6, -1.5), rotation: new THREE.Euler(0, 0, 0) },
+                ];
                 const squareEdges = new THREE.EdgesGeometry(new THREE.PlaneGeometry(0.5625, 0.5625))
                 const squareWireframe = new THREE.LineSegments(squareEdges, new THREE.LineBasicMaterial({ color: 0xff0000 }));
-                this.squareLocations = [
-                    { position: new THREE.Vector3(1, 1.6, 0), rotation: new THREE.Euler(0, Math.PI / 2, 0), theta: Math.PI / 2, rho: 0 },
-                    { position: new THREE.Vector3(Math.cos(Math.PI / 6), 2.1, 0), rotation: new THREE.Euler(0.52, -Math.PI / 2, 0, 'YXZ'), theta: Math.PI / 2, rho: Math.PI / 6 },
-                    { position: new THREE.Vector3(0, 1.6, -1), rotation: new THREE.Euler(0, 0, 0), theta: 0, rho: 0 },
-                ];
                 squareWireframe.position.copy(this.squareLocations[0].position);
                 squareWireframe.rotation.copy(this.squareLocations[0].rotation);
                 this.el.sceneEl.setObject3D('square', squareWireframe);
@@ -116,11 +117,11 @@
                         let theta = self.testInterface.data.theta;
                         let rho = self.testInterface.data.rho;
 
-                        const x = -Math.sin(theta) * Math.cos(rho);
-                        const y = 1.6 + Math.sin(rho);
-                        const z = -Math.cos(theta) * Math.cos(rho);
+                        const x = -Math.sin(theta) * Math.cos(rho) * self.testInterface.radius * self.testInterface.radius;
+                        const y = 1.6 + Math.sin(rho) * self.testInterface.radius;
+                        const z = -Math.cos(theta) * Math.cos(rho) * self.testInterface.radius * self.testInterface.radius;
 
-                        self.distances[self.timeIdx] = new THREE.Vector3(x, y, z).distanceTo(self.squareLocations[self.squareIdx].position);
+                        self.distances[self.timeIdx] = new THREE.Vector3(x, y, z).distanceTo(squareWireframe.position);
 
                         self.timeIdx++;
 
@@ -175,9 +176,11 @@
 
                 if (this.isMoving) {
                     this.times[this.timeIdx] += delta * 0.001;
+                    this.testInterface.buttons[0].getWorldPosition(this.auxPosition);
+                    this.auxPosition.x += 0.1;
+                    this.auxPosition.y -= 0.1;
 
-                    if (this.testInterface.data.theta > -(this.squareLocations[this.squareIdx].theta + 0.07) && this.testInterface.data.theta < -(this.squareLocations[this.squareIdx].theta - 0.07)
-                        && this.testInterface.data.rho < (this.squareLocations[this.squareIdx].rho + 0.07) && this.testInterface.data.rho > (this.squareLocations[this.squareIdx].rho - 0.07)) {
+                    if (this.auxPosition.distanceToSquared(this.squareLocations[this.squareIdx].position) < 0.04) {
                         if (this.square.material.color.r = 1) {
                             this.square.material.color.r = 0;
                             this.square.material.color.g = 1;
@@ -258,7 +261,7 @@
             </a-entity>
         </a-entity>
 
-        <a-entity id="example" vr-interface="dimension: 2 2; orbits: 1; theta: 0; gap: 0.01 0.01; buttonSize: 0.2 0.2; border: 1 #f2f2f2; transparency: true;
+        <a-entity id="example" vr-interface="dimension: 2 2; orbits: 1 1.5; theta: 0; gap: 0.01 0.01; buttonSize: 0.2 0.2; border: 1 #f2f2f2; transparency: true;
             font: roboto-msdf.json; negate: false;">
         </a-entity>
 
