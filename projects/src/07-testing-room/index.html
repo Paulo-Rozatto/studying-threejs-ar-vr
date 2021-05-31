@@ -94,7 +94,7 @@
                 sphereWireframe.position.y = 1.6;
                 this.el.sceneEl.setObject3D("sphere", sphereWireframe);
 
-                const squareEdges = new THREE.EdgesGeometry(new THREE.PlaneGeometry(0.45, 0.45))
+                const squareEdges = new THREE.EdgesGeometry(new THREE.PlaneGeometry(0.5625, 0.5625))
                 const squareWireframe = new THREE.LineSegments(squareEdges, new THREE.LineBasicMaterial({ color: 0xff0000 }));
                 this.squareLocations = [
                     { position: new THREE.Vector3(1, 1.6, 0), rotation: new THREE.Euler(0, Math.PI / 2, 0), theta: Math.PI / 2, rho: 0 },
@@ -106,6 +106,10 @@
                 this.el.sceneEl.setObject3D('square', squareWireframe);
                 this.square = squareWireframe;
                 this.squareIdx = 0;
+
+                const squareClone = new THREE.LineSegments(squareEdges, new THREE.LineBasicMaterial({ color: 0xff0000 }));
+                squareClone.scale.set(0.77, 0.77, 0.77);
+                squareWireframe.add(squareClone);
 
                 this.testInterface.stopButtonCallback = () => {
                     if (self.timeIdx <= 3) {
@@ -122,7 +126,7 @@
 
                         if (self.timeIdx === 4) {
                             this.isMoving = false;
-                            sendData();
+                            // sendData();
                         }
                     }
 
@@ -172,8 +176,8 @@
                 if (this.isMoving) {
                     this.times[this.timeIdx] += delta * 0.001;
 
-                    if (this.testInterface.data.theta > -(this.squareLocations[this.squareIdx].theta + 0.02) && this.testInterface.data.theta < -(this.squareLocations[this.squareIdx].theta - 0.02)
-                        && this.testInterface.data.rho < (this.squareLocations[this.squareIdx].rho + 0.02) && this.testInterface.data.rho > (this.squareLocations[this.squareIdx].rho - 0.02)) {
+                    if (this.testInterface.data.theta > -(this.squareLocations[this.squareIdx].theta + 0.07) && this.testInterface.data.theta < -(this.squareLocations[this.squareIdx].theta - 0.07)
+                        && this.testInterface.data.rho < (this.squareLocations[this.squareIdx].rho + 0.07) && this.testInterface.data.rho > (this.squareLocations[this.squareIdx].rho - 0.07)) {
                         if (this.square.material.color.r = 1) {
                             this.square.material.color.r = 0;
                             this.square.material.color.g = 1;
