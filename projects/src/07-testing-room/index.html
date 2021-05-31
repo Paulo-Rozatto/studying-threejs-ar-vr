@@ -30,8 +30,8 @@
 
                 this.isMoving = false;
                 this.timeSum = 0;
-                this.times = [0, 0, 0, 0];
-                this.distances = [0, 0, 0, 0];
+                this.times = [0, 0, 0];
+                this.distances = [0, 0, 0];
                 this.timeIdx = 0;
                 this.horizontalTurns = 2;
                 this.verticalTurns = 0;
@@ -96,60 +96,76 @@
 
                 this.squareLocations = [
                     { position: new THREE.Vector3(1, 1.6, 0), rotation: new THREE.Euler(0, Math.PI / 2, 0) },
-                    { position: new THREE.Vector3(Math.cos(Math.PI / 6), 2.1, 0), rotation: new THREE.Euler(0.52, -Math.PI / 2, 0, 'YXZ') },
+                    { position: new THREE.Vector3(Math.cos(Math.PI / 6) * 1.5, 1.6 + 0.75, 0), rotation: new THREE.Euler(0.52, -Math.PI / 2, 0, 'YXZ') },
                     { position: new THREE.Vector3(0, 1.6, -1.5), rotation: new THREE.Euler(0, 0, 0) },
                 ];
                 const squareEdges = new THREE.EdgesGeometry(new THREE.PlaneGeometry(0.5625, 0.5625))
-                const squareWireframe = new THREE.LineSegments(squareEdges, new THREE.LineBasicMaterial({ color: 0xff0000 }));
-                squareWireframe.position.copy(this.squareLocations[0].position);
-                squareWireframe.rotation.copy(this.squareLocations[0].rotation);
-                this.el.sceneEl.setObject3D('square', squareWireframe);
-                this.square = squareWireframe;
-                this.squareIdx = 0;
+                this.square = new THREE.LineSegments(squareEdges, new THREE.LineBasicMaterial({ color: 0xff0000 }));
+                this.square.position.copy(this.squareLocations[0].position);
+                this.square.rotation.copy(this.squareLocations[0].rotation);
+                this.el.sceneEl.setObject3D('square', this.square);
 
                 const squareClone = new THREE.LineSegments(squareEdges, new THREE.LineBasicMaterial({ color: 0xff0000 }));
                 squareClone.scale.set(0.77, 0.77, 0.77);
-                squareWireframe.add(squareClone);
+                this.square.add(squareClone);
+
+                this.movementsRemaining = 1;
 
                 const startMoving = () => {
-                    self.isMoving = true;
+                    self.isMoving = self.timeIdx < 3;
                 }
-                this.testInterface.horizMovButtonCallback = startMoving;
-                this.testInterface.vertiMovButtonCallback = startMoving;
 
-                this.testInterface.stopButtonCallback = () => {
-                    this.isMoving = false;
+                const stopMoving = () => {
+                    self.isMoving = false;
 
-                    if (self.timeIdx <= 3) {
-                        let theta = self.testInterface.data.theta;
-                        let rho = self.testInterface.data.rho;
+                    let theta = self.testInterface.data.theta;
+                    let rho = self.testInterface.data.rho;
 
-                        const x = -Math.sin(theta) * Math.cos(rho) * self.testInterface.radius * self.testInterface.radius;
-                        const y = 1.6 + Math.sin(rho) * self.testInterface.radius;
-                        const z = -Math.cos(theta) * Math.cos(rho) * self.testInterface.radius * self.testInterface.radius;
+                    const x = -Math.sin(theta) * Math.cos(rho) * self.testInterface.radius;
+                    const y = 1.6 + Math.sin(rho) * self.testInterface.radius;
+                    const z = -Math.cos(theta) * Math.cos(rho) * self.testInterface.radius;
 
-                        self.distances[self.timeIdx] = new THREE.Vector3(x, y, z).distanceTo(squareWireframe.position);
+                    self.distances[self.timeIdx] = new THREE.Vector3(x, y, z).distanceTo(self.square.position);
 
-                        self.timeIdx++;
-
-                        if (self.timeIdx === 4) {
-                            // sendData();
-                        }
+                    self.timeIdx += 1;
+                    if (self.timeIdx === 3) {
+                        sendData();
+                        self.square.visible = false;
+                        self.movementsRemaining = -1;
                     }
+                    else {
+                        self.movementsRemaining = 2;
 
-                    if (self.squareIdx < 2) {
                         self.arrow.rotation.y = -Math.PI * 0.5;
                         self.arrow.rotation.z = 1.5 * self.arrow.rotation.z + Math.PI * 0.5;
-                        self.arrow.position.copy(squareWireframe.position);
+                        self.arrow.position.copy(self.square.position);
                         self.arrow.position.z -= 0.5;
 
-                        self.squareIdx++;
-                        squareWireframe.position.copy(self.squareLocations[self.squareIdx].position);
-                        squareWireframe.rotation.copy(self.squareLocations[self.squareIdx].rotation);
+                        self.square.position.copy(self.squareLocations[self.timeIdx].position);
+                        self.square.rotation.copy(self.squareLocations[self.timeIdx].rotation);
 
-                        this.square.material.color.r = 1;
-                        this.square.material.color.g = 0;
+                        self.square.material.color.r = 1;
+                        self.square.material.color.g = 0;
                     }
+
+                }
+
+                const movementUpdate = () => {
+                    self.movementsRemaining--;
+
+                    if (self.movementsRemaining === 0) {
+                        stopMoving();
+                    }
+                }
+
+                this.testInterface.horizMovButtonCallback = startMoving;
+                this.testInterface.vertiMovButtonCallback = startMoving;
+                this.testInterface.stopButtonCallback = movementUpdate;
+                this.testInterface.orbitButtonCallback = () => {
+                    if (!self.isMoving) {
+                        self.isMoving = true;
+                    }
+                    movementUpdate();
                 }
 
                 const manEl = document.querySelector('#man');
@@ -167,11 +183,11 @@
                 function sendData() {
                     document.querySelector("#d1").value = self.distances[0];
                     document.querySelector("#d2").value = self.distances[1];
-                    document.querySelector("#d3").value = self.distances[3];
+                    document.querySelector("#d3").value = self.distances[2];
 
                     document.querySelector("#t1").value = self.times[0];
                     document.querySelector("#t2").value = self.times[1];
-                    document.querySelector("#t3").value = self.times[2] + self.times[3];
+                    document.querySelector("#t3").value = self.times[2];
                     document.getElementById("gform").submit();
                 }
             },
@@ -186,7 +202,7 @@
                     this.auxPosition.x += 0.1;
                     this.auxPosition.y -= 0.1;
 
-                    if (this.auxPosition.distanceToSquared(this.squareLocations[this.squareIdx].position) < 0.04) {
+                    if (this.auxPosition.distanceToSquared(this.square.position) < 0.04) {
                         if (this.square.material.color.r = 1) {
                             this.square.material.color.r = 0;
                             this.square.material.color.g = 1;
