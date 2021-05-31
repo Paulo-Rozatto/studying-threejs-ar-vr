@@ -61,7 +61,6 @@
                         self.testInterface.showMessage('Mova a interface para direita')
 
                         self.isToAnimateMan = false;
-                        self.isMoving = true;
                         self.verticalTurns = 0;
                         self.horizontalTurns = 0;
                         self.testInterface.el.object3D.rotation.y = 0;
@@ -112,7 +111,15 @@
                 squareClone.scale.set(0.77, 0.77, 0.77);
                 squareWireframe.add(squareClone);
 
+                const startMoving = () => {
+                    self.isMoving = true;
+                }
+                this.testInterface.horizMovButtonCallback = startMoving;
+                this.testInterface.vertiMovButtonCallback = startMoving;
+
                 this.testInterface.stopButtonCallback = () => {
+                    this.isMoving = false;
+
                     if (self.timeIdx <= 3) {
                         let theta = self.testInterface.data.theta;
                         let rho = self.testInterface.data.rho;
@@ -126,7 +133,6 @@
                         self.timeIdx++;
 
                         if (self.timeIdx === 4) {
-                            this.isMoving = false;
                             // sendData();
                         }
                     }
