@@ -119,11 +119,11 @@
                     self.isMoving = false;
 
                     let theta = self.testInterface.data.theta;
-                    let rho = self.testInterface.data.rho;
+                    let phi = self.testInterface.data.phi;
 
-                    const x = -Math.sin(theta) * Math.cos(rho) * self.testInterface.radius;
-                    const y = 1.6 + Math.sin(rho) * self.testInterface.radius;
-                    const z = -Math.cos(theta) * Math.cos(rho) * self.testInterface.radius;
+                    const x = -Math.sin(theta) * Math.cos(phi) * self.testInterface.radius;
+                    const y = 1.6 + Math.sin(phi) * self.testInterface.radius;
+                    const z = -Math.cos(theta) * Math.cos(phi) * self.testInterface.radius;
 
                     self.distances[self.timeIdx] = new THREE.Vector3(x, y, z).distanceTo(self.square.position);
 

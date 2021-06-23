@@ -3,7 +3,7 @@
   - Import orbi to your code:
     <script type="text/javascript" charset="UTF-8" src="path/to/orbi.js"></script>
   - Call it in an aframe entity and pass the options to config like the example below:
-      <a-entity orbi="dimension: 3 2; orbits: 1 1.5 2 ; theta: 90; rho: 0; transparency: true; gap: 0.01 0.01; border: 1.2 #6d7584; movementBar: true"</a-entity>
+      <a-entity orbi="dimension: 3 2; orbits: 1 1.5 2 ; theta: 90; phi: 0; transparency: true; gap: 0.01 0.01; border: 1.2 #6d7584; movementBar: true"</a-entity>
   - To add buttons and use functions create a component in your code
     AFRAME.registerComponent('my-component', {
       init: function () {
@@ -15,13 +15,13 @@
           vrInterface.showMessage('Button 2 pressed', 'bottom');
         });
         vrInterface.addButton('myButtonRotate', '#myTexture3', function(){
-          vrInterface.updatePosition({theta: 180, rho: 15})
+          vrInterface.updatePosition({theta: 180, phi: 15})
         });
       },
     });
     - There are two ways to define the position to the orbi: relative to the camera and relative to the world.
-      Positioning relative to the camera works similar to polar coordinates, where the camera is the pole and you define some orbits (distances to the camera), theta (horizontal angle), and rho (vertical angle)
-        <a-entity orbi="orbits: 1; theta: 45; rho: 45;"></a-entity>
+      Positioning relative to the camera works similar to polar coordinates, where the camera is the pole and you define some orbits (distances to the camera), theta (horizontal angle), and phi (vertical angle)
+        <a-entity orbi="orbits: 1; theta: 45; phi: 45;"></a-entity>
       Positioning relative to the world works like positioning regular a-frame object, you define position and rotation in each axis
         <a-entity orbi="worldPosition: -1 1.6 -1; rotation: 0 45 0">
       The advantage of positioning relative to the camera is being able to move the orbi if movementBar is set to true;
@@ -29,7 +29,7 @@
   - visible: visibilty of the interface;
   - orbits: distances from the camera;
   - theta: horizontal rotation in degrees;
-  - rho: vertical rotation in degrees;
+  - phi: vertical rotation in degrees;
   - worldPosition: a second way for positioning the interface, it overrides the orbital way;
   - rotation: Defines the rotation in x, y and z;
   - movementBar: whether to display move bar or not, doesn't work with world position;
@@ -50,7 +50,7 @@
   - showMessage(message, position) - shows message, position parameter is optional
   - showSideText() - shows a permanent multiline message to the right of the interface
   - hideSideText() - hides side text
-  - updatePosition({radius, theta, rho, worldPosition}) - should be called if the camera position changes or if you want to change one parameter. All parameters are optional.
+  - updatePosition({radius, theta, phi, worldPosition}) - should be called if the camera position changes or if you want to change one parameter. All parameters are optional.
   - hide() - hide the interface
   - show() - make interface visible
   
@@ -81,7 +81,7 @@ AFRAME.registerComponent('orbi', {
       }
     },
     theta: { type: 'number', default: 90, parse: (value) => value * Math.PI / 180 },
-    rho: { type: 'number', default: 0, parse: (value) => value * Math.PI / 180, },
+    phi: { type: 'number', default: 0, parse: (value) => value * Math.PI / 180, },
     movementBar: { type: 'bool', default: true },
     worldPosition: { type: 'vec3', default: null },
     rotation: {
@@ -220,7 +220,7 @@ AFRAME.registerComponent('orbi', {
       this.radius = data.orbits[this.orbitIndex];
 
       this.el.object3D.rotation.y = data.theta;
-      this.buttonGroup.object3D.rotation.x = data.rho;
+      this.buttonGroup.object3D.rotation.x = data.phi;
 
       if (typeof data.raycaster.far === 'null') {
         data.raycaster.far = this.radius;
@@ -270,8 +270,8 @@ AFRAME.registerComponent('orbi', {
     }
 
     if (this.isToChangeRho) {
-      this.data.rho = this.camera.object3D.rotation.x;
-      this.buttonGroup.object3D.rotation.x = this.data.rho;
+      this.data.phi = this.camera.object3D.rotation.x;
+      this.buttonGroup.object3D.rotation.x = this.data.phi;
     }
   },
   handleClick: function (evt) {
@@ -537,8 +537,8 @@ AFRAME.registerComponent('orbi', {
     else {
       button.position.set(
         j * (data.buttonSize.x + data.gap.x),
-        - (i * (data.buttonSize.y + data.gap.y)), //* Math.cos(data.rho)),
-        -this.radius  //- (i * (data.buttonSize.y + data.gap.y) * Math.sin(data.rho))
+        - (i * (data.buttonSize.y + data.gap.y)), //* Math.cos(data.phi)),
+        -this.radius  //- (i * (data.buttonSize.y + data.gap.y) * Math.sin(data.phi))
       );
     }
   },
@@ -579,7 +579,7 @@ AFRAME.registerComponent('orbi', {
     button.border.rotation.copy(button.rotation);
   },
   centralize: function (button) {
-    button.position.y += this.data.buttonSize.y * 0.5 * (this.data.dimension.x - 1) * Math.cos(this.data.rho); // data.dimension.x == lines
+    button.position.y += this.data.buttonSize.y * 0.5 * (this.data.dimension.x - 1) * Math.cos(this.data.phi); // data.dimension.x == lines
     button.position.x -= this.data.buttonSize.x * 0.5 * (this.data.dimension.y - 1); // data.dimension.y == columns
   },
   decentralize: function (button) {
@@ -597,8 +597,8 @@ AFRAME.registerComponent('orbi', {
         this.data.theta = args.theta * Math.PI / 180;
         this.el.object3D.rotation.y = this.data.theta;
       }
-      if (typeof args.rho === 'number') {
-        this.data.rho = args.rho * Math.PI / 180;
+      if (typeof args.phi === 'number') {
+        this.data.phi = args.phi * Math.PI / 180;
       }
 
       if (this.positioning === 'world') {
