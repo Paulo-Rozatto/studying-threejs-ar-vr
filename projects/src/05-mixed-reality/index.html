@@ -2,7 +2,7 @@
 
 <head>
     <script src="https://aframe.io/releases/1.1.0/aframe.min.js"></script>
-    <script src="../../libs/vr-interface.js"></script>
+    <script src="../../libs/orbi.js"></script>
 
     <style>
         html,
@@ -27,7 +27,7 @@
     </div>
     <a-scene main_scene id="scene" stats background="color: black">
         <a-assets timeout="3000">
-            <img id="next" src="../../assets/icons/vr-interface/next.png">
+            <img id="next" src="../../assets/icons/orbi/next.png">
             <video id="webcam" playsinline></video>
         </a-assets>
 
@@ -35,7 +35,7 @@
         <!-- <a-plane src="#webcam" position="0 1.6 -2" rotation="0 0 0" width="6.4" height="3.4"></a-plane> -->
 
         <a-entity
-            vr-interface="dimension: 2 1; orbits: 1.2; theta: 45; rho: 0; transparency: true; gap: 0.01 0.01; border: 1.2 #6d7584;"
+            orbi="dimension: 2 1; orbits: 1.2; theta: 45; rho: 0; transparency: true; gap: 0.01 0.01; border: 1.2 #6d7584;"
             config></a-entity>
 
         <a-entity id="rig" position="0 0 0" rotation="0 0 0">
@@ -71,7 +71,7 @@
 
         AFRAME.registerComponent('config', {
             init: function () {
-                const vrInterface = this.el.components['vr-interface'];
+                const vrInterface = this.el.components['orbi'];
 
                 vrInterface.addButton('1', '#next');
                 vrInterface.addButton('2', '#next');

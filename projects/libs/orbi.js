@@ -1,13 +1,13 @@
 /*
   Usage:
-  - Import vr-interface to your code:
-    <script type="text/javascript" charset="UTF-8" src="path/to/vr-interface.js"></script>
+  - Import orbi to your code:
+    <script type="text/javascript" charset="UTF-8" src="path/to/orbi.js"></script>
   - Call it in an aframe entity and pass the options to config like the example below:
-      <a-entity vr-interface="dimension: 3 2; orbits: 1 1.5 2 ; theta: 90; rho: 0; transparency: true; gap: 0.01 0.01; border: 1.2 #6d7584; movementBar: true"</a-entity>
+      <a-entity orbi="dimension: 3 2; orbits: 1 1.5 2 ; theta: 90; rho: 0; transparency: true; gap: 0.01 0.01; border: 1.2 #6d7584; movementBar: true"</a-entity>
   - To add buttons and use functions create a component in your code
     AFRAME.registerComponent('my-component', {
       init: function () {
-        const vrInterface = document.querySelector('[vr-interface]').components['vr-interface'];
+        const vrInterface = document.querySelector('[orbi]').components['orbi'];
         vrInterface.addButton('myButton', '#myTexture', function() {
           vrInterface.showMessage('Button pressed');
         });
@@ -19,12 +19,12 @@
         });
       },
     });
-    - There are two ways to define the position to the vr-interface: relative to the camera and relative to the world.
+    - There are two ways to define the position to the orbi: relative to the camera and relative to the world.
       Positioning relative to the camera works similar to polar coordinates, where the camera is the pole and you define some orbits (distances to the camera), theta (horizontal angle), and rho (vertical angle)
-        <a-entity vr-interface="orbits: 1; theta: 45; rho: 45;"></a-entity>
+        <a-entity orbi="orbits: 1; theta: 45; rho: 45;"></a-entity>
       Positioning relative to the world works like positioning regular a-frame object, you define position and rotation in each axis
-        <a-entity vr-interface="worldPosition: -1 1.6 -1; rotation: 0 45 0">
-      The advantage of positioning relative to the camera is being able to move the vr-interface if movementBar is set to true;
+        <a-entity orbi="worldPosition: -1 1.6 -1; rotation: 0 45 0">
+      The advantage of positioning relative to the camera is being able to move the orbi if movementBar is set to true;
   Properties:
   - visible: visibilty of the interface;
   - orbits: distances from the camera;
@@ -58,7 +58,7 @@
   - Setting the dimension property correctly is important for displaying the vr interface elements correctly;
 */
 
-AFRAME.registerComponent('vr-interface', {
+AFRAME.registerComponent('orbi', {
   schema: {
     dimension: { type: 'vec2', default: { x: 1, y: 1 } },
     orbits: {
@@ -95,7 +95,7 @@ AFRAME.registerComponent('vr-interface', {
         obj = obj.split(' ');
 
         if (obj.length != 3) {
-          console.warn('VR-Interface - Wrong number of parameters for rotation. Using default value');
+          console.warn('OrBI- Wrong number of parameters for rotation. Using default value');
           return result;
         }
 

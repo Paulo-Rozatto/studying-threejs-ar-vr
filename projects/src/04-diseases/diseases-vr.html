@@ -22,7 +22,7 @@
     <!-- Library of Virtual Reality -->
     <script type="text/javascript" charset="UTF-8" src="../../libs/aframe-master.js"></script>
     <script type="text/javascript" charset="UTF-8" src="../../libs/aframe-button-controls.js"></script>
-    <script type="text/javascript" charset="UTF-8" src="../../libs/vr-interface.js"></script>
+    <script type="text/javascript" charset="UTF-8" src="../../libs/orbi.js"></script>
 
     <script>
         AFRAME.registerComponent('menu', {
@@ -49,7 +49,7 @@
                     next: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAABhGlDQ1BJQ0MgcHJvZmlsZQAAKJF9kT1Iw0AcxV9TRSkVFSuIOGSoThb8Qhy1CkWoEGqFVh1MLv2CJg1Jiouj4Fpw8GOx6uDirKuDqyAIfoA4OTopukiJ/0sKLWI9OO7Hu3uPu3eAUC0yzWobAzTdNhOxqJhKr4odrwigH70YR4/MLGNOkuJoOb7u4ePrXYRntT735+hSMxYDfCLxLDNMm3iDeHrTNjjvE4dYXlaJz4lHTbog8SPXFY/fOOdcFnhmyEwm5olDxGKuiZUmZnlTI54iDquaTvlCymOV8xZnrVhm9XvyFwYz+soy12kOIYZFLEGCCAVlFFCEjQitOikWErQfbeEfdP0SuRRyFcDIsYASNMiuH/wPfndrZScnvKRgFGh/cZyPYaBjF6hVHOf72HFqJ4D/GbjSG/5SFZj5JL3S0MJHQPc2cHHd0JQ94HIHGHgyZFN2JT9NIZsF3s/om9JA3y0QWPN6q+/j9AFIUlfxG+DgEBjJUfZ6i3d3Nvf275l6fz+EwHKuBmeZxQAAAAlwSFlzAAAuIwAALiMBeKU/dgAAAAd0SU1FB+QKFRIkBxxYTyMAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABNVBMVEX+/v7////8/Pz9/f37+/v8/Pz6+vr39/f4+Pj19fXy8vLw8PDu7u7r6+vs7Ozr6+vp6enj4+Pf39/d3d3e3t7a2trY2NjZ2dnX19fV1dXR0dHOzs7MzMzNzc3KysrJycnIyMjHx8fExMS+vr65ubmrq6uoqKipqamnp6eoqKilpaWjo6OgoKCdnZ2ampqZmZmWlpaUlJSSkpKTk5ORkZGQkJCKioqJiYmGhoaAgIB/f399fX13d3d2dnZ3d3d1dXVycnJycnJvb29wcHBsbGxoaGhjY2NiYmJgYGBdXV1bW1tcXFxUVFRSUlJTU1NRUVFKSkpERERCQkJDQ0M8PDw9PT06Ojo3NzcyMjI0NDQxMTErKysnJycpKSkiIiIkJCQcHBwfHx8ZGRkNDQ0SEhIAAAAGBgaxsr4vAAAAZXRSTlOAgIGBgoKDhISFh4mKi4uMjZGTlJSWl5eYmZyen5+goaKjpKistbe3uLi5u72/wcLExcbGx8jLzM7S09TX2NjZ2tvc3N7g4+Tl5ufn6uvr7O/x8vL09PX29/f4+fr6+/v8/P3+/vL/r4gAAAABYktHRGW13YifAAAA/ElEQVRYw+3TV08CURCG4X1FQAUbKmLHLiqiYl8VWSt2ZcEKLso5//8neGG55RATjcl8l5PJk8lkxuKHsQQQQAABBBDgHwOpx18A0oXwdik/DdCzc18+GoLmq5NGGNWTq0opla8FuJsDLXOqH6Klrc5Q0uuDmLdIWyFjOIEaA67Xwbn0A4e7wIyO79+GDYGqH9hzCLwuASzcAVa2okdMd+AC2Me0qo9ogAl1ar7ET6Cpmvwutrs5PVUvwEGu4avJuQmtVHph/qUeIPpkdwUjiWWYfRskcHYeZFwN+8wBuu1i+SLdQcxLAZHnNXwbDzXvQN5ZAAEEEECAPwXeAfR5OZ2nUVU9AAAAAElFTkSuQmCC'
                 }
 
-                let a = document.querySelector('[vr-interface]').setAttribute('vr-interface', { position: { x: 1, y: 1, z: -1 } });
+                let a = document.querySelector('[orbi]').setAttribute('orbi', { position: { x: 1, y: 1, z: -1 } });
                 // console.log(a); 
 
                 this.buttons = {
@@ -172,8 +172,8 @@
         AFRAME.registerComponent('config', {
             init: function () {
                 const self = this;
-                const entity = document.querySelector('[vr-interface]');
-                const vrInterface = entity.components["vr-interface"];
+                const entity = document.querySelector('[orbi]');
+                const vrInterface = entity.components["orbi"];
                 this.text = 'mensagem de teste ai';
 
                 vrInterface.addButton('next', '#next', function () { vrInterface.showMessage('NEXT') });
@@ -183,7 +183,7 @@
                 vrInterface.addButton('zoomIn', '#zoomIn', () => { });
                 vrInterface.addButton('zoomOut', '#zoomOut', () => { });
 
-                entity.setAttribute('vr-interface', { border: '2 red' });
+                entity.setAttribute('orbi', { border: '2 red' });
                 // vrInterface.setAttribute('rotation', 90);
             }
         });
@@ -196,11 +196,11 @@
             <a-asset-item id="aneurismModel" src="../../assets/models/diseases/an.glb"></a-asset-item>
             <a-asset-item id="strokeModel" src="../../assets/models/diseases/stroke.glb"></a-asset-item>
 
-            <img id="next" src="../../assets/icons/vr-interface/next.png">
-            <img id="rotLeft" src="../../assets/icons/vr-interface/rotleft.png">
-            <img id="rotRight" src="../../assets/icons/vr-interface/rotright.png">
-            <img id="zoomIn" src="../../assets/icons/vr-interface/zooin.png">
-            <img id="zoomOut" src="../../assets/icons/vr-interface/zoomout.png">
+            <img id="next" src="../../assets/icons/orbi/next.png">
+            <img id="rotLeft" src="../../assets/icons/orbi/rotleft.png">
+            <img id="rotRight" src="../../assets/icons/orbi/rotright.png">
+            <img id="zoomIn" src="../../assets/icons/orbi/zooin.png">
+            <img id="zoomOut" src="../../assets/icons/orbi/zoomout.png">
         </a-assets>
 
         <a-entity light="type: ambient; color: #fff; intensity: 0.3"></a-entity>
@@ -223,7 +223,7 @@
         </a-entity>
 
         <a-entity
-            vr-interface="messageSize: 1; sideTextSize: 0.75 1 ; sideTextRotation: -25; dimension: 3 2; orbits: 1 1.5 2; transparency: true; gap: 0.01 0.01; border: 1.2 #6d7584;"
+            orbi="messageSize: 1; sideTextSize: 0.75 1 ; sideTextRotation: -25; dimension: 3 2; orbits: 1 1.5 2; transparency: true; gap: 0.01 0.01; border: 1.2 #6d7584;"
             config>
         </a-entity>
     </a-scene>

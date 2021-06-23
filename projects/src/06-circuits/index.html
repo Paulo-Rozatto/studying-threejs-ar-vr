@@ -21,13 +21,13 @@
 
     <!-- Library of Virtual Reality -->
     <script type="text/javascript" charset="UTF-8" src="../../libs/aframe-master.js"></script>
-    <script type="text/javascript" charset="UTF-8" src="../../libs/vr-interface.js"></script>
+    <script type="text/javascript" charset="UTF-8" src="../../libs/orbi.js"></script>
 
     <script>
         AFRAME.registerComponent('panel', {
             init: function () {
                 const self = this;
-                const vrInterface = this.el.components['vr-interface'];
+                const vrInterface = this.el.components['orbi'];
                 this.models = this.el.querySelectorAll('.panelModel');
                 const clipboard = document.querySelector('#clipboard').object3D;
 
@@ -177,7 +177,7 @@
 
         AFRAME.registerComponent('grid', {
             init: function () {
-                const vrGrid = this.el.components['vr-interface'];
+                const vrGrid = this.el.components['orbi'];
                 const clipboard = document.querySelector('#clipboard').object3D;
                 const container = document.querySelector('#container').object3D;
                 const batteries = [];
@@ -479,7 +479,7 @@
 
         <a-plane position="0 1.45 -1.35" width="2.1" height="1" color="#4D3100"></a-plane>
         <a-entity
-            vr-interface="dimension: 2 4; worldPosition:-0.045 1.45 -1.30; buttonSize: 0.4 0.4; gap: 0.03 0.03; border: 2 #362211; movementBar: false; transparency: true;"
+            orbi="dimension: 2 4; worldPosition:-0.045 1.45 -1.30; buttonSize: 0.4 0.4; gap: 0.03 0.03; border: 2 #362211; movementBar: false; transparency: true;"
             panel>
             <a-entity class="panelModel" gltf-model="#wireModel" position="-0.65 1.65 -1.30" rotation="90 90 90">
             </a-entity>
@@ -496,7 +496,7 @@
         </a-entity>
 
         <a-entity
-            vr-interface="dimension: 5 9; worldPosition: 0 0.975 -0.75; rotation: -90 0 0; transparency: true; buttonSize: 0.2 0.2; border: 5 #362211; cursorPosition: 0 0 -0.65"
+            orbi="dimension: 5 9; worldPosition: 0 0.975 -0.75; rotation: -90 0 0; transparency: true; buttonSize: 0.2 0.2; border: 5 #362211; cursorPosition: 0 0 -0.65"
             grid>
         </a-entity>
 

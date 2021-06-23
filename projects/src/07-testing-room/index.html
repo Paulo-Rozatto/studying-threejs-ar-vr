@@ -21,7 +21,7 @@
 
     <!-- Library of Virtual Reality -->
     <script type="text/javascript" charset="UTF-8" src="../../libs/aframe-master.js"></script>
-    <script type="text/javascript" charset="UTF-8" src="../../libs/vr-interface.js"></script>
+    <script type="text/javascript" charset="UTF-8" src="../../libs/orbi.js"></script>
 
     <script>
         AFRAME.registerComponent('config', {
@@ -48,8 +48,8 @@
                 ]
                 let msgIndex = 0;
 
-                const vrInterface = this.el.components['vr-interface'];
-                this.testInterface = document.querySelector('#example').components['vr-interface'];
+                const vrInterface = this.el.components['orbi'];
+                this.testInterface = document.querySelector('#example').components['orbi'];
 
                 vrInterface.addButton('next', '#next', () => {
                     msgIndex++;
@@ -78,7 +78,7 @@
                             setTimeout(fadeOut, 100);
                         }
                         fadeOut();
-                        self.arrow.visible = true;
+                        // self.arrow.visible = true;
                     }
                 });
                 vrInterface.showSideText(messages[0]);
@@ -103,7 +103,7 @@
                 this.square = new THREE.LineSegments(squareEdges, new THREE.LineBasicMaterial({ color: 0xff0000 }));
                 this.square.position.copy(this.squareLocations[0].position);
                 this.square.rotation.copy(this.squareLocations[0].rotation);
-                this.el.sceneEl.setObject3D('square', this.square);
+                // this.el.sceneEl.setObject3D('square', this.square);
 
                 const squareClone = new THREE.LineSegments(squareEdges, new THREE.LineBasicMaterial({ color: 0xff0000 }));
                 squareClone.scale.set(0.77, 0.77, 0.77);
@@ -129,7 +129,7 @@
 
                     self.timeIdx += 1;
                     if (self.timeIdx === 3) {
-                        sendData();
+                        // sendData();
                         self.square.visible = false;
                         self.movementsRemaining = -1;
                     }
@@ -257,6 +257,9 @@
             <img id="b3" src="img/action3.png">
             <img id="b4" src="img/action4.png">
             <img id="arrowTexture" src="img/arrow.png">
+
+            <img id="wallText" src="../../assets/textures/white-wall.jpg">
+            <img id="wood" src="../../assets/textures/wood3.jpg">
         </a-assets>
 
         <a-entity id="man" gltf-model="#manModel" test></a-entity>
@@ -264,12 +267,16 @@
         <a-entity light="type: ambient; color: #fff; intensity: 0.3"></a-entity>
         <a-entity light="color: #fff" position="-15 110 30"></a-entity>
 
-        <a-plane id="floor" rotation="-90 0 0" color="#645434" height="10" width="10"></a-plane>
+        <a-plane id="floor" rotation="-90 0 0" material="src: #wood; repeat: 3 3" height="10" width="10"></a-plane>
 
-        <a-plane id="wall-1" rotation="0 0 0" position="0 1.5 -5" color="#777777" height="3" width="10"></a-plane>
-        <a-plane id="wall-2" rotation="0 180 0" position="0 1.5 5" color="#777777" height="3" width="10"></a-plane>
-        <a-plane id="wall-3" rotation="0 90 0" position="-5 1.5 0" color="#777777" height="3" width="10"></a-plane>
-        <a-plane id="wall-3" rotation="0 -90 0" position="5 1.5 0" color="#777777" height="3" width="10"></a-plane>
+        <a-plane id="wall-1" rotation="0 0 0" position="0 1.5 -5" material="src: #wallText;" height="3" width="10">
+        </a-plane>
+        <a-plane id="wall-2" rotation="0 180 0" position="0 1.5 5" material="src: #wallText;" height="3" width="10">
+        </a-plane>
+        <a-plane id="wall-3" rotation="0 90 0" position="-5 1.5 0" material="src: #wallText;" height="3" width="10">
+        </a-plane>
+        <a-plane id="wall-3" rotation="0 -90 0" position="5 1.5 0" material="src: #wallText;" height="3" width="10">
+        </a-plane>
 
         <a-plane id="arrow" height="0.15" width="0.15" material="src: #arrowTexture; transparent: true;"
             position="0.3 1.6 -1.1"
@@ -283,11 +290,11 @@
             </a-entity>
         </a-entity>
 
-        <a-entity id="example" vr-interface="dimension: 2 2; orbits: 1 1.5; theta: 0; gap: 0.01 0.01; buttonSize: 0.2 0.2; border: 1 #f2f2f2; transparency: true;
+        <a-entity id="example" orbi="dimension: 2 2; orbits: 1 1.25 1.5; theta: 0; gap: 0.01 0.01; buttonSize: 0.2 0.2; border: 1 #f2f2f2; transparency: true;
             font: roboto-msdf.json; negate: false;">
         </a-entity>
 
-        <a-entity vr-interface="dimension: 1 1; orbits: 1.25; theta: 30; sideTextRotation: -30; gap: 0.01 0.01; buttonSize: 0.2 0.2; border: 1 #f2f2f2; transparency: true;
+        <a-entity orbi="dimension: 1 1; orbits: 1.25; theta: 30; sideTextRotation: -30; gap: 0.01 0.01; buttonSize: 0.2 0.2; border: 1 #f2f2f2; transparency: true;
             font: roboto-msdf.json; negate: false; sideTextSize: 0.32 3" config>
         </a-entity>
 
