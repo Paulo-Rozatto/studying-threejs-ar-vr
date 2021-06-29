@@ -1,6 +1,7 @@
 //-- Imports -------------------------------------------------------------------------------------
 import * as THREE from '../../build/three.module.js';
 import { VRButton } from '../../build/jsm/webxr/VRButton.js';
+import { GLTFLoader } from '../../build/jsm/loaders/GLTFLoader.js';
 import {
 	onWindowResize,
 	degreesToRadians,
@@ -16,7 +17,7 @@ window.addEventListener('resize', onWindowResize);
 
 //-- Renderer settings ---------------------------------------------------------------------------
 let renderer = new THREE.WebGLRenderer();
-renderer.setClearColor(new THREE.Color("rgb(70, 150, 240)"));
+renderer.setClearColor(new THREE.Color("#9C6727"));
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.xr.enabled = true;
@@ -30,6 +31,7 @@ let moveCamera; // Move when a button is pressed
 
 //-- 'Camera Holder' to help moving the camera
 const cameraHolder = new THREE.Object3D();
+cameraHolder.position.set(0, 5, 0)
 cameraHolder.add(camera);
 scene.add(cameraHolder);
 //-- Create VR button and settings ---------------------------------------------------------------
@@ -93,8 +95,8 @@ function render() {
 //-- Create Scene --------------------------------------------------------------------------------
 function createScene() {
 	// Light stuff 
-	const light = new THREE.PointLight(0xaaaaaa);
-	light.position.set(30, 30, 20);
+	const light = new THREE.DirectionalLight(0xaaaaaa);
+	light.position.set(30, 60, 20);
 	light.castShadow = true;
 	light.distance = 0;
 	light.shadow.mapSize.width = 1024;
@@ -110,23 +112,56 @@ function createScene() {
 	var cubeTex = textureLoader.load('../../assets/textures/crate.jpg');
 
 	// Create Ground Plane
-	var groundPlane = createGroundPlane(80.0, 80.0, 100, 100, "rgb(200,200,150)");
-	groundPlane.rotateX(degreesToRadians(-90));
-	groundPlane.material.map = floor;
-	groundPlane.material.map.wrapS = THREE.RepeatWrapping;
-	groundPlane.material.map.wrapT = THREE.RepeatWrapping;
-	groundPlane.material.map.repeat.set(8, 8);
-	scene.add(groundPlane);
+	// var groundPlane = createGroundPlane(80.0, 80.0, 100, 100, "rgb(200,200,150)");
+	// groundPlane.rotateX(degreesToRadians(-90));
+	// groundPlane.material.map = floor;
+	// groundPlane.material.map.wrapS = THREE.RepeatWrapping;
+	// groundPlane.material.map.wrapT = THREE.RepeatWrapping;
+	// groundPlane.material.map.repeat.set(8, 8);
+	// scene.add(groundPlane);
 
-	// Create feature cubes [size, xPos, zPos, textureName]
-	createCube(3.0, -20.0, -20.0, cubeTex);
-	createCube(1.0, -15.0, 12.0, cubeTex);
-	createCube(1.0, -10.0, -5.0, cubeTex);
-	createCube(1.0, -5.0, 13.0, cubeTex);
-	createCube(1.0, 5.0, 10.0, cubeTex);
-	createCube(1.0, 10.0, -15.0, cubeTex);
-	createCube(1.0, 20.0, -12.0, cubeTex);
-	createCube(4.0, 20.0, 22.0, cubeTex);
+	// // Create feature cubes [size, xPos, zPos, textureName]
+	// createCube(3.0, -20.0, -20.0, cubeTex);
+	// createCube(1.0, -15.0, 12.0, cubeTex);
+	// createCube(1.0, -10.0, -5.0, cubeTex);
+	// createCube(1.0, -5.0, 13.0, cubeTex);
+	// createCube(1.0, 5.0, 10.0, cubeTex);
+	// createCube(1.0, 10.0, -15.0, cubeTex);
+	// createCube(1.0, 20.0, -12.0, cubeTex);
+	// createCube(4.0, 20.0, 22.0, cubeTex);
+
+	const loader = new GLTFLoader();
+
+	// Load a glTF resource
+	loader.load(
+		// resource URL
+		// '../../assets/models/map-test.glb',
+		'../../assets/models/mars2.glb',
+		// called when the resource is loaded
+		function (gltf) {
+
+			scene.add(gltf.scene);
+
+			gltf.animations; // Array<THREE.AnimationClip>
+			gltf.scene; // THREE.Group
+			gltf.scenes; // Array<THREE.Group>
+			gltf.cameras; // Array<THREE.Camera>
+			gltf.asset; // Object
+
+		},
+		// called while loading is progressing
+		function (xhr) {
+
+			console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+
+		},
+		// called when loading has errors
+		function (error) {
+
+			console.log('An error happened');
+
+		}
+	);
 }
 
 function createCube(cubeSize, xPos, zPos, texture) {
