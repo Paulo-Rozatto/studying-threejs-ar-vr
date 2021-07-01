@@ -32,7 +32,7 @@ camera.position.set(0, 0, 0);
 
 //-- 'Camera Holder' to help moving the camera
 const cameraHolder = new THREE.Object3D();
-// cameraHolder.position.set(0, 5, 0)
+cameraHolder.position.set(0, 5, 0)
 cameraHolder.add(camera);
 scene.add(cameraHolder);
 //-- Create VR button and settings ---------------------------------------------------------------
@@ -51,7 +51,7 @@ const clock = new THREE.Clock();
 const rocks = [];
 const vecOrigin2d = new THREE.Vector2(0, 0); // origin for raycaster
 const quaternion = new THREE.Quaternion(); // aux quaternion to movement
-let aimLine, raycaster;
+let aimLine, raycaster, rayTime = 0;
 
 //-- Creating Scene and calling the main loop ----------------------------------------------------
 createScene();
@@ -78,10 +78,10 @@ function move() {
 }
 
 function detectRocks(delta) {
-	this.time += delta; clock.getDelta();
+	rayTime += delta; clock.getDelta();
 
-	if (this.time > 3) { // raycast for rocks every 3 seconds
-		this.time = 0;
+	if (rayTime > 3) { // raycast for rocks every 3 seconds
+		rayTime = 0;
 		// raycaster.set(camera.getWorldPosition(), camera.getWorldDirection());
 		raycaster.setFromCamera(vecOrigin2d, camera);
 		console.log(raycaster.intersectObjects(rocks));
@@ -103,7 +103,7 @@ function animate() {
 
 function render() {
 	move();
-	detectRocks();
+	detectRocks(clock.getDelta());
 	renderer.render(scene, camera);
 }
 
@@ -123,6 +123,17 @@ function createScene() {
 
 	const ambientLight = new THREE.AmbientLight(0x323232);
 	scene.add(ambientLight);
+
+	const aimGeo = new THREE.PlaneBufferGeometry(0.04, 0.01);
+	const aimMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.5 });
+
+	const horiBar = new THREE.Mesh(aimGeo, aimMat);
+	horiBar.position.set(0, 0, -1);
+	camera.add(horiBar);
+
+	const vertiBar = horiBar.clone();
+	vertiBar.rotation.z = Math.PI / 2;
+	camera.add(vertiBar);
 
 	const loader = new GLTFLoader();
 	//-------- loading terrain and rocks --------
@@ -177,17 +188,6 @@ function createScene() {
 		new THREE.Vector3(0, -0.1, -5),
 		new THREE.Vector3(0, -0.1, 0),
 	];
-
-	const geo = new THREE.BufferGeometry().setFromPoints(points);
-	const mat = new THREE.LineDashedMaterial({
-		color: 0xdfff00,
-		linewidth: 1,
-		scale: 1,
-		dashSize: 3,
-		gapSize: 1,
-	});
-	aimLine = new THREE.Line(geo, mat);
-	camera.add(aimLine);
 
 	raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, 0, -1), 0.5, 5);
 	raycaster.ray = new THREE.Ray(new THREE.Vector3(), new THREE.Vector3(0, 0, -1));
