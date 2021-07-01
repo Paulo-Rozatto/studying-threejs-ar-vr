@@ -28,21 +28,30 @@ let scene = new THREE.Scene();
 let camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, .1, 1000);
 let moveCamera; // Move when a button is pressed 
 
+camera.position.set(0, 0, 0);
+
 //-- 'Camera Holder' to help moving the camera
 const cameraHolder = new THREE.Object3D();
-cameraHolder.position.set(0, 5, 0)
+// cameraHolder.position.set(0, 5, 0)
 cameraHolder.add(camera);
 scene.add(cameraHolder);
 //-- Create VR button and settings ---------------------------------------------------------------
 document.body.appendChild(VRButton.createButton(renderer));
 
 // controllers
-var controller1 = renderer.xr.getController(0);
+const controller1 = renderer.xr.getController(0);
 controller1.addEventListener('selectstart', onSelectStart);
 controller1.addEventListener('selectend', onSelectEnd);
 window.addEventListener('keydown', onSelectStart);
 window.addEventListener('keyup', onSelectEnd);
 camera.add(controller1);
+
+//-- Global objects ----------------------------------------------------
+const clock = new THREE.Clock();
+const rocks = [];
+const vecOrigin2d = new THREE.Vector2(0, 0); // origin for raycaster
+const quaternion = new THREE.Quaternion(); // aux quaternion to movement
+let aimLine, raycaster;
 
 //-- Creating Scene and calling the main loop ----------------------------------------------------
 createScene();
@@ -55,8 +64,7 @@ animate();
 function move() {
 	if (moveCamera) {
 		// Get Camera Rotation
-		let quaternion = new THREE.Quaternion();
-		quaternion = camera.quaternion;
+		quaternion.copy(camera.quaternion);
 
 		// Get direction to translate from quaternion
 		var moveTo = new THREE.Vector3(0, 0, -0.1);
@@ -66,6 +74,17 @@ function move() {
 		cameraHolder.translateX(moveTo.x);
 		cameraHolder.translateY(moveTo.y);
 		cameraHolder.translateZ(moveTo.z);
+	}
+}
+
+function detectRocks(delta) {
+	this.time += delta; clock.getDelta();
+
+	if (this.time > 3) { // raycast for rocks every 3 seconds
+		this.time = 0;
+		// raycaster.set(camera.getWorldPosition(), camera.getWorldDirection());
+		raycaster.setFromCamera(vecOrigin2d, camera);
+		console.log(raycaster.intersectObjects(rocks));
 	}
 }
 
@@ -84,6 +103,7 @@ function animate() {
 
 function render() {
 	move();
+	detectRocks();
 	renderer.render(scene, camera);
 }
 
@@ -97,16 +117,15 @@ function createScene() {
 	light.position.set(20, 300, 100);
 	light.castShadow = true;
 	light.distance = 0;
-	light.shadow.mapSize.width = 1024;
-	light.shadow.mapSize.height = 1024;
+	// light.shadow.mapSize.width = 1024;
+	// light.shadow.mapSize.height = 1024;
 	scene.add(light);
 
-	var ambientLight = new THREE.AmbientLight(0x323232);
+	const ambientLight = new THREE.AmbientLight(0x323232);
 	scene.add(ambientLight);
 
 	const loader = new GLTFLoader();
-
-	// loading terrain and rocks
+	//-------- loading terrain and rocks --------
 	loader.load(
 		'../../assets/models/mars2.glb',
 		function (gltf) {
@@ -118,6 +137,7 @@ function createScene() {
 				}
 				else {
 					e.castShadow = true;
+					rocks.push(e);
 				}
 
 				if (/special*/.test(e.name)) {
@@ -130,13 +150,11 @@ function createScene() {
 			console.log('terrain: ' + (xhr.loaded / xhr.total * 100) + '% loaded');
 		},
 		function (error) {
-
 			console.log('An error happened', error);
-
 		}
 	);
 
-	// loading rover
+	//-------- loading rover --------
 	loader.load(
 		'../../assets/models/perseverance.glb',
 		function (gltf) {
@@ -153,4 +171,24 @@ function createScene() {
 			console.log('An error happened', error)
 		}
 	);
+
+	//-------- Creating aim line --------
+	const points = [
+		new THREE.Vector3(0, -0.1, -5),
+		new THREE.Vector3(0, -0.1, 0),
+	];
+
+	const geo = new THREE.BufferGeometry().setFromPoints(points);
+	const mat = new THREE.LineDashedMaterial({
+		color: 0xdfff00,
+		linewidth: 1,
+		scale: 1,
+		dashSize: 3,
+		gapSize: 1,
+	});
+	aimLine = new THREE.Line(geo, mat);
+	camera.add(aimLine);
+
+	raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, 0, -1), 0.5, 5);
+	raycaster.ray = new THREE.Ray(new THREE.Vector3(), new THREE.Vector3(0, 0, -1));
 }
