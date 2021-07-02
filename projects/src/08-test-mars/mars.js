@@ -51,7 +51,7 @@ const clock = new THREE.Clock();
 const rocks = [];
 const vecOrigin2d = new THREE.Vector2(0, 0); // origin for raycaster
 const quaternion = new THREE.Quaternion(); // aux quaternion to movement
-let aimLine, raycaster, rayTime = 0;
+let aimLine, delta, raycaster, rayTime = 0, intersection, lastRock = null;
 
 //-- Creating Scene and calling the main loop ----------------------------------------------------
 createScene();
@@ -78,13 +78,34 @@ function move() {
 }
 
 function detectRocks(delta) {
-	rayTime += delta; clock.getDelta();
+	rayTime += delta;
 
 	if (rayTime > 3) { // raycast for rocks every 3 seconds
 		rayTime = 0;
-		// raycaster.set(camera.getWorldPosition(), camera.getWorldDirection());
 		raycaster.setFromCamera(vecOrigin2d, camera);
-		console.log(raycaster.intersectObjects(rocks));
+		intersection = raycaster.intersectObjects(rocks)[0];
+
+		if (intersection && intersection.object != lastRock) {
+			console.log(intersection);
+			lastRock = intersection.object;
+			aimLine.scale.y = intersection.distance;
+			aimLine.visible = true;
+		}
+		else {
+			if (lastRock != null) {
+				lastRock.material.emissive.setRGB(1, 1, 0);
+				lastRock.material.emissiveIntensity = 0.1
+				aimLine.material.color.setRGB(255, 0, 0);
+				aimLine.visible = false;
+			}
+		}
+	}
+}
+
+function rayAnimation(delta) {
+	if (aimLine.visible) {
+		aimLine.material.color.r -= delta * 2;
+		aimLine.material.color.g += delta / 2;
 	}
 }
 
@@ -102,8 +123,10 @@ function animate() {
 }
 
 function render() {
+	delta = clock.getDelta();
 	move();
-	detectRocks(clock.getDelta());
+	detectRocks(delta);
+	rayAnimation(delta);
 	renderer.render(scene, camera);
 }
 
@@ -124,16 +147,24 @@ function createScene() {
 	const ambientLight = new THREE.AmbientLight(0x323232);
 	scene.add(ambientLight);
 
-	const aimGeo = new THREE.PlaneBufferGeometry(0.04, 0.01);
-	const aimMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.5 });
+	const barGeo = new THREE.PlaneBufferGeometry(0.04, 0.01);
+	const barMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.5 });
 
-	const horiBar = new THREE.Mesh(aimGeo, aimMat);
+	const horiBar = new THREE.Mesh(barGeo, barMat);
 	horiBar.position.set(0, 0, -1);
 	camera.add(horiBar);
 
 	const vertiBar = horiBar.clone();
 	vertiBar.rotation.z = Math.PI / 2;
 	camera.add(vertiBar);
+
+	const aimGeo = new THREE.CylinderBufferGeometry(0.01, 0.01, 1);
+	const aimMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+	aimLine = new THREE.Mesh(aimGeo, aimMat);
+	aimLine.position.y = -0.1;
+	aimLine.rotation.x = Math.PI / 2;
+	aimLine.visible = false;
+	camera.add(aimLine);
 
 	const loader = new GLTFLoader();
 	//-------- loading terrain and rocks --------
