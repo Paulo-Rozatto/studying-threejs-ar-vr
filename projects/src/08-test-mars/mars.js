@@ -51,7 +51,7 @@ const clock = new THREE.Clock();
 const rocks = [];
 const vecOrigin2d = new THREE.Vector2(0, 0); // origin for raycaster
 const quaternion = new THREE.Quaternion(); // aux quaternion to movement
-let aimLine, delta, raycaster, rayTime = 0, intersection, lastRock = null;
+let aimLine, delta, raycaster, rayTime = 0, intersection, lastRock = null, ground, groundIntersection;
 
 //-- Creating Scene and calling the main loop ----------------------------------------------------
 createScene();
@@ -62,18 +62,24 @@ animate();
 //------------------------------------------------------------------------------------------------
 
 function move() {
+	raycaster.setFromCamera(vecOrigin2d, camera);
 	if (moveCamera) {
-		// Get Camera Rotation
-		quaternion.copy(camera.quaternion);
 
-		// Get direction to translate from quaternion
-		var moveTo = new THREE.Vector3(0, 0, -0.1);
-		moveTo.applyQuaternion(quaternion);
+		groundIntersection = raycaster.intersectObject(ground)[0];
+		console.log(groundIntersection);
+		if (!groundIntersection || groundIntersection.distance > 2) {
+			// Get Camera Rotation
+			quaternion.copy(camera.quaternion);
 
-		// Move the camera Holder to the computed direction
-		cameraHolder.translateX(moveTo.x);
-		cameraHolder.translateY(moveTo.y);
-		cameraHolder.translateZ(moveTo.z);
+			// Get direction to translate from quaternion
+			var moveTo = new THREE.Vector3(0, 0, -0.1);
+			moveTo.applyQuaternion(quaternion);
+
+			// Move the camera Holder to the computed direction
+			cameraHolder.translateX(moveTo.x);
+			cameraHolder.translateY(moveTo.y);
+			cameraHolder.translateZ(moveTo.z);
+		}
 	}
 }
 
@@ -82,7 +88,6 @@ function detectRocks(delta) {
 
 	if (rayTime > 3) { // raycast for rocks every 3 seconds
 		rayTime = 0;
-		raycaster.setFromCamera(vecOrigin2d, camera);
 		intersection = raycaster.intersectObjects(rocks)[0];
 
 		if (intersection && intersection.object != lastRock) {
@@ -176,6 +181,7 @@ function createScene() {
 			gltf.scene.traverse(e => {
 				if (/ground/.test(e.name)) {
 					e.receiveShadow = true;
+					ground = e;
 				}
 				else {
 					e.castShadow = true;
@@ -220,6 +226,6 @@ function createScene() {
 		new THREE.Vector3(0, -0.1, 0),
 	];
 
-	raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, 0, -1), 0.5, 5);
+	raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, 0, -1), 0, 5);
 	raycaster.ray = new THREE.Ray(new THREE.Vector3(), new THREE.Vector3(0, 0, -1));
 }
