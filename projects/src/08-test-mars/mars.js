@@ -2,6 +2,8 @@
 import * as THREE from '../../build/three.module.js';
 import { VRButton } from '../../build/jsm/webxr/VRButton.js';
 import { GLTFLoader } from '../../build/jsm/loaders/GLTFLoader.js';
+import { PointerLockControls } from '../../build/jsm/controls/PointerLockControls.js'
+import Stats from '../../libs/stats.module.js';
 import {
 	onWindowResize,
 } from "../../libs/util/util.js";
@@ -19,9 +21,22 @@ renderer.setClearColor(new THREE.Color("#9C7747"));
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.xr.enabled = true;
+renderer.gammaFactor = 2.2;
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
+
+//-- Stats settings ---------------------------------------------------------------------------
+
+const stats = new Stats();
+stats.setMode(0); // 0: fps, 1: ms
+
+// Align top-left
+stats.domElement.style.position = 'absolute';
+stats.domElement.style.left = '0px';
+stats.domElement.style.top = '0px';
+
+document.getElementById('stats').appendChild(stats.domElement);
 
 //-- Setting scene and camera -------------------------------------------------------------------
 let scene = new THREE.Scene();
@@ -32,7 +47,7 @@ camera.position.set(0, 0, 0);
 
 //-- 'Camera Holder' to help moving the camera
 const cameraHolder = new THREE.Object3D();
-cameraHolder.position.set(0, 5, 0)
+cameraHolder.position.set(0, 2, 0)
 cameraHolder.add(camera);
 scene.add(cameraHolder);
 //-- Create VR button and settings ---------------------------------------------------------------
@@ -48,10 +63,10 @@ camera.add(controller1);
 
 //-- Global objects ----------------------------------------------------
 const clock = new THREE.Clock();
-const rocks = [];
+const rocks = [], ground = [];
 const vecOrigin2d = new THREE.Vector2(0, 0); // origin for raycaster
 const quaternion = new THREE.Quaternion(); // aux quaternion to movement
-let aimLine, delta, raycaster, rayTime = 0, intersection, lastRock = null, ground, groundIntersection;
+let aimLine, delta, raycaster, rayTime = 0, intersection, lastRock = null, groundIntersection;
 
 //-- Creating Scene and calling the main loop ----------------------------------------------------
 createScene();
@@ -65,8 +80,8 @@ function move() {
 	raycaster.setFromCamera(vecOrigin2d, camera);
 	if (moveCamera) {
 
-		groundIntersection = raycaster.intersectObject(ground)[0];
-		console.log(groundIntersection);
+		groundIntersection = raycaster.intersectObjects(ground)[0];
+
 		if (!groundIntersection || groundIntersection.distance > 2) {
 			// Get Camera Rotation
 			quaternion.copy(camera.quaternion);
@@ -130,6 +145,7 @@ function animate() {
 function render() {
 	delta = clock.getDelta();
 	move();
+	stats.update();
 	detectRocks(delta);
 	rayAnimation(delta);
 	renderer.render(scene, camera);
@@ -141,19 +157,28 @@ function render() {
 
 //-- Create Scene --------------------------------------------------------------------------------
 function createScene() {
-	const light = new THREE.DirectionalLight(0xaaaaaa);
-	light.position.set(20, 300, 100);
+	let fogColor = new THREE.Color(0xB77700);
+	scene.background = fogColor;
+	scene.fog = new THREE.Fog(fogColor, 0.025, 100);
+
+	const light = new THREE.SpotLight(0xaaaaaa);
+	light.position.set(20, 100, 200);
 	light.castShadow = true;
 	light.distance = 0;
-	// light.shadow.mapSize.width = 1024;
-	// light.shadow.mapSize.height = 1024;
+	light.shadow.mapSize.width = 1024; // default
+	light.shadow.mapSize.height = 1024; // default
+	light.shadow.camera.near = 1; // default
+	light.shadow.camera.far = 500; // default
+	light.shadow.focus = 1; // default
+
 	scene.add(light);
 
-	const ambientLight = new THREE.AmbientLight(0x323232);
-	scene.add(ambientLight);
+	const hemisphereLight = new THREE.HemisphereLight(0x605500, 0x080820, 1);
+	hemisphereLight.position.y = 100;
+	scene.add(hemisphereLight);
 
-	const barGeo = new THREE.PlaneBufferGeometry(0.04, 0.01);
-	const barMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.5 });
+	const barGeo = new THREE.PlaneBufferGeometry(0.03, 0.0075);
+	const barMat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
 
 	const horiBar = new THREE.Mesh(barGeo, barMat);
 	horiBar.position.set(0, 0, -1);
@@ -174,14 +199,18 @@ function createScene() {
 	const loader = new GLTFLoader();
 	//-------- loading terrain and rocks --------
 	loader.load(
-		'../../assets/models/mars2.glb',
+		'../../assets/models/mars3.glb',
 		function (gltf) {
 
 			scene.add(gltf.scene);
 			gltf.scene.traverse(e => {
-				if (/ground/.test(e.name)) {
+				e.matrixAutoUpdate = false;
+				e.updateMatrix();
+
+				if (/ground*/.test(e.name)) {
+					console.log(e.material);
 					e.receiveShadow = true;
-					ground = e;
+					ground.push(e);
 				}
 				else {
 					e.castShadow = true;
@@ -202,6 +231,10 @@ function createScene() {
 		}
 	);
 
+	const controls = new PointerLockControls(camera, document.body);
+
+	window.addEventListener('click', () => { controls.lock() });
+
 	//-------- loading rover --------
 	loader.load(
 		'../../assets/models/perseverance.glb',
@@ -210,6 +243,10 @@ function createScene() {
 
 			rover.rotation.y = Math.PI;
 			rover.position.z = -5;
+			rover.castShadow = true;
+			rover.matrixAutoUpdate = false
+
+			rover.updateMatrix();
 			scene.add(rover);
 		},
 		function (xhr) {
