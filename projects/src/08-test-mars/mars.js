@@ -23,7 +23,7 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.xr.enabled = true;
 renderer.gammaFactor = 2.2;
 renderer.outputEncoding = THREE.sRGBEncoding;
-renderer.shadowMap.enabled = true;
+renderer.shadowMap.enabled = false;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
 
 //-- Stats settings ---------------------------------------------------------------------------
@@ -62,11 +62,25 @@ window.addEventListener('keyup', onSelectEnd);
 camera.add(controller1);
 
 //-- Global objects ----------------------------------------------------
-const clock = new THREE.Clock();
-const rocks = [], ground = [];
+const DETECTING_DELAY = 1; // defines how many seconds it take to processa a rock
+const INTERSECT_DELAY = 0.5; // defines how many seconds to wait to raycast
+
+const clock = new THREE.Clock(); // used to get time between render calls
+let delta; // store result of clock
+let passedTime = 0; // sum of deltas to get total time passed
+
+let loadingBar, outline; // they store loading bar mesh and outline mesh (initialized in create scene) 
+let detectingTime = 0, isDetecting = false; // helpers to detecing animation
+
+let raycaster, intersection, groundIntersection, lastRock = null;
+
+const rocks = []; // receives rock meshes in createScene()
+const ground = []; // receives ground meshes in createScene()
+
+let text, textGeo, font, count = 0;
+
 const vecOrigin2d = new THREE.Vector2(0, 0); // origin for raycaster
 const quaternion = new THREE.Quaternion(); // aux quaternion to movement
-let aimLine, delta, raycaster, rayTime = 0, intersection, lastRock = null, groundIntersection;
 
 //-- Creating Scene and calling the main loop ----------------------------------------------------
 createScene();
@@ -99,33 +113,60 @@ function move() {
 }
 
 function detectRocks(delta) {
-	rayTime += delta;
+	passedTime += delta;
 
-	if (rayTime > 3) { // raycast for rocks every 3 seconds
-		rayTime = 0;
+	if (isDetecting) {
+		detectingTime += delta;
+		loadingAnimation(detectingTime);
+	}
+
+	if (passedTime > INTERSECT_DELAY) {
+		// console.log(renderer.info.render.triangles);
+		passedTime = 0;
 		intersection = raycaster.intersectObjects(rocks)[0];
 
-		if (intersection && intersection.object != lastRock) {
-			console.log(intersection);
-			lastRock = intersection.object;
-			aimLine.scale.y = intersection.distance;
-			aimLine.visible = true;
-		}
-		else {
-			if (lastRock != null) {
-				lastRock.material.emissive.setRGB(1, 1, 0);
-				lastRock.material.emissiveIntensity = 0.1
-				aimLine.material.color.setRGB(255, 0, 0);
-				aimLine.visible = false;
+		if (intersection) {
+			isDetecting = true;
+			outline.visible = true;
+			loadingBar.visible = true;
+
+			if (intersection.object != lastRock) {
+				detectingTime = 0;
+				loadingBar.scale.x = 0;
+				lastRock = intersection.object;
 			}
+		}
+		else if (lastRock != null) {
+			lastRock = null;
+			isDetecting = false;
+			outline.visible = false;
+			loadingBar.visible = false;
 		}
 	}
 }
 
-function rayAnimation(delta) {
-	if (aimLine.visible) {
-		aimLine.material.color.r -= delta * 2;
-		aimLine.material.color.g += delta / 2;
+function loadingAnimation(passedTime) {
+	if (passedTime < DETECTING_DELAY) {
+		loadingBar.scale.x = passedTime;
+	}
+	else {
+		if (/special*/.test(lastRock.name)) {
+			count++;
+			textGeo = new THREE.TextBufferGeometry(count + '/3', {
+				font: font,
+				size: 0.05,
+				height: 0,
+			});
+			text.geometry = textGeo;
+			text.geometry.needsUpdate = true;
+		}
+
+		lastRock.material.emissive.setRGB(1, 1, 1);
+		lastRock.material.emissiveIntensity = 0.1;
+
+		let rockIndex = rocks.indexOf(lastRock);
+		rocks.splice(rockIndex, 1);
+		isDetecting = false;
 	}
 }
 
@@ -147,7 +188,6 @@ function render() {
 	move();
 	stats.update();
 	detectRocks(delta);
-	rayAnimation(delta);
 	renderer.render(scene, camera);
 }
 
@@ -157,58 +197,40 @@ function render() {
 
 //-- Create Scene --------------------------------------------------------------------------------
 function createScene() {
+	//-------- fog creation --------
 	let fogColor = new THREE.Color(0xB77700);
 	scene.background = fogColor;
 	scene.fog = new THREE.Fog(fogColor, 0.025, 100);
 
+	//-------- setting lights up --------
 	const light = new THREE.SpotLight(0xaaaaaa);
 	light.position.set(20, 100, 200);
-	light.castShadow = true;
-	light.distance = 0;
-	light.shadow.mapSize.width = 1024; // default
-	light.shadow.mapSize.height = 1024; // default
-	light.shadow.camera.near = 1; // default
-	light.shadow.camera.far = 500; // default
-	light.shadow.focus = 1; // default
-
 	scene.add(light);
 
 	const hemisphereLight = new THREE.HemisphereLight(0x605500, 0x080820, 1);
 	hemisphereLight.position.y = 100;
 	scene.add(hemisphereLight);
 
-	const barGeo = new THREE.PlaneBufferGeometry(0.03, 0.0075);
-	const barMat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+	const controls = new PointerLockControls(camera, document.body);
 
-	const horiBar = new THREE.Mesh(barGeo, barMat);
-	horiBar.position.set(0, 0, -1);
-	camera.add(horiBar);
+	window.addEventListener('click', () => { controls.lock() });
 
-	const vertiBar = horiBar.clone();
-	vertiBar.rotation.z = Math.PI / 2;
-	camera.add(vertiBar);
+	raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, 0, -1), 0, 5);
 
-	const aimGeo = new THREE.CylinderBufferGeometry(0.01, 0.01, 1);
-	const aimMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-	aimLine = new THREE.Mesh(aimGeo, aimMat);
-	aimLine.position.y = -0.1;
-	aimLine.rotation.x = Math.PI / 2;
-	aimLine.visible = false;
-	camera.add(aimLine);
 
+	//-------- loading external objects --------
 	const loader = new GLTFLoader();
+	let hasTerrainLoaded = false, hasRoverLoaded = false;
+
 	//-------- loading terrain and rocks --------
 	loader.load(
 		'../../assets/models/mars3.glb',
 		function (gltf) {
-
-			scene.add(gltf.scene);
 			gltf.scene.traverse(e => {
 				e.matrixAutoUpdate = false;
 				e.updateMatrix();
 
 				if (/ground*/.test(e.name)) {
-					console.log(e.material);
 					e.receiveShadow = true;
 					ground.push(e);
 				}
@@ -222,47 +244,128 @@ function createScene() {
 					e.material.emissiveIntensity = 0.01;
 				}
 			});
+
+			scene.add(gltf.scene);
+			hasTerrainLoaded = true;
+
+			// if (hasRoverLoaded) 
+			createCameraElements(); // camera interface has to be created after other objects in scene
 		},
 		function (xhr) {
-			console.log('terrain: ' + (xhr.loaded / xhr.total * 100) + '% loaded');
+			console.log('Terrain: ' + (xhr.loaded / xhr.total * 100) + '% loaded');
 		},
 		function (error) {
 			console.log('An error happened', error);
 		}
 	);
 
-	const controls = new PointerLockControls(camera, document.body);
-
-	window.addEventListener('click', () => { controls.lock() });
-
 	//-------- loading rover --------
-	loader.load(
-		'../../assets/models/perseverance.glb',
-		function (gltf) {
-			const rover = gltf.scene;
+	// loader.load(
+	// 	'../../assets/models/perseverance.glb',
+	// 	function (gltf) {
+	// 		const rover = gltf.scene;
 
-			rover.rotation.y = Math.PI;
-			rover.position.z = -5;
-			rover.castShadow = true;
-			rover.matrixAutoUpdate = false
+	// 		rover.rotation.y = Math.PI;
+	// 		rover.position.z = -5;
+	// 		rover.castShadow = true;
+	// 		rover.matrixAutoUpdate = false
+	// 		rover.updateMatrix();
 
-			rover.updateMatrix();
-			scene.add(rover);
-		},
-		function (xhr) {
-			console.log('rover: ' + (xhr.loaded / xhr.total * 100) + '% loaded');
-		},
-		function (error) {
-			console.log('An error happened', error)
-		}
-	);
+	// 		scene.add(rover);
+	// 		hasRoverLoaded = true;
 
-	//-------- Creating aim line --------
-	const points = [
-		new THREE.Vector3(0, -0.1, -5),
-		new THREE.Vector3(0, -0.1, 0),
-	];
+	// 		if (hasTerrainLoaded) createCameraInterface(); // camera interface has to be created after other objects in scene
 
-	raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, 0, -1), 0, 5);
-	raycaster.ray = new THREE.Ray(new THREE.Vector3(), new THREE.Vector3(0, 0, -1));
+	// 	},
+	// 	function (xhr) {
+	// 		console.log('Rover: ' + (xhr.loaded / xhr.total * 100) + '% loaded');
+	// 	},
+	// 	function (error) {
+	// 		console.log('An error happened', error)
+	// 	}
+	// );
+}
+
+
+function createCameraElements() {
+	//-------- Green material used by different meshes below --------
+	const greenMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, depthWrite: false, depthTest: false });
+
+	//-------- creating aim cross --------
+	const barGeo = new THREE.PlaneBufferGeometry(0.025, 0.00625);
+
+	const horiBar = new THREE.Mesh(barGeo, greenMat);
+	horiBar.position.set(0, 0, -1);
+	camera.add(horiBar);
+
+	const vertiBar = horiBar.clone();
+	vertiBar.rotation.z = Math.PI / 2;
+	camera.add(vertiBar);
+
+	//-------- Creating loading bar meshes --------
+	const loadingGeo = new THREE.PlaneBufferGeometry(0.15, 0.02);
+
+	loadingBar = new THREE.Mesh(loadingGeo, greenMat);
+	loadingBar.position.set(0, -0.05, -1);
+	loadingBar.visible = false;
+	camera.add(loadingBar);
+
+	const outlineGeo = new THREE.EdgesGeometry(loadingGeo);
+	const outlineMat = new THREE.LineBasicMaterial({ color: 0x00ff00 });
+
+	outline = new THREE.LineSegments(outlineGeo, outlineMat);
+	outline.position.copy(loadingBar.position);
+	outline.scale.set(1.1, 1.5, 1);
+	outline.visible = false;
+	camera.add(outline);
+
+	//-------- Creating corner bars --------
+	const cornerBarGeo = new THREE.PlaneBufferGeometry(0.25, 0.01);
+
+	const horiCornerBar = new THREE.Mesh(cornerBarGeo, greenMat);
+	horiCornerBar.position.set(0.125, 0, 0);
+	const vertiCornerBar = horiCornerBar.clone();
+	vertiCornerBar.rotation.set(0, 0, Math.PI / 2);
+	vertiCornerBar.position.set(0.006, 0.13, 0)
+
+	const corner = new THREE.Object3D();
+	corner.add(horiCornerBar);
+	corner.add(vertiCornerBar);
+
+	const corner1 = corner.clone();
+	corner1.position.set(-0.45, -0.45, -1);
+	camera.add(corner1);
+
+	const corner2 = corner.clone();
+	corner2.rotation.set(0, 0, Math.PI / 2);
+	corner2.position.set(0.45, -0.45, -1);
+	camera.add(corner2);
+
+	const corner3 = corner.clone();
+	corner3.rotation.set(0, 0, -Math.PI / 2);
+	corner3.position.set(-0.45, 0.45, -1);
+	camera.add(corner3);
+
+	const corner4 = corner.clone();
+	corner4.rotation.set(0, 0, -Math.PI);
+	corner4.position.set(0.45, 0.45, -1);
+	camera.add(corner4);
+
+	//-------- Creating corner bars --------
+	const loader = new THREE.FontLoader();
+
+	loader.load('../../assets/fonts/Roboto_Regular.json', function (e) {
+		font = e;
+
+		textGeo = new THREE.TextBufferGeometry('0/3', {
+			font: font,
+			size: 0.05,
+			height: 0,
+		});
+
+		text = new THREE.Mesh(textGeo, greenMat);
+		text.position.set(0.3, 0.35, -1);
+		camera.add(text);
+
+	});
 }
