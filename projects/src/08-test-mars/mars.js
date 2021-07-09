@@ -20,7 +20,7 @@ let renderer = new THREE.WebGLRenderer();
 renderer.setClearColor(new THREE.Color("#9C7747"));
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
-// renderer.xr.enabled = true;
+renderer.xr.enabled = true;
 renderer.gammaFactor = 2.2;
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.shadowMap.enabled = false;
