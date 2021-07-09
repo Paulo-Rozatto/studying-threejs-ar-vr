@@ -20,7 +20,7 @@ let renderer = new THREE.WebGLRenderer();
 renderer.setClearColor(new THREE.Color("#9C7747"));
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.xr.enabled = true;
+// renderer.xr.enabled = true;
 renderer.gammaFactor = 2.2;
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.shadowMap.enabled = false;
@@ -77,7 +77,8 @@ let raycaster, intersection, groundIntersection, lastRock = null;
 const rocks = []; // receives rock meshes in createScene()
 const ground = []; // receives ground meshes in createScene()
 
-let text, textGeo, font, count = 0;
+let counterText, counterTextGeo, font, count = 0;
+let winText;
 
 const vecOrigin2d = new THREE.Vector2(0, 0); // origin for raycaster
 const quaternion = new THREE.Quaternion(); // aux quaternion to movement
@@ -152,13 +153,17 @@ function loadingAnimation(passedTime) {
 	else {
 		if (/special*/.test(lastRock.name)) {
 			count++;
-			textGeo = new THREE.TextBufferGeometry(count + '/3', {
+			counterTextGeo = new THREE.TextBufferGeometry(count + '/3', {
 				font: font,
 				size: 0.05,
 				height: 0,
 			});
-			text.geometry = textGeo;
-			text.geometry.needsUpdate = true;
+			counterText.geometry = counterTextGeo;
+			counterText.geometry.needsUpdate = true;
+
+			if (count === 3) {
+				winText.visible = true;
+			}
 		}
 
 		lastRock.material.emissive.setRGB(1, 1, 1);
@@ -357,15 +362,25 @@ function createCameraElements() {
 	loader.load('../../assets/fonts/Roboto_Regular.json', function (e) {
 		font = e;
 
-		textGeo = new THREE.TextBufferGeometry('0/3', {
+		counterTextGeo = new THREE.TextBufferGeometry('0/3', {
 			font: font,
 			size: 0.05,
 			height: 0,
 		});
 
-		text = new THREE.Mesh(textGeo, greenMat);
-		text.position.set(0.3, 0.35, -1);
-		camera.add(text);
+		counterText = new THREE.Mesh(counterTextGeo, greenMat);
+		counterText.position.set(0.3, 0.35, -1);
+		camera.add(counterText);
+
+		const winTextGeo = new THREE.TextBufferGeometry('Task Completed', {
+			font: font,
+			size: 0.05,
+			height: 0,
+		});
+		winText = new THREE.Mesh(winTextGeo, greenMat);
+		winText.position.set(-0.225, 0.1, -1);
+		winText.visible = false;
+		camera.add(winText);
 
 	});
 }
