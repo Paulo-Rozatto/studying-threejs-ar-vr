@@ -20,7 +20,7 @@ let renderer = new THREE.WebGLRenderer();
 renderer.setClearColor(new THREE.Color("#9C7747"));
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.xr.enabled = true;
+// renderer.xr.enabled = true;
 renderer.gammaFactor = 2.2;
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.shadowMap.enabled = false;
@@ -229,7 +229,7 @@ function createScene() {
 
 	//-------- loading terrain and rocks --------
 	loader.load(
-		'../../assets/models/mars3.glb',
+		'../../assets/models/mars4.glb',
 		function (gltf) {
 			gltf.scene.traverse(e => {
 				e.matrixAutoUpdate = false;
