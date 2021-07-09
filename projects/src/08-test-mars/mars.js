@@ -20,7 +20,7 @@ let renderer = new THREE.WebGLRenderer();
 renderer.setClearColor(new THREE.Color("#9C7747"));
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
-// renderer.xr.enabled = true;
+renderer.xr.enabled = true;
 renderer.gammaFactor = 2.2;
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.shadowMap.enabled = false;
@@ -316,7 +316,7 @@ function createCameraElements() {
 	camera.add(loadingBar);
 
 	const outlineGeo = new THREE.EdgesGeometry(loadingGeo);
-	const outlineMat = new THREE.LineBasicMaterial({ color: 0x00ff00 });
+	const outlineMat = new THREE.LineBasicMaterial({ color: 0x00ff00, depthWrite: false, depthTest: false });
 
 	outline = new THREE.LineSegments(outlineGeo, outlineMat);
 	outline.position.copy(loadingBar.position);
