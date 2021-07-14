@@ -50,7 +50,14 @@ scene.add(cameraHolder);
 const controller1 = renderer.xr.getController(0);
 controller1.addEventListener('selectstart', onSelectStart);
 controller1.addEventListener('selectend', onSelectEnd);
-window.addEventListener('keydown', onSelectStart);
+window.addEventListener('keydown', (e) => {
+	if (e.key === 'w') {
+		onSelectStart();
+	}
+	else {
+		console.log(cameraHolder.position);
+	}
+});
 window.addEventListener('keyup', onSelectEnd);
 camera.add(controller1);
 
@@ -214,13 +221,34 @@ async function createScene() {
 
 	raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, 0, -1), 0, 5);
 
+	//-- Setting curve
+	const curve = new THREE.CatmullRomCurve3([
+		new THREE.Vector3(0, 1, 0),
+		new THREE.Vector3(1, 1, -10),
+		new THREE.Vector3(-12, 1, -25),
+		new THREE.Vector3(2, 1, -32),
+		new THREE.Vector3(-30, 1, -40),
+		new THREE.Vector3(0, 2, -55),
+		new THREE.Vector3(3, 10, -60),
+		new THREE.Vector3(10, 15, -70)
+	])
+
+	const points = curve.getPoints(100);
+	const geometry = new THREE.BufferGeometry().setFromPoints(points);
+
+	const material = new THREE.LineBasicMaterial({ color: 0xff0000 });
+
+	// Create the final object to add to the scene
+	const curveObject = new THREE.Line(geometry, material);
+	scene.add(curveObject);
+
 	//-------- loading external objects --------
 
 	const loadingText = document.querySelector('#loader-text');
 
 	// loading terrain and rocks
 	await asyncLoader(
-		'../../assets/models/mars4.glb', // model url
+		'../../assets/models/mars5.glb', // model url
 		(gltf) => { // on load scene
 			loadingText.innerHTML = 'Processing...';
 
