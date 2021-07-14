@@ -50,15 +50,6 @@ scene.add(cameraHolder);
 const controller1 = renderer.xr.getController(0);
 controller1.addEventListener('selectstart', onSelectStart);
 controller1.addEventListener('selectend', onSelectEnd);
-window.addEventListener('keydown', (e) => {
-	if (e.key === 'w') {
-		onSelectStart();
-	}
-	else {
-		console.log(cameraHolder.position);
-	}
-});
-window.addEventListener('keyup', onSelectEnd);
 camera.add(controller1);
 
 //--  General globals ---------------------------------------------------------------------------
@@ -285,8 +276,9 @@ async function createScene() {
 	createCameraElements();
 
 	//-- Create VR button and settings ---------------------------------------------------------------
-	loadingText.innerHTML = 'Instructions:<br><br> Search for the red rocks.'
-	document.querySelector('#loader').style.display = 'none';
+	loadingText.style.display = 'none';
+	document.querySelector('.container').style.display = 'none';
+	document.querySelector('#instructions').style.display = 'block';
 	document.body.appendChild(VRButton.createButton(renderer));
 
 	//-------- loading rover --------

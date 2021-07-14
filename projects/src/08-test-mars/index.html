@@ -28,10 +28,32 @@
             animation: spin 2s linear infinite;
         }
 
-        #loader-text {
+        .text {
             color: white;
             text-align: center;
-            font-size: large;
+            font-size: 1.2em;
+        }
+
+        #instructions {
+            display: flex;
+            margin: auto;
+            position: absolute;
+            top: 25%;
+            left: 10%;
+            margin: 0 auto;
+            width: 80vw;
+            height: 50vh;
+            border: 1px solid white;
+
+            background-image: url('img/red-rock.jpg');
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        #instructions img {
+            margin: auto;
+            max-height: 60%;
+            max-width: 60%;
         }
 
         @-webkit-keyframes spin {
@@ -60,8 +82,15 @@
     <div id="stats"></div>
     <div class="container">
         <div id="loader"></div>
-        <p id="loader-text">Downloading...</p>
+        <p id="loader-text" class="text">Downloading...</p>
     </div>
+
+    <div id="instructions" class="text" style="display: none;">
+        <h2>Instructions:</h2>
+        <p>Follow the line and find the 3 red rocks like the one below.</p>
+        <!-- <img src="img/red-rock.jpg" alt="red rock"> -->
+    </div>
+
     <div id="webgl-output">
         <script type="module" src="mars.js"></script>
     </div>
