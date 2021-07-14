@@ -2,7 +2,6 @@
 import * as THREE from '../../build/three.module.js';
 import { VRButton } from '../../build/jsm/webxr/VRButton.js';
 import { GLTFLoader } from '../../build/jsm/loaders/GLTFLoader.js';
-import { PointerLockControls } from '../../build/jsm/controls/PointerLockControls.js'
 import Stats from '../../libs/stats.module.js';
 import {
 	onWindowResize,
@@ -12,11 +11,8 @@ import {
 //-- MAIN SCRIPT --------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------------
 
-//--  General globals ---------------------------------------------------------------------------
-window.addEventListener('resize', onWindowResize);
-
 //-- Renderer settings ---------------------------------------------------------------------------
-let renderer = new THREE.WebGLRenderer();
+const renderer = new THREE.WebGLRenderer();
 renderer.setClearColor(new THREE.Color("#9C7747"));
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -27,7 +23,6 @@ renderer.shadowMap.enabled = false;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
 
 //-- Stats settings ---------------------------------------------------------------------------
-
 const stats = new Stats();
 stats.setMode(0); // 0: fps, 1: ms
 
@@ -39,8 +34,8 @@ stats.domElement.style.top = '0px';
 document.getElementById('stats').appendChild(stats.domElement);
 
 //-- Setting scene and camera -------------------------------------------------------------------
-let scene = new THREE.Scene();
-let camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, .1, 1000);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, .1, 1000);
 let moveCamera; // Move when a button is pressed 
 
 camera.position.set(0, 0, 0);
@@ -50,8 +45,6 @@ const cameraHolder = new THREE.Object3D();
 cameraHolder.position.set(0, 2, 0)
 cameraHolder.add(camera);
 scene.add(cameraHolder);
-//-- Create VR button and settings ---------------------------------------------------------------
-document.body.appendChild(VRButton.createButton(renderer));
 
 // controllers
 const controller1 = renderer.xr.getController(0);
@@ -60,6 +53,9 @@ controller1.addEventListener('selectend', onSelectEnd);
 window.addEventListener('keydown', onSelectStart);
 window.addEventListener('keyup', onSelectEnd);
 camera.add(controller1);
+
+//--  General globals ---------------------------------------------------------------------------
+window.addEventListener('resize', onWindowResize);
 
 //-- Global objects ----------------------------------------------------
 const DETECTING_DELAY = 1; // defines how many seconds it take to processa a rock
@@ -90,6 +86,19 @@ animate();
 //------------------------------------------------------------------------------------------------
 //-- FUNCTIONS -----------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------
+
+//-- Main loop -----------------------------------------------------------------------------------
+function animate() {
+	renderer.setAnimationLoop(render);
+}
+
+function render() {
+	delta = clock.getDelta();
+	move();
+	stats.update();
+	detectRocks(delta);
+	renderer.render(scene, camera);
+}
 
 function move() {
 	raycaster.setFromCamera(vecOrigin2d, camera);
@@ -183,25 +192,12 @@ function onSelectEnd() {
 	moveCamera = false;
 }
 
-//-- Main loop -----------------------------------------------------------------------------------
-function animate() {
-	renderer.setAnimationLoop(render);
-}
-
-function render() {
-	delta = clock.getDelta();
-	move();
-	stats.update();
-	detectRocks(delta);
-	renderer.render(scene, camera);
-}
-
 //------------------------------------------------------------------------------------------------
 //-- Scene and auxiliary functions ---------------------------------------------------------------
 //------------------------------------------------------------------------------------------------
 
 //-- Create Scene --------------------------------------------------------------------------------
-function createScene() {
+async function createScene() {
 	//-------- fog creation --------
 	let fogColor = new THREE.Color(0xB77700);
 	scene.background = fogColor;
@@ -216,53 +212,54 @@ function createScene() {
 	hemisphereLight.position.y = 100;
 	scene.add(hemisphereLight);
 
-	const controls = new PointerLockControls(camera, document.body);
-
-	window.addEventListener('click', () => { controls.lock() });
-
 	raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, 0, -1), 0, 5);
 
-
 	//-------- loading external objects --------
-	const loader = new GLTFLoader();
-	let hasTerrainLoaded = false, hasRoverLoaded = false;
 
-	//-------- loading terrain and rocks --------
-	loader.load(
-		'../../assets/models/mars4.glb',
-		function (gltf) {
-			gltf.scene.traverse(e => {
-				e.matrixAutoUpdate = false;
-				e.updateMatrix();
+	const loadingText = document.querySelector('#loader-text');
 
-				if (/ground*/.test(e.name)) {
-					e.receiveShadow = true;
-					ground.push(e);
+	// loading terrain and rocks
+	await asyncLoader(
+		'../../assets/models/mars4.glb', // model url
+		(gltf) => { // on load scene
+			loadingText.innerHTML = 'Processing...';
+
+			gltf.scene.traverse(child => {
+				child.matrixAutoUpdate = false;
+				child.updateMatrix();
+
+				if (/ground*/.test(child.name)) {
+					child.receiveShadow = true;
+					ground.push(child);
 				}
 				else {
-					e.castShadow = true;
-					rocks.push(e);
+					child.castShadow = true;
+					rocks.push(child);
 				}
 
-				if (/special*/.test(e.name)) {
-					e.material.emissive.setRGB(8, 2, 2)
-					e.material.emissiveIntensity = 0.01;
+				if (/special*/.test(child.name)) {
+					child.material.emissive.setRGB(8, 2, 2)
+					child.material.emissiveIntensity = 0.01;
 				}
 			});
 
 			scene.add(gltf.scene);
-			hasTerrainLoaded = true;
-
-			// if (hasRoverLoaded) 
-			createCameraElements(); // camera interface has to be created after other objects in scene
 		},
-		function (xhr) {
+		(xhr) => { // on progress fuction
 			console.log('Terrain: ' + (xhr.loaded / xhr.total * 100) + '% loaded');
+			loadingText.innerHTML = (xhr.loaded / xhr.total * 100).toFixed(0) + '% loaded';
 		},
-		function (error) {
+		(error) => { // on error function
 			console.log('An error happened', error);
 		}
 	);
+
+	createCameraElements();
+
+	//-- Create VR button and settings ---------------------------------------------------------------
+	loadingText.innerHTML = 'Instructions:<br><br> Search for the red rocks.'
+	document.querySelector('#loader').style.display = 'none';
+	document.body.appendChild(VRButton.createButton(renderer));
 
 	//-------- loading rover --------
 	// loader.load(
@@ -384,3 +381,27 @@ function createCameraElements() {
 
 	});
 }
+
+function asyncLoader(url, onLoad, onProgress, onError) {
+	const loader = new GLTFLoader();
+
+	return new Promise((resolve, reject) => {
+		loader.load(
+			url,
+			// on load function
+			(gltf) => {
+				onLoad(gltf);
+				resolve(gltf);
+			},
+			// on progress function
+			onProgress,
+			// on error function
+			(error) => {
+				if (typeof onError === 'function') {
+					oneError(error);
+				}
+				reject;
+			}
+		);
+	});
+};
