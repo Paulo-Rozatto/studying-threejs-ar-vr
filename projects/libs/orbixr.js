@@ -17,19 +17,19 @@ import {
     TextBufferGeometry,
     Texture,
     TextureLoader
-} from '../build/three.module.js';
+} from '../build2/three.module.js';
 
 // propertys
 let currentOrbit, isFusing, config;
 
 // objects
-let camera, cursor, raycaster, rayClock, fusingClock, messageBg, message;
+let camera, cursor, raycaster, rayClock, fusingClock, messageBg, message, textBg, text;
 
 // groups
-let uiGroup, movementBar, messageGroup;
+let uiGroup, movementBar, messageGroup, textGroup;
 
 // helpers
-let buttonsArray, buttonCount, origin2d, euler, intersection, intersected, oldIntersected;
+let buttonsArray, buttonCount, origin2d, euler, intersection, intersected, oldIntersected, oldTime;
 
 class Orbi extends Object3D {
     constructor(cam, props) {
@@ -74,6 +74,14 @@ class Orbi extends Object3D {
                 transparent: true,
                 opacity: 0.5,
             },
+            text: {
+                size: new Vector2(1, 0.6),
+                yRotation: Math.PI / -4,
+                color: 0xffffff,
+                bgColor: 0x000000,
+                transparent: true,
+                opacity: 0.5
+            },
             raycaster: {
                 near: 0.1,
                 far: 1.5,
@@ -107,6 +115,7 @@ class Orbi extends Object3D {
         this.add(uiGroup);
 
         movementBar = createMovementBar(this);
+        movementBar.position.z = -config.orbits[0];
         uiGroup.add(movementBar);
 
         messageGroup = new Group();
@@ -126,6 +135,24 @@ class Orbi extends Object3D {
         messageBg.position.z = -config.orbits[currentOrbit];
         messageGroup.add(messageBg);
 
+        textGroup = new Group();
+        textGroup.name = "text-wrapper";
+        textGroup.position.x = (config.button.size.x + config.gap.x) * (config.display.y - 1);
+        textGroup.position.z = -config.orbits[currentOrbit];
+        textGroup.rotation.y = config.text.yRotation;
+        textGroup.visible = false;
+        uiGroup.add(textGroup)
+
+        const textBgGeo = new PlaneBufferGeometry(config.text.size.x, config.text.size.y);
+        const textBgMat = new MeshBasicMaterial({
+            color: config.text.bgColor,
+            transparent: config.text.transparent,
+            opacity: config.text.opacity,
+        });
+        textBg = new Mesh(textBgGeo, textBgMat);
+        textBg.position.x = config.text.size.x * 0.5 + 0.01;
+        textGroup.add(textBg);
+
         // load font
         if (config.font.path) {
             const fontLoader = new FontLoader();
@@ -136,10 +163,18 @@ class Orbi extends Object3D {
                 (font) => {
                     self.font = font
 
-                    const messageGeo = new TextBufferGeometry('', { font });
+                    const msgGeo = new TextBufferGeometry('', { font });
                     const messageMat = new MeshBasicMaterial({ color: config.message.color });
-                    message = new Mesh(messageGeo, messageMat);
+                    message = new Mesh(msgGeo, messageMat);
                     messageGroup.add(message);
+
+                    const textGeo = new TextBufferGeometry('', { font });
+                    const textMat = new MeshBasicMaterial({ color: config.text.color });
+                    text = new Mesh(textGeo, messageMat);
+                    text.position.x = config.text.size.x * -0.5 + 0.05;
+                    text.position.y = config.text.size.y * 0.5 - 0.1;
+                    text.position.z = 0.001;
+                    textBg.add(text);
                 },
                 null,
                 function (e) { console.error(e) }
@@ -229,7 +264,30 @@ class Orbi extends Object3D {
         }, 3000);
     }
 
-    update() {
+    showText(txt) {
+        if (!this.font) {
+            console.error('OrBI: No font specified.');
+            return;
+        }
+
+        const textGeo = new TextBufferGeometry(txt, {
+            font: this.font,
+            size: 0.04,
+            height: 0,
+        });
+        // textGeo.computeBoundingBox()
+
+        text.geometry = textGeo;
+        text.geometry.needsUpdate = true;
+
+        textGroup.visible = true;
+    }
+
+    hideText() {
+        textGroup.visible = false;
+    }
+
+    update(time) {
         if (this.moveHorizontally) {
             euler.setFromQuaternion(camera.quaternion);
             this.rotation.y = euler.y;
@@ -325,14 +383,13 @@ function createMovementBar(orbi) {
     const gap = 0.01
     const xPos = (config.button.size.x + config.gap.x) * (config.display.y * -0.5) - size * 0.5 - gap
     const yPos = (config.button.size.y + config.gap.y) * ((config.display.x - 0) * 0.5) - size * 0.5;
-    const zPos = -config.orbits[currentOrbit];
 
     const orbitsButton = createMoveButton(
         'orbits-button',
         btnGeo,
         'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAADJ0lEQVRYw92Xv4sTQRTHFzzLxUIIot0JKVKeXCWB/APHFZJgcYHDxisChq3cM4VguHZD0gUbtQhBIYhbSK64YBAiKSRBmEC2yQ8xhdmw2UVudXe+FmZ/JGaT6FwhbjW/8sm8N9/35g0Hxo9DiWP4sv84IBQ7FERROIyF/gIQychkbNoAYJtjImcifwLghfqEAtZ02Gm1OsOpBdBJXeA3BPDZrg17VJMS278GthNSbWTD7mb5TQApQqHX0gt2h9I1HZSk1gLCsgmjEltmb6xiwJTDqwFxBXZjP8jn+w0bSnwVQFChSXzwsfOSBlUIBhwb6B+sVs5BH8ZxEEAwQKLrtBclMITlgLgKsrtevbsEanwZIKygP/f/fLJYbbbbzWoxOeeWaB9KeAlAhua3P1oaWE7MW4OSH32gQf4dkDJtyRcKZQ3QW5WcKOYqLR3Qyr5gkGwztQjgCRreRo96oEphx+nuFBSK3pFnXAOEXwBkqeHp58SAmp/TciivwjjxFGXQ7DyA76Li/f4cZG/R+XsE5x6hgi4/BxBs3dX/kYHmkuiPNGG4VsR0W5gD1FFzF/ZAlmaPCEHPnaih7gdEJnbamSpDdfa/dfrikt8KFWWnnbYnER8gQ0eOz6IazTurXgNn132EPNUcPYRGNOMDyJ4FJSgO6zkFQG77zkLxhF+D7AMQOCLiByg4ax5NAeDLPY9QwMARiwTiAUJjKzEbT1q6qx/u7mcAMJ64Azu6lZw1E9Y45AJi5nSWP7kiWj6jb30CgB/P3IEWirPW9tSMuYBDe+isqPoExXHc1SoFQM+uuQKqOlND+9AFCOg4w03k5k//6XcAeD/r5dB0JjoQXIDo7bsNcUE/EgUwnXVEtD1rxI0Ad0YA0FgNWGFC8isAfLy52oRgJ96fAMCHG9xqJwYe44MpALy7su4Yg4T00ACA0621QgqQ8uNvAPBma72UA4LpLQD6ktskmJaH82WZ0hfcRuEckFC4V0Vus4TCnNLYkypzWme+WNivNubLlf16Zy8wmEsc9iKLvcxjLzTZS132Ypu93L+ABwf7k+cCHl0X8ez7T56+GwF+Am1c2iRVXhf/AAAAAElFTkSuQmCC',
     );
-    orbitsButton.position.set(xPos, yPos, zPos);
+    orbitsButton.position.set(xPos, yPos, 0);
     buttonsArray.push(orbitsButton);
     movementGroup.add(orbitsButton)
 
@@ -345,10 +402,10 @@ function createMovementBar(orbi) {
         }
 
         raycaster.far = config.orbits[currentOrbit] + 0.5;
-        uiGroup.traverse(child => {
-            if (child.isMesh) {
-                child.position.z = -config.orbits[currentOrbit];
-            }
+        uiGroup.children.forEach(child => {
+            // if (child.isMesh ) {
+            child.position.z = -config.orbits[currentOrbit];
+            // }
         });
     };
 
@@ -357,7 +414,7 @@ function createMovementBar(orbi) {
         btnGeo,
         'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAABO0lEQVRYw+3WrQ7CQAwH8D3NPcAsT4CYnMSDQeM3g5snqAlCcDgMDoeZwS1BzBEIZpBAlj+CqXH9uBASxNVe90u29doGWARfxAKBBzzggV8BUUznx5ECKFIaSAsZSMABSESg4oFKAnLwAHIe6NUSUPdYYAsJwJYDRk8ZeI4Y4AAZwIEGptAAmFKAOemAkyGAJXQAlnagf9MCt74V2L1PMR+SMW9TdjZg3EAdzdgClHCI8hPI4BRZFzAXN+BiOkBYuwF12H2F3A3IPz9i5fJ8ZfkLiQuQ2AqpaA9XKRmrNqWwVmL80JbyI7Zfpo0W2BC3MbzqgGtINZSZDpjRLe2oAY5MT5w0MtBMuLa+l4E9OxeiuwTcI360rSVgLcxGc+aBs5Gmc8YDmbxglBxQKjaUAbfiDPye6AEP/C3wAjQlXixnoVFmAAAAAElFTkSuQmCC',
     );
-    horMoveButton.position.set(xPos, yPos - size, zPos);
+    horMoveButton.position.set(xPos, yPos - size, 0);
     buttonsArray.push(horMoveButton);
     movementGroup.add(horMoveButton);
 
@@ -371,7 +428,7 @@ function createMovementBar(orbi) {
         btnGeo,
         'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAAAAACPAi4CAAAA2klEQVRYw2P4v5yBArD8P8OoAUPAAFM1igzgXfzl3UQKDGh+8h8I7hSQaUDYxf8Q8PeoJxkGmO789R8Ovq1SI9EA3tkf/qOA110kGVD54D8GuJZFtAH+p//+xwJ+77MlygC1jd//4wBfFvMSNmDim/94wJNmAgbE3/lPAFz0x2tAaCsSWAvTNA9ZNJT4lNgKMyCNzKQ8asCoAaMGjBowasCoAZQaQHHVRnHlSnH1ToUGBuVNHCo0sqjQzKO8oUmFpi4VGttUaO5T3uEY7bURacD55RSA80ADKAQAlbbCnlvwDscAAAAASUVORK5CYII=',
     );
-    verMoveButton.position.set(xPos, yPos - 2 * size, zPos);
+    verMoveButton.position.set(xPos, yPos - 2 * size, 0);
     buttonsArray.push(verMoveButton);
     movementGroup.add(verMoveButton);
 
@@ -395,6 +452,13 @@ function createMovementBar(orbi) {
         orbi.moveVertically = false;
 
         stopButton.visible = false;
+
+        if (textGroup.visible) {
+            text.material.transparent = false;
+            text.material.opacity = 1;
+            textBg.material.transparent = config.text.transparent;
+            textBg.material.opacity = config.text.opacity;
+        }
     }
 
     stopButton.show = (position) => {
@@ -404,11 +468,18 @@ function createMovementBar(orbi) {
             stopButton.position.set(
                 0,
                 yPos + size + gap,
-                zPos + gap
+                gap
             );
         }
         else if (position === 'right') {
-            stopButton.position.set(-xPos, 0, zPos)
+            stopButton.position.set(-xPos, 0, 0);
+
+            if (textGroup.visible) {
+                text.material.transparent = true;
+                text.material.opacity = 0.1;
+                textBg.material.transparent = true;
+                textBg.material.opacity = 0.1;
+            }
         }
     }
 
