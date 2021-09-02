@@ -36,15 +36,23 @@
             let src = new cv.Mat(height, width, cv.CV_8UC4);
             let ycbcr = new cv.Mat(height, width, cv.CV_8UC1);
             let binary = new cv.Mat(height, width, cv.CV_8UC1);
-            let dst = new cv.Mat(height, width, cv.CV_8UC1);
-
+            let dst = cv.Mat.zeros(height, width, cv.CV_8UC3);
+            
+            const black = new cv.Scalar(0, 0, 0);
+            const red = new cv.Scalar(255, 0, 0);
             let contours = new cv.MatVector();
             let hierarchy = new cv.Mat();
-            let color = new cv.Scalar(255, 0, 0);
+            let bigger = 0;
+            let cnt;
+            let lastArea = -1;
+            let area;
+            let index;
+
+            console.log(dst);
 
 
             let low, high;
-            const FPS = 30;
+            const FPS = 24;
             function processVideo() {
                 let begin = Date.now();
 
@@ -60,10 +68,25 @@
 
                 cv.inRange(ycbcr, low, high, binary);
 
-                console.log(contours.size())
+                dst.setTo(black)
 
                 cv.findContours(binary, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
-                cv.drawContours(dst, contours, -1, color, 1, cv.LINE_8, hierarchy, 1);
+
+                index = -1;
+                lastArea = -1;
+                for(let i = 0; i < contours.size(); i++) {
+                    cnt = contours.get(i);
+                    area = cv.contourArea(cnt, false);
+
+                    if(area > lastArea) {
+                        lastArea = area;
+                        index = i;
+                    }
+                }
+
+                if(index > -1) {
+                    cv.drawContours(dst, contours, index, red, 1, cv.LINE_8, hierarchy, 1);
+                }
 
                 cv.imshow("binary", binary); // canvasOutput is the id of another <canvas>;
                 cv.imshow("canvasFrame", dst); // canvasOutput is the id of another <canvas>;
