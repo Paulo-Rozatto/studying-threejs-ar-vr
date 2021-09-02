@@ -10,6 +10,7 @@
 
 <body>
     <canvas id="canvasFrame"></canvas>
+    <canvas id="binary"></canvas>
     <video id="videoInput"></video>
 
     <script async src="libs/opencv0.js" onload="main();" type="text/javascript"></script>
@@ -35,6 +36,12 @@
             let src = new cv.Mat(height, width, cv.CV_8UC4);
             let ycbcr = new cv.Mat(height, width, cv.CV_8UC1);
             let binary = new cv.Mat(height, width, cv.CV_8UC1);
+            let dst = new cv.Mat(height, width, cv.CV_8UC1);
+
+            let contours = new cv.MatVector();
+            let hierarchy = new cv.Mat();
+            let color = new cv.Scalar(255, 0, 0);
+
 
             let low, high;
             const FPS = 30;
@@ -53,7 +60,14 @@
 
                 cv.inRange(ycbcr, low, high, binary);
 
-                cv.imshow("canvasFrame", binary); // canvasOutput is the id of another <canvas>;
+                console.log(contours.size())
+
+                cv.findContours(binary, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
+                cv.drawContours(dst, contours, -1, color, 1, cv.LINE_8, hierarchy, 1);
+
+                cv.imshow("binary", binary); // canvasOutput is the id of another <canvas>;
+                cv.imshow("canvasFrame", dst); // canvasOutput is the id of another <canvas>;
+
 
                 // schedule next one.
                 let delay = 1000 / FPS - (Date.now() - begin);
