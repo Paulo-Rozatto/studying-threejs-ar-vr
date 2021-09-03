@@ -36,8 +36,9 @@
             let src = new cv.Mat(height, width, cv.CV_8UC4);
             let ycbcr = new cv.Mat(height, width, cv.CV_8UC1);
             let binary = new cv.Mat(height, width, cv.CV_8UC1);
-            let dst = cv.Mat.zeros(height, width, cv.CV_8UC3);
-            
+            let dst =  new cv.Mat(height, width, cv.CV_8UC1);
+            let tst = cv.Mat.zeros(height, width, cv.CV_8UC3);
+
             const black = new cv.Scalar(0, 0, 0);
             const red = new cv.Scalar(255, 0, 0);
             let contours = new cv.MatVector();
@@ -74,22 +75,24 @@
 
                 index = -1;
                 lastArea = -1;
-                for(let i = 0; i < contours.size(); i++) {
+                for (let i = 0; i < contours.size(); i++) {
                     cnt = contours.get(i);
                     area = cv.contourArea(cnt, false);
 
-                    if(area > lastArea) {
+                    if (area > lastArea) {
                         lastArea = area;
                         index = i;
                     }
                 }
 
-                if(index > -1) {
-                    cv.drawContours(dst, contours, index, red, 1, cv.LINE_8, hierarchy, 1);
+                if (index > -1) {
+                    cv.drawContours(dst, contours, index, red, -1, cv.LINE_8, hierarchy, 1);
+                    tst.setTo(black)
+                    cv.bitwise_and(src, src, tst, dst);
                 }
 
-                cv.imshow("binary", binary); // canvasOutput is the id of another <canvas>;
-                cv.imshow("canvasFrame", dst); // canvasOutput is the id of another <canvas>;
+                cv.imshow("binary", dst); // canvasOutput is the id of another <canvas>;
+                cv.imshow("canvasFrame", tst); // canvasOutput is the id of another <canvas>;
 
 
                 // schedule next one.
