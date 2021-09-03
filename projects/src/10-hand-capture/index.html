@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capture Study</title>
+</head>
+
+<body>
+    <canvas id="canvasFrame"></canvas>
+    <canvas id="binary"></canvas>
+    <video id="videoInput"></video>
+
+    <script async src="libs/opencv0.js" onload="main();" type="text/javascript"></script>
+    <script>
+        function main() {
+            const video = document.getElementById("videoInput"); // video is the id of video tag
+            let canvasFrame = document.getElementById("canvasFrame"); // canvasFrame is the id of <canvas>
+            const context = canvasFrame.getContext("2d");
+            let height = 480;//video.videoHeight;
+            let width = 720; //video.videoWidth;
+            console.log(height, width)
+
+            navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+                .then(function (stream) {
+                    video.srcObject = stream;
+                    video.play();
+                })
+                .catch(function (err) {
+                    console.log("An error occurred! " + err);
+                });
+
+
+            let src = new cv.Mat(height, width, cv.CV_8UC4);
+            let ycbcr = new cv.Mat(height, width, cv.CV_8UC1);
+            let binary = new cv.Mat(height, width, cv.CV_8UC1);
+            let dst =  new cv.Mat(height, width, cv.CV_8UC1);
+            let tst = cv.Mat.zeros(height, width, cv.CV_8UC3);
+
+            const black = new cv.Scalar(0, 0, 0);
+            const red = new cv.Scalar(255, 0, 0);
+            let contours = new cv.MatVector();
+            let hierarchy = new cv.Mat();
+            let bigger = 0;
+            let cnt;
+            let lastArea = -1;
+            let area;
+            let index;
+
+            console.log(dst);
+
+
+            let low, high;
+            const FPS = 24;
+            function processVideo() {
+                let begin = Date.now();
+
+                context.drawImage(video, 0, 0, width, height);
+                src.data.set(context.getImageData(0, 0, width, height).data);
+
+                cv.cvtColor(src, ycbcr, cv.COLOR_RGB2YCrCb);
+
+                if (!low && !high) {
+                    low = new cv.Mat(ycbcr.rows, ycbcr.cols, ycbcr.type(), [0, 133, 77, 0]);
+                    high = new cv.Mat(ycbcr.rows, ycbcr.cols, ycbcr.type(), [255, 173, 127, 255]);
+                }
+
+                cv.inRange(ycbcr, low, high, binary);
+
+                dst.setTo(black)
+
+                cv.findContours(binary, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
+
+                index = -1;
+                lastArea = -1;
+                for (let i = 0; i < contours.size(); i++) {
+                    cnt = contours.get(i);
+                    area = cv.contourArea(cnt, false);
+
+                    if (area > lastArea) {
+                        lastArea = area;
+                        index = i;
+                    }
+                }
+
+                if (index > -1) {
+                    cv.drawContours(dst, contours, index, red, -1, cv.LINE_8, hierarchy, 1);
+                    tst.setTo(black)
+                    cv.bitwise_and(src, src, tst, dst);
+                }
+
+                cv.imshow("binary", dst); // canvasOutput is the id of another <canvas>;
+                cv.imshow("canvasFrame", tst); // canvasOutput is the id of another <canvas>;
+
+
+                // schedule next one.
+                let delay = 1000 / FPS - (Date.now() - begin);
+                setTimeout(processVideo, delay);
+            }
+            // schedule first one.
+            setTimeout(processVideo, 0);
+        }
+    </script>
+</body>
+
+</html>
