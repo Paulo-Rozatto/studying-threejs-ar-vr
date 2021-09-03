@@ -19,11 +19,11 @@
             const video = document.getElementById("videoInput"); // video is the id of video tag
             let canvasFrame = document.getElementById("canvasFrame"); // canvasFrame is the id of <canvas>
             const context = canvasFrame.getContext("2d");
-            let height = 480;//video.videoHeight;
-            let width = 720; //video.videoWidth;
+            let width = 480; //video.videoWidth;
+            let height = 360;//video.videoHeight;
             console.log(height, width)
 
-            navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width, height }, audio: false })
                 .then(function (stream) {
                     video.srcObject = stream;
                     video.play();
@@ -36,7 +36,7 @@
             let src = new cv.Mat(height, width, cv.CV_8UC4);
             let ycbcr = new cv.Mat(height, width, cv.CV_8UC1);
             let binary = new cv.Mat(height, width, cv.CV_8UC1);
-            let dst =  new cv.Mat(height, width, cv.CV_8UC1);
+            let dst = new cv.Mat(height, width, cv.CV_8UC1);
             let tst = cv.Mat.zeros(height, width, cv.CV_8UC3);
 
             const black = new cv.Scalar(0, 0, 0);
@@ -48,9 +48,6 @@
             let lastArea = -1;
             let area;
             let index;
-
-            console.log(dst);
-
 
             let low, high;
             const FPS = 24;
