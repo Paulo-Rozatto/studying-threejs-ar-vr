@@ -9,95 +9,103 @@
 </head>
 
 <body>
+    <video id="videoInput"></video>
     <canvas id="canvasFrame"></canvas>
     <canvas id="binary"></canvas>
-    <video id="videoInput"></video>
+
+    <p id="info">Oi</p>
 
     <script async src="libs/opencv0.js" onload="main();" type="text/javascript"></script>
     <script>
-        function main() {
-            const video = document.getElementById("videoInput"); // video is the id of video tag
-            let canvasFrame = document.getElementById("canvasFrame"); // canvasFrame is the id of <canvas>
-            const context = canvasFrame.getContext("2d");
-            let width = 480; //video.videoWidth;
-            let height = 360;//video.videoHeight;
-            console.log(height, width)
+        async function main() {
+            const canvasFrame = document.getElementById("canvasFrame"); // gets <canvas>
+            const context = canvasFrame.getContext("2d"); // context
 
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width, height }, audio: false })
-                .then(function (stream) {
-                    video.srcObject = stream;
-                    video.play();
-                })
-                .catch(function (err) {
-                    console.log("An error occurred! " + err);
-                });
+            const video = document.getElementById("videoInput"); // gets <video>
+            const { width, height } = await startVideo(video); // start video and get its properties
 
+            const p = document.getElementById("info");
+            p.innerHTML = `width: ${width} and height: ${height}`;
 
-            let src = new cv.Mat(height, width, cv.CV_8UC4);
-            let ycbcr = new cv.Mat(height, width, cv.CV_8UC1);
-            let binary = new cv.Mat(height, width, cv.CV_8UC1);
-            let dst = new cv.Mat(height, width, cv.CV_8UC1);
-            let tst = cv.Mat.zeros(height, width, cv.CV_8UC3);
-
-            const black = new cv.Scalar(0, 0, 0);
-            const red = new cv.Scalar(255, 0, 0);
-            let contours = new cv.MatVector();
-            let hierarchy = new cv.Mat();
-            let bigger = 0;
-            let cnt;
-            let lastArea = -1;
-            let area;
-            let index;
-
-            let low, high;
             const FPS = 24;
+            const src = new cv.Mat(height, width, cv.CV_8UC4); // storages image source
+            const dst = new cv.Mat(height, width, cv.CV_8UC4); // storages final result
+            const aux = new cv.Mat(height, width, cv.CV_8UC4); // helper mat
+            const low = new cv.Mat(dst.rows, dst.cols, cv.CV_8UC3, [0, 133, 77, 0]);
+            const high = new cv.Mat(dst.rows, dst.cols, cv.CV_8UC3, [255, 173, 127, 255]);
+            const black = new cv.Scalar(0, 0, 0); // helper scalar for black color
+            const red = new cv.Scalar(255, 0, 0); // helper scalar for red color
+
+            let contours = new cv.MatVector(); // storages contours
+            let hierarchy = new cv.Mat(); // storages hierarchy
+            let begin, delay; // fps helpers
+            let i, areaIdx, area, lastArea, contour // helpers for fiding largest area
+
             function processVideo() {
-                let begin = Date.now();
+                begin = Date.now();
 
                 context.drawImage(video, 0, 0, width, height);
                 src.data.set(context.getImageData(0, 0, width, height).data);
 
-                cv.cvtColor(src, ycbcr, cv.COLOR_RGB2YCrCb);
+                cv.cvtColor(src, aux, cv.COLOR_RGB2YCrCb);
+                cv.inRange(aux, low, high, aux);
+                cv.findContours(aux, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
 
-                if (!low && !high) {
-                    low = new cv.Mat(ycbcr.rows, ycbcr.cols, ycbcr.type(), [0, 133, 77, 0]);
-                    high = new cv.Mat(ycbcr.rows, ycbcr.cols, ycbcr.type(), [255, 173, 127, 255]);
-                }
-
-                cv.inRange(ycbcr, low, high, binary);
-
-                dst.setTo(black)
-
-                cv.findContours(binary, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
-
-                index = -1;
+                areaIdx = -1;
                 lastArea = -1;
-                for (let i = 0; i < contours.size(); i++) {
-                    cnt = contours.get(i);
-                    area = cv.contourArea(cnt, false);
+                for (i = 0; i < contours.size(); i++) {
+                    contour = contours.get(i);
+                    area = cv.contourArea(contour, false);
 
                     if (area > lastArea) {
+                        areaIdx = i;
                         lastArea = area;
-                        index = i;
                     }
                 }
 
-                if (index > -1) {
-                    cv.drawContours(dst, contours, index, red, -1, cv.LINE_8, hierarchy, 1);
-                    tst.setTo(black)
-                    cv.bitwise_and(src, src, tst, dst);
+                if (areaIdx > -1) {
+                    aux.setTo(black); // clear aux
+                    dst.setTo(black); // clear dst
+                    cv.drawContours(aux, contours, areaIdx, red, -1, cv.LINE_8, hierarchy, 1);
+
+                    cv.bitwise_and(src, src, dst, aux);
                 }
 
-                cv.imshow("binary", dst); // canvasOutput is the id of another <canvas>;
-                cv.imshow("canvasFrame", tst); // canvasOutput is the id of another <canvas>;
+                cv.imshow("canvasFrame", dst);
 
-
-                // schedule next one.
-                let delay = 1000 / FPS - (Date.now() - begin);
+                delay = 1000 / FPS - (Date.now() - begin);
                 setTimeout(processVideo, delay);
             }
-            // schedule first one.
             setTimeout(processVideo, 0);
+        }
+
+        async function startVideo(video) {
+            let stream = null; // video stream
+            let width, height; // video size
+
+            const constraints = {
+                video: {
+                    facingMode: "environment",
+                    width: 480,
+                    height: 360
+                },
+                audio: false
+            }
+
+            try {
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+                video.play();
+
+                width = stream.getVideoTracks()[0].getSettings().width
+                height = stream.getVideoTracks()[0].getSettings().height
+
+                return { width, height }
+            }
+            catch (err) {
+                console.error('Error accesing camera:', err);
+            }
+
         }
     </script>
 </body>
