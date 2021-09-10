@@ -31,15 +31,33 @@
             const src = new cv.Mat(height, width, cv.CV_8UC4); // storages image source
             const dst = new cv.Mat(height, width, cv.CV_8UC4); // storages final result
             const aux = new cv.Mat(height, width, cv.CV_8UC4); // helper mat
+            const oldAux = new cv.Mat(height, width, cv.CV_8UC4); // helper mat
             const low = new cv.Mat(dst.rows, dst.cols, cv.CV_8UC3, [0, 133, 77, 0]);
             const high = new cv.Mat(dst.rows, dst.cols, cv.CV_8UC3, [255, 173, 127, 255]);
-            const black = new cv.Scalar(0, 0, 0); // helper scalar for black color
+            const black = new cv.Scalar(0, 0, 0, 255); // helper scalar for black color
             const red = new cv.Scalar(255, 0, 0); // helper scalar for red color
 
             let contours = new cv.MatVector(); // storages contours
             let hierarchy = new cv.Mat(); // storages hierarchy
             let begin, delay; // fps helpers
             let i, areaIdx, area, lastArea, contour // helpers for fiding largest area
+
+            let hasFeatures = false;
+            let [maxCorners, qualityLevel, minDistance, blockSize] = [30, 0.3, 7, 7];
+            let features = new cv.Mat();
+            let features2 = new cv.Mat();
+            let stats = new cv.Mat();
+            let err = new cv.Mat()
+
+            let winSize = new cv.Size(15, 15);
+            let maxLevel = 2;
+            let criteria = new cv.TermCriteria(cv.TERM_CRITERIA_EPS | cv.TERM_CRITERIA_COUNT, 10, 0.03);
+
+            let color = [];
+            for (let i = 0; i < maxCorners; i++) {
+                color.push(new cv.Scalar(parseInt(Math.random() * 255), parseInt(Math.random() * 255),
+                    parseInt(Math.random() * 255), 255));
+            }
 
             function processVideo() {
                 begin = Date.now();
@@ -69,6 +87,35 @@
                     cv.drawContours(aux, contours, areaIdx, red, -1, cv.LINE_8, hierarchy, 1);
 
                     cv.bitwise_and(src, src, dst, aux);
+
+                    dst.copyTo(aux);
+                    cv.cvtColor(dst, aux, cv.COLOR_RGB2GRAY);
+
+
+                    if (!hasFeatures) {
+                        cv.goodFeaturesToTrack(aux, features, maxCorners, qualityLevel, minDistance)
+                        aux.copyTo(oldAux)
+                        console.log(features.rows);
+                        if (features.rows >= 20)
+                            hasFeatures = true;
+                    }
+                    else {
+                        cv.calcOpticalFlowPyrLK(oldAux, aux, features, features2, stats, err, winSize, maxLevel, criteria);
+
+                        let goodNew = [];
+                        let goodOld = [];
+                        for (let i = 0; i < stats.rows; i++) {
+                            if (stats.data[i] === 1) {
+                                goodNew.push(new cv.Point(features2.data32F[i * 2], features2.data32F[i * 2 + 1]));
+                                goodOld.push(new cv.Point(features.data32F[i * 2], features.data32F[i * 2 + 1]));
+                            }
+                        }
+
+                        // draw the tracks
+                        for (let i = 0; i < goodNew.length; i++) {
+                            cv.circle(dst, goodNew[i], 5, color[i], -1);
+                        }
+                    }
                 }
 
                 cv.imshow("canvasFrame", dst);
