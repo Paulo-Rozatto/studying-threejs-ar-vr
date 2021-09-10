@@ -40,10 +40,11 @@
             let contours = new cv.MatVector(); // storages contours
             let hierarchy = new cv.Mat(); // storages hierarchy
             let begin, delay; // fps helpers
-            let i, areaIdx, area, lastArea, contour // helpers for fiding largest area
+            const MIN_AREA = height * width * 0.1;
+            let i, areaIdx, area, biggerArea, contour // helpers for fiding largest area
 
             let hasFeatures = false;
-            let [maxCorners, qualityLevel, minDistance, blockSize] = [30, 0.3, 7, 7];
+            let [maxCorners, qualityLevel, minDistance, blockSize] = [30, .1, 7, 7];
             let features = new cv.Mat();
             let features2 = new cv.Mat();
             let stats = new cv.Mat();
@@ -70,18 +71,19 @@
                 cv.findContours(aux, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
 
                 areaIdx = -1;
-                lastArea = -1;
+                biggerArea = -1;
+                biggerArea = 0;
                 for (i = 0; i < contours.size(); i++) {
                     contour = contours.get(i);
                     area = cv.contourArea(contour, false);
 
-                    if (area > lastArea) {
+                    if (area > biggerArea) {
                         areaIdx = i;
-                        lastArea = area;
+                        biggerArea = area;
                     }
                 }
 
-                if (areaIdx > -1) {
+                if (areaIdx > -1 && biggerArea >= MIN_AREA) {
                     aux.setTo(black); // clear aux
                     dst.setTo(black); // clear dst
                     cv.drawContours(aux, contours, areaIdx, red, -1, cv.LINE_8, hierarchy, 1);
@@ -116,6 +118,10 @@
                             cv.circle(dst, goodNew[i], 5, color[i], -1);
                         }
                     }
+                }
+                else {
+                    hasFeatures = false;
+                    dst.setTo(black);
                 }
 
                 cv.imshow("canvasFrame", dst);
