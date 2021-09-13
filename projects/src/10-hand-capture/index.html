@@ -13,7 +13,7 @@
     <canvas id="canvasFrame"></canvas>
     <canvas id="binary"></canvas>
 
-    <p id="info">Oi</p>
+    <p id="info">Carregando...</p>
 
     <script async src="libs/opencv0.js" onload="main();" type="text/javascript"></script>
     <script>
@@ -43,16 +43,21 @@
             const MIN_AREA = height * width * 0.1;
             let i, areaIdx, area, biggerArea, contour // helpers for fiding largest area
 
+            // https://docs.opencv.org/3.4/dd/d1a/group__imgproc__feature.html#ga1d6bb77486c8f92d79c8793ad995d541
+            let [maxCorners, qualityLevel, minDistance, blockSize] = [30, 0.2, 15, 7];
             let hasFeatures = false;
-            let [maxCorners, qualityLevel, minDistance, blockSize] = [30, .1, 7, 7];
             let features = new cv.Mat();
             let features2 = new cv.Mat();
             let stats = new cv.Mat();
             let err = new cv.Mat()
 
+            // https://docs.opencv.org/3.4/dc/d6b/group__video__track.html#ga473e4b886d0bcc6b65831eb88ed93323
             let winSize = new cv.Size(15, 15);
             let maxLevel = 2;
             let criteria = new cv.TermCriteria(cv.TERM_CRITERIA_EPS | cv.TERM_CRITERIA_COUNT, 10, 0.03);
+
+            let goodNew = [];
+            let goodOld = [];
 
             let color = [];
             for (let i = 0; i < maxCorners; i++) {
@@ -95,6 +100,7 @@
 
 
                     if (!hasFeatures) {
+                        console.log('new ones')
                         cv.goodFeaturesToTrack(aux, features, maxCorners, qualityLevel, minDistance)
                         aux.copyTo(oldAux)
                         console.log(features.rows);
@@ -104,8 +110,9 @@
                     else {
                         cv.calcOpticalFlowPyrLK(oldAux, aux, features, features2, stats, err, winSize, maxLevel, criteria);
 
-                        let goodNew = [];
-                        let goodOld = [];
+                        goodNew.length = 0;
+                        goodOld.length = 0;
+
                         for (let i = 0; i < stats.rows; i++) {
                             if (stats.data[i] === 1) {
                                 goodNew.push(new cv.Point(features2.data32F[i * 2], features2.data32F[i * 2 + 1]));
@@ -115,6 +122,7 @@
 
                         // draw the tracks
                         for (let i = 0; i < goodNew.length; i++) {
+                            cv.line(dst, goodNew[i], goodOld[i], color[i], 2);
                             cv.circle(dst, goodNew[i], 5, color[i], -1);
                         }
                     }
@@ -125,6 +133,16 @@
                 }
 
                 cv.imshow("canvasFrame", dst);
+
+                aux.copyTo(oldAux);
+                // features.delete();
+                // features = null;
+                // features = new cv.Mat(goodNew.length, 1, cv.CV_32FC2);
+                
+                // for (let i = 0; i < goodNew.length; i++) {
+                //     features.data32F[i * 2] = goodNew[i].x;
+                //     features.data32F[i * 2 + 1] = goodNew[i].y;
+                // }
 
                 delay = 1000 / FPS - (Date.now() - begin);
                 setTimeout(processVideo, delay);
