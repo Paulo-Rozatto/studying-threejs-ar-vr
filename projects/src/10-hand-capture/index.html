@@ -36,6 +36,7 @@
             const high = new cv.Mat(dst.rows, dst.cols, cv.CV_8UC3, [255, 173, 127, 255]);
             const black = new cv.Scalar(0, 0, 0, 255); // helper scalar for black color
             const red = new cv.Scalar(255, 0, 0); // helper scalar for red color
+            const mask = new cv.Mat(height, width, cv.CV_8UC4, black); // helper mat
 
             let contours = new cv.MatVector(); // storages contours
             let hierarchy = new cv.Mat(); // storages hierarchy
@@ -44,7 +45,7 @@
             let i, areaIdx, area, biggerArea, contour // helpers for fiding largest area
 
             // https://docs.opencv.org/3.4/dd/d1a/group__imgproc__feature.html#ga1d6bb77486c8f92d79c8793ad995d541
-            let [maxCorners, qualityLevel, minDistance, blockSize] = [30, 0.2, 15, 7];
+            let [maxCorners, qualityLevel, minDistance, blockSize] = [40, 0.2, 15, 7];
             let hasFeatures = false;
             let features = new cv.Mat();
             let features2 = new cv.Mat();
@@ -101,10 +102,11 @@
 
                     if (!hasFeatures) {
                         console.log('new ones')
+                        mask.setTo(black);
                         cv.goodFeaturesToTrack(aux, features, maxCorners, qualityLevel, minDistance)
                         aux.copyTo(oldAux)
                         console.log(features.rows);
-                        if (features.rows >= 20)
+                        if (features.rows >= 40)
                             hasFeatures = true;
                     }
                     else {
@@ -122,9 +124,10 @@
 
                         // draw the tracks
                         for (let i = 0; i < goodNew.length; i++) {
-                            cv.line(dst, goodNew[i], goodOld[i], color[i], 2);
+                            cv.line(mask, goodNew[i], goodOld[i], color[i], 2);
                             cv.circle(dst, goodNew[i], 5, color[i], -1);
                         }
+                        cv.add(dst, mask, dst);
                     }
                 }
                 else {
@@ -139,10 +142,10 @@
                 // features = null;
                 // features = new cv.Mat(goodNew.length, 1, cv.CV_32FC2);
                 
-                // for (let i = 0; i < goodNew.length; i++) {
-                //     features.data32F[i * 2] = goodNew[i].x;
-                //     features.data32F[i * 2 + 1] = goodNew[i].y;
-                // }
+                for (let i = 0; i < goodNew.length; i++) {
+                    features.data32F[i * 2] = goodNew[i].x;
+                    features.data32F[i * 2 + 1] = goodNew[i].y;
+                }
 
                 delay = 1000 / FPS - (Date.now() - begin);
                 setTimeout(processVideo, delay);
