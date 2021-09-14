@@ -106,7 +106,7 @@
                         cv.goodFeaturesToTrack(aux, features, maxCorners, qualityLevel, minDistance)
                         aux.copyTo(oldAux)
                         console.log(features.rows);
-                        if (features.rows >= 40)
+                        if (features.rows >= 20)
                             hasFeatures = true;
                     }
                     else {
@@ -141,7 +141,7 @@
                 // features.delete();
                 // features = null;
                 // features = new cv.Mat(goodNew.length, 1, cv.CV_32FC2);
-                
+
                 for (let i = 0; i < goodNew.length; i++) {
                     features.data32F[i * 2] = goodNew[i].x;
                     features.data32F[i * 2 + 1] = goodNew[i].y;
@@ -178,6 +178,8 @@
             }
             catch (err) {
                 console.error('Error accesing camera:', err);
+                const p = document.getElementById("info");
+                p.innerHTML = 'Error accesing camera - ' + err;
             }
 
         }
