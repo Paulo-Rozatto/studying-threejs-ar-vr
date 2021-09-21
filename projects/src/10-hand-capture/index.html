@@ -66,48 +66,32 @@
                     parseInt(Math.random() * 255), 255));
             }
 
+
             function processVideo() {
                 begin = Date.now();
 
                 context.drawImage(video, 0, 0, width, height);
                 src.data.set(context.getImageData(0, 0, width, height).data);
 
-                cv.cvtColor(src, aux, cv.COLOR_RGB2YCrCb);
-                cv.inRange(aux, low, high, aux);
-                cv.findContours(aux, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
 
-                areaIdx = -1;
-                biggerArea = -1;
-                biggerArea = 0;
-                for (i = 0; i < contours.size(); i++) {
-                    contour = contours.get(i);
-                    area = cv.contourArea(contour, false);
+                if (!hasHand()) {
+                    hasFeatures = false;
+                    dst.setTo(black);
 
-                    if (area > biggerArea) {
-                        areaIdx = i;
-                        biggerArea = area;
-                    }
-                }
-
-                if (areaIdx > -1 && biggerArea >= MIN_AREA) {
-                    aux.setTo(black); // clear aux
-                    dst.setTo(black); // clear dst
-                    cv.drawContours(aux, contours, areaIdx, red, -1, cv.LINE_8, hierarchy, 1);
-
-                    cv.bitwise_and(src, src, dst, aux);
-
-                    dst.copyTo(aux);
-                    cv.cvtColor(dst, aux, cv.COLOR_RGB2GRAY);
-
+                } else {
+                    detachForeground();
 
                     if (!hasFeatures) {
                         console.log('new ones')
-                        mask.setTo(black);
+
                         cv.goodFeaturesToTrack(aux, features, maxCorners, qualityLevel, minDistance)
-                        aux.copyTo(oldAux)
+
                         console.log(features.rows);
-                        if (features.rows >= 20)
+                        if (features.rows >= 20) {
                             hasFeatures = true;
+                            aux.copyTo(oldAux)
+                            mask.setTo(black);
+                        }
                     }
                     else {
                         cv.calcOpticalFlowPyrLK(oldAux, aux, features, features2, stats, err, winSize, maxLevel, criteria);
@@ -119,6 +103,8 @@
                             if (stats.data[i] === 1) {
                                 goodNew.push(new cv.Point(features2.data32F[i * 2], features2.data32F[i * 2 + 1]));
                                 goodOld.push(new cv.Point(features.data32F[i * 2], features.data32F[i * 2 + 1]));
+
+                                console.log(features2.data32F[i * 2] - features.data32F[i * 2])
                             }
                         }
 
@@ -129,10 +115,6 @@
                         }
                         cv.add(dst, mask, dst);
                     }
-                }
-                else {
-                    hasFeatures = false;
-                    dst.setTo(black);
                 }
 
                 cv.imshow("canvasFrame", dst);
@@ -151,6 +133,39 @@
                 setTimeout(processVideo, delay);
             }
             setTimeout(processVideo, 0);
+
+            function hasHand() {
+                cv.cvtColor(src, aux, cv.COLOR_RGB2YCrCb);
+                cv.inRange(aux, low, high, aux);
+                cv.findContours(aux, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
+
+                areaIdx = -1;
+                biggerArea = -1;
+                biggerArea = 0;
+                for (i = 0; i < contours.size(); i++) {
+                    contour = contours.get(i);
+                    area = cv.contourArea(contour, false);
+
+                    if (area > biggerArea) {
+                        areaIdx = i;
+                        biggerArea = area;
+                    }
+                }
+
+                return areaIdx > -1 && biggerArea >= MIN_AREA;
+            }
+
+            function detachForeground() {
+                aux.setTo(black); // clear aux
+                dst.setTo(black); // clear dst
+                cv.drawContours(aux, contours, areaIdx, red, -1, cv.LINE_8, hierarchy, 1);
+
+                cv.bitwise_and(src, src, dst, aux);
+
+                dst.copyTo(aux);
+                cv.cvtColor(dst, aux, cv.COLOR_RGB2GRAY);
+            }
+
         }
 
         async function startVideo(video) {
