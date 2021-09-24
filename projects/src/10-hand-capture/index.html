@@ -59,6 +59,8 @@
 
             let goodNew = [];
             let goodOld = [];
+            let resultant = [];
+            let test = [];
 
             let color = [];
             for (let i = 0; i < maxCorners; i++) {
@@ -66,6 +68,9 @@
                     parseInt(Math.random() * 255), 255));
             }
 
+            let draw = false;
+            let count = 0;
+            setTimeout(() => { draw = true }, 1000);
 
             function processVideo() {
                 begin = Date.now();
@@ -89,8 +94,14 @@
                         console.log(features.rows);
                         if (features.rows >= 20) {
                             hasFeatures = true;
-                            aux.copyTo(oldAux)
+                            aux.copyTo(oldAux);
                             mask.setTo(black);
+
+                            for (let i = 0; i < features.rows; i++) {
+                                resultant.push(new cv.Point(0, 0));
+                            }
+
+                            test.length = 0;
                         }
                     }
                     else {
@@ -104,14 +115,46 @@
                                 goodNew.push(new cv.Point(features2.data32F[i * 2], features2.data32F[i * 2 + 1]));
                                 goodOld.push(new cv.Point(features.data32F[i * 2], features.data32F[i * 2 + 1]));
 
-                                console.log(features2.data32F[i * 2] - features.data32F[i * 2])
+                                // console.log(resultant[i])
+                                // resultant[i].x += features2.data32F[i * 2] - features.data32F[i * 2];
+                                // resultant[i].y += features2.data32F[i * 2 + 1] - features.data32F[i * 2 + 1];
+                                // console.log(features2.data32F[i * 2] - features.data32F[i * 2])
                             }
+                        }
+                        console.log();
+
+                        if (test.length === 0) {
+                            console.log(count);
+                            for (let i = 0; i < stats.rows; i++) {
+                                if (stats.data[i] === 1) {
+                                    test.push(new cv.Point(features.data32F[i * 2], features.data32F[i * 2 + 1]));
+
+                                }
+                            }
+                            count++;
                         }
 
                         // draw the tracks
                         for (let i = 0; i < goodNew.length; i++) {
-                            cv.line(mask, goodNew[i], goodOld[i], color[i], 2);
                             cv.circle(dst, goodNew[i], 5, color[i], -1);
+                            // cv.line(mask, goodNew[i], goodOld[i], color[i], 2);
+
+                            if (draw && i < test.length) {
+                                // console.log(test.length, goodNew.length)
+                                cv.line(mask, goodOld[i], test[i], color[i], 2);
+                                cv.add(dst, mask, dst);
+                                cv.imshow("canvasFrame", dst);
+                            }
+                        }
+                        if (draw) {
+                            draw = false;
+                            hasFeatures = false;
+                            setTimeout(() => { draw = true }, 2000);
+                            setTimeout(() => {
+                                processVideo();
+                            }, 1000);
+                            count = 0;
+                            return;
                         }
                         cv.add(dst, mask, dst);
                     }
