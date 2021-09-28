@@ -62,6 +62,11 @@
             let resultant = [];
             let test = [];
 
+            // ---
+            let hull = new cv.MatVector();
+            let hpts = [];
+            let lables = [];
+
             let color = [];
             for (let i = 0; i < maxCorners; i++) {
                 color.push(new cv.Scalar(parseInt(Math.random() * 255), parseInt(Math.random() * 255),
@@ -87,11 +92,8 @@
                     detachForeground();
 
                     if (!hasFeatures) {
-                        console.log('new ones')
-
                         cv.goodFeaturesToTrack(aux, features, maxCorners, qualityLevel, minDistance)
 
-                        console.log(features.rows);
                         if (features.rows >= 20) {
                             hasFeatures = true;
                             aux.copyTo(oldAux);
@@ -121,10 +123,8 @@
                                 // console.log(features2.data32F[i * 2] - features.data32F[i * 2])
                             }
                         }
-                        console.log();
 
                         if (test.length === 0) {
-                            console.log(count);
                             for (let i = 0; i < stats.rows; i++) {
                                 if (stats.data[i] === 1) {
                                     test.push(new cv.Point(features.data32F[i * 2], features.data32F[i * 2 + 1]));
@@ -136,16 +136,25 @@
 
                         // draw the tracks
                         for (let i = 0; i < goodNew.length; i++) {
-                            cv.circle(dst, goodNew[i], 5, color[i], -1);
+                            // cv.circle(dst, goodNew[i], 5, color[i], -1);
                             // cv.line(mask, goodNew[i], goodOld[i], color[i], 2);
 
+
                             if (draw && i < test.length) {
-                                // console.log(test.length, goodNew.length)
+                                p.innerHTML = `area: ${biggerArea}`;
                                 cv.line(mask, goodOld[i], test[i], color[i], 2);
                                 cv.add(dst, mask, dst);
                                 cv.imshow("canvasFrame", dst);
                             }
                         }
+
+                        if (hpts.length > 0)
+                            for (let i = 0; i < hpts.length; i++) {
+                                // cv.circle(dst, { x: hull.get(0).data32S[i * 2], y: hull.get(0).data32S[i * 2 + 1] }, color[i], 2)
+                                cv.circle(dst, hpts[i], 5, color[i], 2);
+                            }
+                        cv.drawContours(mask, hull, 0, color[0], 2, 8, hierarchy, 0);
+
                         if (draw) {
                             draw = false;
                             hasFeatures = false;
@@ -177,11 +186,47 @@
             }
             setTimeout(processVideo, 0);
 
+
+            // // https://medium.com/@muehler.v/simple-hand-gesture-recognition-using-opencv-and-javascript-eb3d6ced28a0
+            // function getRoughHull(contour, maxDist) {
+            //     // get hull indices and hull points
+            //     const hullIndices = contour.convexHullIndices();
+            //     const contourPoints = contour.getPoints();
+            //     const hullPointsWithIdx = hullIndices.map(idx => ({
+            //         pt: contourPoints[idx],
+            //         contourIdx: idx
+            //     }));
+            //     const hullPoints = hullPointsWithIdx.map(ptWithIdx => ptWithIdx.pt);
+
+            //     // group all points in local neighborhood
+            //     const ptsBelongToSameCluster = (pt1, pt2) => ptDist(pt1, pt2) < maxDist;
+            //     const { labels } = cv.partition(hullPoints, ptsBelongToSameCluster);
+            //     const pointsByLabel = new Map();
+            //     labels.forEach(l => pointsByLabel.set(l, []));
+            //     hullPointsWithIdx.forEach((ptWithIdx, i) => {
+            //         const label = labels[i];
+            //         pointsByLabel.get(label).push(ptWithIdx);
+            //     });
+
+            //     // map points in local neighborhood to most central point
+            //     const getMostCentralPoint = (pointGroup) => {
+            //         // find center
+            //         const center = getCenterPt(pointGroup.map(ptWithIdx => ptWithIdx.pt));
+            //         // sort ascending by distance to center
+            //         return pointGroup.sort(
+            //             (ptWithIdx1, ptWithIdx2) => ptDist(ptWithIdx1.pt, center) - ptDist(ptWithIdx2.pt, center)
+            //         )[0];
+            //     };
+            //     const pointGroups = Array.from(pointsByLabel.values());
+            //     // return contour indices of most central points
+            //     return pointGroups.map(getMostCentralPoint).map(ptWithIdx => ptWithIdx.contourIdx);
+            // }
+
             function hasHand() {
                 cv.cvtColor(src, aux, cv.COLOR_RGB2YCrCb);
                 cv.inRange(aux, low, high, aux);
                 cv.findContours(aux, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
-
+                console.log(cv.partition)
                 areaIdx = -1;
                 biggerArea = -1;
                 biggerArea = 0;
@@ -195,7 +240,54 @@
                     }
                 }
 
+                if (areaIdx > -1) {
+                    let tmp = new cv.Mat();
+                    let cnt = contours.get(areaIdx);
+                    hull.delete();
+                    hull = new cv.MatVector();
+                    // You can try more different parameters
+                    cv.convexHull(cnt, tmp, false, true);
+                    hull.push_back(tmp);
+
+                    // console.log(hull.get(0))
+
+                    hpts.length = 0;
+                    for (let i = 0; i < tmp.rows; i++) {
+                        let pt = new cv.Point(tmp.data32S[i * 2], tmp.data32S[i * 2 + 1]);
+
+
+                        let flag = false;
+
+                        for (let j = 0; j < hpts.length; j++) {
+                            if (dinstaceSquared(hpts[j], pt) < 1000) {
+                                hpts[j].x = (hpts[j].x + pt.x) / 2;
+                                hpts[j].y = (hpts[j].y + pt.y) / 2;
+                                flag = true;
+                            }
+                        }
+
+                        if (!flag) {
+                            hpts.push(new cv.Point(tmp.data32S[i * 2], tmp.data32S[i * 2 + 1]))
+                        }
+
+
+                        // if (hpts.length == 0 || hpts.every(hpt => dinstaceSquared(hpt, pt) > 500))
+                        //     hpts.push(new cv.Point(tmp.data32S[i * 2], tmp.data32S[i * 2 + 1]))
+                    }
+
+                    // cv.partition(tmp, lables, (pt1, pt2) => true)
+
+                    cnt.delete(); tmp.delete();
+
+                    // cv.drawContours(mask, hull, 0, color[0], 1, 8, hierarchy, 0);
+                }
+
                 return areaIdx > -1 && biggerArea >= MIN_AREA;
+            }
+
+            function dinstaceSquared(p1, p2) {
+                console.log(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y, - p1.y, 2))
+                return Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y, - p1.y, 2);
             }
 
             function detachForeground() {
