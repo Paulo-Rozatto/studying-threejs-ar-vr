@@ -65,7 +65,7 @@
             // ---
             let hull = new cv.MatVector();
             let hpts = [];
-            let lables = [];
+            let df = [];
 
             let color = [];
             for (let i = 0; i < maxCorners; i++) {
@@ -89,6 +89,7 @@
                     dst.setTo(black);
 
                 } else {
+                    // return;
                     detachForeground();
 
                     if (!hasFeatures) {
@@ -226,7 +227,7 @@
                 cv.cvtColor(src, aux, cv.COLOR_RGB2YCrCb);
                 cv.inRange(aux, low, high, aux);
                 cv.findContours(aux, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
-                console.log(cv.partition)
+
                 areaIdx = -1;
                 biggerArea = -1;
                 biggerArea = 0;
@@ -242,6 +243,11 @@
 
                 if (areaIdx > -1) {
                     let tmp = new cv.Mat();
+                    let hIdxs = new cv.Mat();
+                    let defects = new cv.Mat();
+
+                    mask.setTo(black);
+
                     let cnt = contours.get(areaIdx);
                     hull.delete();
                     hull = new cv.MatVector();
@@ -249,12 +255,14 @@
                     cv.convexHull(cnt, tmp, false, true);
                     hull.push_back(tmp);
 
-                    // console.log(hull.get(0))
+                    cv.convexHull(cnt, hIdxs, false, false);
+                    cv.convexityDefects(cnt, hIdxs, defects);
+
+                    console.log(defects);
 
                     hpts.length = 0;
                     for (let i = 0; i < tmp.rows; i++) {
                         let pt = new cv.Point(tmp.data32S[i * 2], tmp.data32S[i * 2 + 1]);
-
 
                         let flag = false;
 
@@ -269,24 +277,15 @@
                         if (!flag) {
                             hpts.push(new cv.Point(tmp.data32S[i * 2], tmp.data32S[i * 2 + 1]))
                         }
-
-
-                        // if (hpts.length == 0 || hpts.every(hpt => dinstaceSquared(hpt, pt) > 500))
-                        //     hpts.push(new cv.Point(tmp.data32S[i * 2], tmp.data32S[i * 2 + 1]))
                     }
 
-                    // cv.partition(tmp, lables, (pt1, pt2) => true)
-
-                    cnt.delete(); tmp.delete();
-
-                    // cv.drawContours(mask, hull, 0, color[0], 1, 8, hierarchy, 0);
+                    cnt.delete(); tmp.delete(); hIdxs.delete();
                 }
 
                 return areaIdx > -1 && biggerArea >= MIN_AREA;
             }
 
             function dinstaceSquared(p1, p2) {
-                console.log(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y, - p1.y, 2))
                 return Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y, - p1.y, 2);
             }
 
