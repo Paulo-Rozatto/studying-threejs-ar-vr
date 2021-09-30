@@ -16,13 +16,21 @@
     <p id="info">Carregando...</p>
 
     <script async src="libs/opencv0.js" onload="main();" type="text/javascript"></script>
-    <script>
-        async function main() {
-            const canvasFrame = document.getElementById("canvasFrame"); // gets <canvas>
-            const context = canvasFrame.getContext("2d"); // context
+    <script >
+        const canvasFrame = document.getElementById("canvasFrame"); // gets <canvas>
+        const context = canvasFrame.getContext("2d"); // context
 
-            const video = document.getElementById("videoInput"); // gets <video>
-            const { width, height } = await startVideo(video); // start video and get its properties
+        const video = document.getElementById("videoInput"); // gets <video>
+        let width, height;
+        // const { width, height } = 
+        startVideo(video)
+        .then(e => {
+            console.log(e);
+            width = e.width
+            height = e.height
+        }); // start video and get its properties
+
+        async function main() {
 
             const p = document.getElementById("info");
             p.innerHTML = `width: ${width} and height: ${height}`;
@@ -164,7 +172,6 @@
                                 processVideo();
                             }, 1000);
                             count = 0;
-                            return;
                         }
                         cv.add(dst, mask, dst);
                     }
