@@ -77,6 +77,10 @@
             let goodNew = [];
             let goodOld = [];
 
+            // hull variables -
+            let tempHull = new cv.MatVector();
+            const fingerTips = [];
+
             // colors for drawing points
             const colors = [];
             for (let i = 0; i < maxCorners; i++) {
@@ -92,7 +96,7 @@
 
                 classifyPixesl(src, aux, LOW, HIGH);
 
-                findBiggerArea(aux, contours, contourArea)
+                findBiggestArea(aux, contours, contourArea)
 
                 if (contourArea.value < MIN_AREA) {
                     hasFeatures = false;
@@ -129,9 +133,13 @@
 
                         for (let i = 0; i < goodNew.length; i++) {
                             cv.circle(dst, goodNew[i], 5, colors[i], -1);
-                            cv.line(mask, goodNew[i], goodOld[i], colors[i], 2);
+                            // cv.line(mask, goodNew[i], goodOld[i], colors[i], 2);
                         }
 
+                        createHull(contours.get(contourArea.id))
+
+                        mask.setTo(BLACK);
+                        cv.drawContours(mask, tempHull, 0, colors[0], 2, 8, hierarchy, 0);
                         cv.add(dst, mask, dst);
 
                         grayFrame.copyTo(oldFrame);
@@ -156,7 +164,7 @@
                 cv.inRange(destination, LOW, HIGH, destination);
             }
 
-            function findBiggerArea(source, contours, contourArea) {
+            function findBiggestArea(source, contours, contourArea) {
                 cv.findContours(source, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
 
                 let areaIdx = -1, area, biggerArea = 0;
@@ -175,12 +183,25 @@
                 contourArea.value = biggerArea;
             }
 
+            function createHull(contour, fingerTips){
+                tempHull.delete();
+                tempHull = new cv.MatVector();
+
+                let tmp = new cv.Mat();
+
+                cv.convexHull(contour, tmp, false, true);
+                tempHull.push_back(tmp);
+
+                tmp.delete();
+            }
+
             function detachForeground(source, destination, contours, areaIdx) {
                 binaryMask.setTo(BLACK);
 
                 cv.drawContours(binaryMask, contours, areaIdx, RED, -1, cv.LINE_8, hierarchy, 1);
                 cv.bitwise_and(source, source, destination, binaryMask);
             }
+            
         }
 
 
