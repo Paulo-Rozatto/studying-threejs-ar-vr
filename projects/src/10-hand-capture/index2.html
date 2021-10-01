@@ -131,15 +131,20 @@
                             }
                         }
 
-                        for (let i = 0; i < goodNew.length; i++) {
-                            cv.circle(dst, goodNew[i], 5, colors[i], -1);
+                        // for (let i = 0; i < goodNew.length; i++) {
+                        //     cv.circle(dst, goodNew[i], 5, colors[i], -1);
+                        //     // cv.line(mask, goodNew[i], goodOld[i], colors[i], 2);
+                        // }
+
+                        createHull(contours.get(contourArea.id), fingerTips)
+
+                        for (let i = 0; i < fingerTips.length; i++) {
+                            cv.circle(dst, fingerTips[i], 5, colors[i], 1);
                             // cv.line(mask, goodNew[i], goodOld[i], colors[i], 2);
                         }
 
-                        createHull(contours.get(contourArea.id))
-
-                        mask.setTo(BLACK);
-                        cv.drawContours(mask, tempHull, 0, colors[0], 2, 8, hierarchy, 0);
+                        // mask.setTo(BLACK);
+                        // cv.drawContours(mask, tempHull, 0, colors[0], 2, 8, hierarchy, 0);
                         cv.add(dst, mask, dst);
 
                         grayFrame.copyTo(oldFrame);
@@ -189,8 +194,23 @@
 
                 let tmp = new cv.Mat();
 
-                cv.convexHull(contour, tmp, false, true);
+                cv.convexHull(contour, tmp, false, false);
                 tempHull.push_back(tmp);
+
+                // console.log(tmp, tmp.type())
+
+                fingerTips.length = 0;
+                for(let i = 0; i < tmp.rows; i++) {
+                    let index = tmp.data32S[i];
+                    let tip = new cv.Point(contour.data32S[index * 2], contour.data32S[index * 2 + 1]);
+                    // let isValid = false;
+                    
+                    // for(let j = 0; j < fingerTips.length; j++) {
+                    // }
+
+                    fingerTips.push(tip);
+                }
+
 
                 tmp.delete();
             }
@@ -202,6 +222,9 @@
                 cv.bitwise_and(source, source, destination, binaryMask);
             }
             
+            function dinstaceSquared(p1, p2) {
+                return Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y, - p1.y, 2);
+            }
         }
 
 
