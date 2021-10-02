@@ -158,10 +158,12 @@
 
                         createHull(contours.get(contourArea.id), fingerTips)
 
+
                         for (let i = 0; i < fingerTips.length; i++) {
                             cv.circle(dst, fingerTips[i], 5, colors[i], 1);
                             // cv.line(mask, goodNew[i], goodOld[i], colors[i], 2);
                         }
+                        // return;
 
                         // mask.setTo(BLACK);
                         // cv.drawContours(mask, tempHull, 0, colors[0], 2, 8, hierarchy, 0);
@@ -217,20 +219,32 @@
                 cv.convexHull(contour, tmp, false, false);
                 tempHull.push_back(tmp);
 
-                // console.log(tmp, tmp.type())
+                tmp.data32S.sort((a, b) => a - b);
+
+                // define cluster as being a group of hull indexes that are less than 100 units apart
+                let firstMember = tmp.data32S[0]; // indicates the first member of a cluster
+                let firstIndex = 0; // member index in the array data32S
+                let counter = 0;
 
                 fingerTips.length = 0;
                 for (let i = 0; i < tmp.rows; i++) {
-                    let index = tmp.data32S[i];
-                    let tip = new cv.Point(contour.data32S[index * 2], contour.data32S[index * 2 + 1]);
-                    // let isValid = false;
+                    let member = tmp.data32S[i];
 
-                    // for(let j = 0; j < fingerTips.length; j++) {
-                    // }
+                    if (Math.abs(firstMember - member) > 100) {
+                        let middleIndex = firstIndex + Math.trunc(counter / 2);
+                        let middleMember = tmp.data32S[middleIndex];
 
-                    fingerTips.push(tip);
+                        fingerTips.push(new cv.Point(
+                            contour.data32S[middleMember * 2],
+                            contour.data32S[middleMember * 2 + 1]
+                        ));
+
+                        firstIndex = i;
+                        firstMember = member;
+                        counter = 0;
+                    }
+                    counter++;
                 }
-
 
                 tmp.delete();
             }
@@ -240,10 +254,6 @@
 
                 cv.drawContours(binaryMask, contours, areaIdx, RED, -1, cv.LINE_8, hierarchy, 1);
                 cv.bitwise_and(source, source, destination, binaryMask);
-            }
-
-            function dinstaceSquared(p1, p2) {
-                return Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y, - p1.y, 2);
             }
         }
 
