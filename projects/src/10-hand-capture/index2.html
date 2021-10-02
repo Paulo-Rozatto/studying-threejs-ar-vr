@@ -156,7 +156,7 @@
                         //     // cv.line(mask, goodNew[i], goodOld[i], colors[i], 2);
                         // }
 
-                        createHull(contours.get(contourArea.id), fingerTips)
+                        obtainFingers(contours.get(contourArea.id), fingerTips);
 
 
                         for (let i = 0; i < fingerTips.length; i++) {
@@ -210,7 +210,7 @@
                 contourArea.value = biggerArea;
             }
 
-            function createHull(contour, fingerTips) {
+            function obtainFingers(contour, fingerTips) {
                 tempHull.delete();
                 tempHull = new cv.MatVector();
 
