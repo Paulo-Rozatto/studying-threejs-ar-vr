@@ -13,10 +13,14 @@
     <canvas id="canvasFrame"></canvas>
     <canvas id="binary"></canvas>
 
-    <p id="info">Carregando...</p>
+    <p id="info"></p>
 
-    <script async src="libs/opencv0.js" onload="main();" type="text/javascript"></script>
+    <script async src="libs/opencv0.js" onload="start({cv: true});" type="text/javascript"></script>
     <script>
+        // variables to know when both opencv and camera loaded
+        let cvHasLoaded = false,
+            cameraHasLoaded = false;
+
         // canvas context and video
         const context = document.getElementById("canvasFrame").getContext("2d");
         const video = document.getElementById("videoInput");
@@ -28,7 +32,23 @@
             .then((value) => {
                 width = value.width;
                 height = value.height;
+                start({ camera: true })
             });
+
+
+        function start(info) {
+            cvHasLoaded = cvHasLoaded || info.cv;
+            cameraHasLoaded = cameraHasLoaded || info.camera;
+
+            console.log(cvHasLoaded, cameraHasLoaded);
+
+            const p = document.getElementById("info");
+            p.innerHTML += `cv: ${cvHasLoaded}, cam: ${cameraHasLoaded} |`;
+
+            if (cvHasLoaded && cameraHasLoaded) {
+                main();
+            }
+        }
 
         function main() {
             // -- Constants -- //
@@ -188,7 +208,7 @@
                 contourArea.value = biggerArea;
             }
 
-            function createHull(contour, fingerTips){
+            function createHull(contour, fingerTips) {
                 tempHull.delete();
                 tempHull = new cv.MatVector();
 
@@ -200,11 +220,11 @@
                 // console.log(tmp, tmp.type())
 
                 fingerTips.length = 0;
-                for(let i = 0; i < tmp.rows; i++) {
+                for (let i = 0; i < tmp.rows; i++) {
                     let index = tmp.data32S[i];
                     let tip = new cv.Point(contour.data32S[index * 2], contour.data32S[index * 2 + 1]);
                     // let isValid = false;
-                    
+
                     // for(let j = 0; j < fingerTips.length; j++) {
                     // }
 
@@ -221,7 +241,7 @@
                 cv.drawContours(binaryMask, contours, areaIdx, RED, -1, cv.LINE_8, hierarchy, 1);
                 cv.bitwise_and(source, source, destination, binaryMask);
             }
-            
+
             function dinstaceSquared(p1, p2) {
                 return Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y, - p1.y, 2);
             }
