@@ -40,8 +40,6 @@
             cvHasLoaded = cvHasLoaded || info.cv;
             cameraHasLoaded = cameraHasLoaded || info.camera;
 
-            console.log(cvHasLoaded, cameraHasLoaded);
-
             const p = document.getElementById("info");
             p.innerHTML += `cv: ${cvHasLoaded}, cam: ${cameraHasLoaded} |`;
 
@@ -98,8 +96,8 @@
             let goodOld = [];
 
             // hull variables -
-            let tempHull = new cv.MatVector();
             const fingerTips = [];
+            let numbFingers = 0;
 
             // colors for drawing points
             const colors = [];
@@ -158,15 +156,12 @@
 
                         obtainFingers(contours.get(contourArea.id), fingerTips);
 
-
-                        for (let i = 0; i < fingerTips.length; i++) {
-                            cv.circle(dst, fingerTips[i], 5, colors[i], 1);
-                            // cv.line(mask, goodNew[i], goodOld[i], colors[i], 2);
-                        }
+                        // for (let i = 0; i < fingerTips.length; i++) {
+                        //     cv.circle(dst, fingerTips[i], 5, colors[i], 3);
+                        // }
                         // return;
 
                         // mask.setTo(BLACK);
-                        // cv.drawContours(mask, tempHull, 0, colors[0], 2, 8, hierarchy, 0);
                         cv.add(dst, mask, dst);
 
                         grayFrame.copyTo(oldFrame);
@@ -211,28 +206,26 @@
             }
 
             function obtainFingers(contour, fingerTips) {
-                tempHull.delete();
-                tempHull = new cv.MatVector();
+                let hull = new cv.Mat();
 
-                let tmp = new cv.Mat();
+                let fingerIndexes = [];
 
-                cv.convexHull(contour, tmp, false, false);
-                tempHull.push_back(tmp);
+                cv.convexHull(contour, hull, false, false);
 
-                tmp.data32S.sort((a, b) => a - b);
+                hull.data32S.sort((a, b) => a - b);
 
                 // define cluster as being a group of hull indexes that are less than 100 units apart
-                let firstMember = tmp.data32S[0]; // indicates the first member of a cluster
+                let firstMember = hull.data32S[0]; // indicates the first member of a cluster
                 let firstIndex = 0; // member index in the array data32S
                 let counter = 0;
 
                 fingerTips.length = 0;
-                for (let i = 0; i < tmp.rows; i++) {
-                    let member = tmp.data32S[i];
+                for (let i = 0; i < hull.rows; i++) {
+                    let member = hull.data32S[i];
 
                     if (Math.abs(firstMember - member) > 100) {
                         let middleIndex = firstIndex + Math.trunc(counter / 2);
-                        let middleMember = tmp.data32S[middleIndex];
+                        let middleMember = hull.data32S[middleIndex];
 
                         fingerTips.push(new cv.Point(
                             contour.data32S[middleMember * 2],
@@ -242,11 +235,51 @@
                         firstIndex = i;
                         firstMember = member;
                         counter = 0;
+
+                        fingerIndexes.push(member);
                     }
                     counter++;
                 }
 
-                tmp.delete();
+                let rh = new cv.Mat(fingerIndexes.length, 1, 4);
+                let rhIdx = 0;
+                let defect = new cv.Mat();
+
+                fingerIndexes.map((e, i) => { rh.data32S[i] = e });
+
+                cv.convexityDefects(contour, rh, defect);
+
+                numbFingers = 0;
+                for (let i = 0; i < defect.rows; ++i) {
+                    let start = new cv.Point(contour.data32S[defect.data32S[i * 4] * 2],
+                        contour.data32S[defect.data32S[i * 4] * 2 + 1]);
+                    let end = new cv.Point(contour.data32S[defect.data32S[i * 4 + 1] * 2],
+                        contour.data32S[defect.data32S[i * 4 + 1] * 2 + 1]);
+                    let far = new cv.Point(contour.data32S[defect.data32S[i * 4 + 2] * 2],
+                        contour.data32S[defect.data32S[i * 4 + 2] * 2 + 1]);
+
+                    let nextI = i + 1 === defect.rows ? 0 : i + 1;
+                    let nextStart = new cv.Point(contour.data32S[defect.data32S[nextI * 4] * 2],
+                        contour.data32S[defect.data32S[nextI * 4] * 2 + 1]);
+                    let nextFar = new cv.Point(contour.data32S[defect.data32S[nextI * 4 + 2] * 2],
+                        contour.data32S[defect.data32S[nextI * 4 + 2] * 2 + 1]);
+
+                    let vec1 = new cv.Point(end.x - far.x, end.y - far.y);
+                    let vec2 = new cv.Point(nextFar.x - nextStart.x, nextFar.y - nextStart.y);
+                    let angle = Math.acos(
+                        (vec1.x * vec2.x + vec1.y * vec2.y) / ( Math.sqrt(vec1.x * vec1.x + vec1.y * vec1.y) * Math.sqrt(vec2.x * vec2.x + vec2.y * vec2.y) )
+                    );
+                    angle = angle * 180 / Math.PI;
+                    if(angle < 40) numbFingers++;
+
+                    cv.line(dst, start, far, colors[i + 5], 2, cv.LINE_AA, 0);
+                    cv.line(dst, far, end, colors[i + 5], 2, cv.LINE_AA, 0);
+                    cv.circle(dst, far, 5, colors[i + 5], 2);
+                    cv.circle(dst, end, 5, colors[i + 5], -1);
+                }
+
+
+                hull.delete(); rh.delete(); defect.delete();
             }
 
             function detachForeground(source, destination, contours, areaIdx) {
@@ -255,6 +288,11 @@
                 cv.drawContours(binaryMask, contours, areaIdx, RED, -1, cv.LINE_8, hierarchy, 1);
                 cv.bitwise_and(source, source, destination, binaryMask);
             }
+        
+            setInterval( ()=> {
+                const p = document.getElementById("info");
+                p.innerHTML = 'Fingers:  ' + numbFingers;
+            }, 1000);
         }
 
 
