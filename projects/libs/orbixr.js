@@ -16,7 +16,8 @@ import {
     FontLoader,
     TextBufferGeometry,
     Texture,
-    TextureLoader
+    TextureLoader,
+    CanvasTexture
 } from '../build2/three.module.js';
 
 // propertys
@@ -31,6 +32,8 @@ let uiGroup, movementBar, messageGroup, textGroup;
 // helpers
 let buttonsArray, buttonCount, origin2d, euler, intersection, intersected, oldIntersected, oldTime;
 
+let fingers, canvasTexture;
+
 class Orbi extends Object3D {
     constructor(cam, props) {
         super();
@@ -38,6 +41,11 @@ class Orbi extends Object3D {
         if (!cam || cam.type != "PerspectiveCamera") {
             throw new Error("OrBI: Type of camera argument have to be PerspectiveCamera")
         }
+
+        window.addEventListener('changed', function (e) {  
+          fingers = e.detail.fingers;
+        }, false);
+        
 
         config = {
             display: new Vector2(4, 1),
@@ -124,6 +132,10 @@ class Orbi extends Object3D {
         messageGroup.visible = false;
         uiGroup.add(messageGroup);
 
+
+        canvasTexture = new CanvasTexture(context.canvas)
+        console.log('ctx', context);
+
         const messageBgGeo = new PlaneBufferGeometry(1, 0.08);
         const messageBgMat = new MeshBasicMaterial({
             color: config.message.bgColor,
@@ -145,9 +157,10 @@ class Orbi extends Object3D {
 
         const textBgGeo = new PlaneBufferGeometry(config.text.size.x, config.text.size.y);
         const textBgMat = new MeshBasicMaterial({
-            color: config.text.bgColor,
-            transparent: config.text.transparent,
-            opacity: config.text.opacity,
+            map: canvasTexture,
+            // color: config.text.bgColor,
+            // transparent: config.text.transparent,
+            // opacity: config.text.opacity,
         });
         textBg = new Mesh(textBgGeo, textBgMat);
         textBg.position.x = config.text.size.x * 0.5 + 0.01;
@@ -265,20 +278,20 @@ class Orbi extends Object3D {
     }
 
     showText(txt) {
-        if (!this.font) {
-            console.error('OrBI: No font specified.');
-            return;
-        }
+        // if (!this.font) {
+        //     console.error('OrBI: No font specified.');
+        //     return;
+        // }
 
-        const textGeo = new TextBufferGeometry(txt, {
-            font: this.font,
-            size: 0.04,
-            height: 0,
-        });
-        // textGeo.computeBoundingBox()
+        // const textGeo = new TextBufferGeometry(txt, {
+        //     font: this.font,
+        //     size: 0.04,
+        //     height: 0,
+        // });
+        // // textGeo.computeBoundingBox()
 
-        text.geometry = textGeo;
-        text.geometry.needsUpdate = true;
+        // text.geometry = textGeo;
+        // text.geometry.needsUpdate = true;
 
         textGroup.visible = true;
     }
@@ -297,7 +310,7 @@ class Orbi extends Object3D {
             uiGroup.rotation.x = euler.x;
         }
 
-        if (rayClock.getElapsedTime() > 0.2) {
+        if (rayClock.getElapsedTime() > 0.2 && fingers > 0) {
             rayClock.start();
 
             raycaster.setFromCamera(origin2d, camera);
@@ -347,6 +360,42 @@ class Orbi extends Object3D {
             }
         }
 
+        canvasTexture.needsUpdate = true;
+
+    }
+
+    click() {
+        raycaster.setFromCamera(origin2d, camera);
+
+        intersection.length = 0;
+
+        if (this.moveVertically || this.moveHorizontally) {
+            raycaster.intersectObject(this.stopButton, false, intersection);
+        }
+        else {
+            raycaster.intersectObjects(buttonsArray, false, intersection);
+        }
+
+        if (intersection.length > 0) {
+            intersected = intersection[0].object;
+        }
+        else {
+            intersected = null;
+            oldIntersected = null;
+        }
+
+        if (intersected) {
+            if (intersected !== oldIntersected) {
+                isFusing = true;
+                fusingClock.start();
+                oldIntersected = intersected;
+            }
+        }
+        else if (isFusing) {
+            isFusing = false;
+            fusingClock.stop();
+            cursor.scale.set(1, 1, 1);
+        }
     }
 }
 

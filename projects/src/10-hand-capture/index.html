@@ -34,7 +34,9 @@
                 height = value.height;
                 start({ camera: true })
             });
-
+        
+            let isReturn = false;
+            window.addEventListener('keydown', () => { isReturn = true})
 
         function start(info) {
             cvHasLoaded = cvHasLoaded || info.cv;
@@ -159,7 +161,7 @@
                         // for (let i = 0; i < fingerTips.length; i++) {
                         //     cv.circle(dst, fingerTips[i], 5, colors[i], 3);
                         // }
-                        // return;
+                        if(isReturn) return;
 
                         // mask.setTo(BLACK);
                         cv.add(dst, mask, dst);
@@ -265,12 +267,19 @@
                         contour.data32S[defect.data32S[nextI * 4 + 2] * 2 + 1]);
 
                     let vec1 = new cv.Point(end.x - far.x, end.y - far.y);
-                    let vec2 = new cv.Point(nextFar.x - nextStart.x, nextFar.y - nextStart.y);
+                    let vec2 = new cv.Point(nextStart.x - nextFar.x, nextStart.y - nextFar.y);
+                    // console.log('vec1', vec1);
+                    // console.log('vec2', vec2);
+                    // console.log('prod',  (vec1.x * vec2.x),  (vec1.y * vec2.y) )
+                    // console.log('dot: ',  (vec1.x * vec2.x + vec1.y * vec2.y) )
+                    // console.log('\n-------\n')
+
                     let angle = Math.acos(
                         (vec1.x * vec2.x + vec1.y * vec2.y) / ( Math.sqrt(vec1.x * vec1.x + vec1.y * vec1.y) * Math.sqrt(vec2.x * vec2.x + vec2.y * vec2.y) )
                     );
                     angle = angle * 180 / Math.PI;
-                    if(angle < 40) numbFingers++;
+                    // console.log(angle)
+                    if(angle < 60) numbFingers++;
 
                     cv.line(dst, start, far, colors[i + 5], 2, cv.LINE_AA, 0);
                     cv.line(dst, far, end, colors[i + 5], 2, cv.LINE_AA, 0);
