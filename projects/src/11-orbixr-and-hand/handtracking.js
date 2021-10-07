@@ -253,10 +253,10 @@ function main() {
             let norm1 = Math.sqrt(vec1.x * vec1.x + vec1.y * vec1.y);
             let norm2 = Math.sqrt(vec2.x * vec2.x + vec2.y * vec2.y)
 
-            vec1.x = vec1.x / norm1;
-            vec1.y = vec1.y / norm1;
-            vec2.x = vec2.x / norm2;
-            vec2.y = vec2.y / norm2;
+            // vec1.x = vec1.x / norm1;
+            // vec1.y = vec1.y / norm1;
+            // vec2.x = vec2.x / norm2;
+            // vec2.y = vec2.y / norm2;
             // console.log('vec1', vec1);
             // console.log('vec2', vec2);
             // console.log('prod',  (vec1.x * vec2.x),  (vec1.y * vec2.y) )
