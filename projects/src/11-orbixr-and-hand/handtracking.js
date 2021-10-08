@@ -83,6 +83,8 @@ function main() {
     let numbFingers = 0;
     let oldFingers = -1;
 
+    let center;
+
     // colors for drawing points
     const colors = [];
     for (let i = 0; i < maxCorners; i++) {
@@ -103,6 +105,8 @@ function main() {
         if (contourArea.value < MIN_AREA) {
             hasFeatures = false;
             dst.setTo(BLACK);
+
+            center = {x: 0, y: 0}
         }
         else {
             dst.setTo(BLACK)
@@ -114,6 +118,8 @@ function main() {
             if (!hasFeatures) {
                 cv.goodFeaturesToTrack(grayFrame, features, maxCorners, qualityLevel, minDistance);
 
+                center = cv.minEnclosingCircle(contours.get(contourArea.id)).center;
+
                 if (features.rows >= MIN_FEATURES) {
                     hasFeatures = true;
                     mask.setTo(BLACK);
@@ -121,38 +127,84 @@ function main() {
                 }
             }
             else {
-                // cv.calcOpticalFlowPyrLK(oldFrame, grayFrame, features, features2, stats, err, winSize, maxLevel, criteria);
+                dst.setTo(BLACK)
+                detachForeground(src, dst, contours, contourArea.id);
 
-                // goodNew.length = 0;
-                // goodOld.length = 0;
+                // dst.copyTo(grayFrame);
+                cv.cvtColor(dst, grayFrame, cv.COLOR_RGB2GRAY);
 
-                // for (let i = 0; i < stats.rows; i++) {
-                //     if (stats.data[i] === 1) {
-                //         goodNew.push(new cv.Point(features2.data32F[i * 2], features2.data32F[i * 2 + 1]));
-                //         goodOld.push(new cv.Point(features.data32F[i * 2], features.data32F[i * 2 + 1]));
-                //     }
-                // }
+                if (!hasFeatures) {
+                    cv.goodFeaturesToTrack(grayFrame, features, maxCorners, qualityLevel, minDistance);
 
-                // for (let i = 0; i < goodNew.length; i++) {
-                //     cv.circle(dst, goodNew[i], 5, colors[i], -1);
-                //     // cv.line(mask, goodNew[i], goodOld[i], colors[i], 2);
-                // }
+                    center = cv.minEnclosingCircle(contours.get(contourArea.id)).center;
 
-                obtainFingers(contours.get(contourArea.id), fingerTips);
+                    if (features.rows >= MIN_FEATURES) {
+                        hasFeatures = true;
+                        mask.setTo(BLACK);
+                        grayFrame.copyTo(oldFrame);
+                    }
+                }
+                else {
+                    cv.calcOpticalFlowPyrLK(oldFrame, grayFrame, features, features2, stats, err, winSize, maxLevel, criteria);
 
-                // for (let i = 0; i < fingerTips.length; i++) {
-                //     cv.circle(dst, fingerTips[i], 5, colors[i], 3);
-                // }
+                    goodNew.length = 0;
+                    goodOld.length = 0;
+                    let avx = 0, avy = 0, size = 0;
 
-                // mask.setTo(BLACK);
-                cv.add(dst, mask, dst);
+                    for (let i = 0; i < stats.rows; i++) {
+                        if (stats.data[i] === 1) {
+                            goodNew.push(new cv.Point(features2.data32F[i * 2], features2.data32F[i * 2 + 1]));
+                            goodOld.push(new cv.Point(features.data32F[i * 2], features.data32F[i * 2 + 1]));
 
-                grayFrame.copyTo(oldFrame);
-                for (let i = 0; i < goodNew.length; i++) {
-                    features.data32F[i * 2] = goodNew[i].x;
-                    features.data32F[i * 2 + 1] = goodNew[i].y;
+                            // console.log(goodNew[i], goodOld[i])
+                            if (goodNew[i] && goodOld[i]) {
+                                avx += goodNew[i].x //- goodOld[i].x;
+                                avy += goodNew[i].y //- goodOld[i].y
+                                size++;
+                            }
+                        }
+                    }
+
+                    avx /= size;
+                    avy /= size;
+
+                    center.x = avx;
+                    center.y = avy;
+
+                    // if(center.x < 0) center.x = 0;
+                    // if(center.y < 0) center.y = 0;
+
+                    // if(center.x > height) center.x = height;
+                    // if(center.y > width) center.y = width;
+
+                    cv.circle(dst, center, 7, colors[0], -1)
+
+                    for (let i = 0; i < goodNew.length; i++) {
+                        cv.circle(dst, goodNew[i], 5, colors[i], 1);
+                        // cv.line(mask, goodNew[i], goodOld[i], colors[i], 2);
+                    }
+
+                    // obtainFingers(contours.get(contourArea.id), fingerTips);
+
+                    // for (let i = 0; i < fingerTips.length; i++) {
+                    //     cv.circle(dst, fingerTips[i], 5, colors[i], 3);
+                    // }
+
+
+
+                    if (isReturn) return;
+
+                    // mask.setTo(BLACK);
+                    cv.add(dst, mask, dst);
+
+                    grayFrame.copyTo(oldFrame);
+                    for (let i = 0; i < goodNew.length; i++) {
+                        features.data32F[i * 2] = goodNew[i].x;
+                        features.data32F[i * 2 + 1] = goodNew[i].y;
+                    }
                 }
             }
+
         }
 
         cv.imshow("canvasFrame", dst);
@@ -288,20 +340,30 @@ function main() {
     }
 
     setInterval(() => {
-        // const p = document.getElementById("info");
-        // p.innerHTML = 'Fingers:  ' + numbFingers;
-        if (numbFingers != oldFingers) {
-            let event = new CustomEvent("changed", {
-                detail: {
-                    fingers: numbFingers
-                }
-            });
-            window.dispatchEvent(event);
+        // if (numbFingers != oldFingers) {
+        //     let event = new CustomEvent("changed", {
+        //         detail: {
+        //             fingers: numbFingers
+        //         }
+        //     });
+        //     window.dispatchEvent(event);
 
-            oldFingers = numbFingers;
-        }
-        console.log(numbFingers);
-    }, 1000);
+        //     oldFingers = numbFingers;
+        // }
+        // console.log(numbFingers);
+
+        window.dispatchEvent(
+            new CustomEvent("center", {
+                detail: {
+                    center: {
+                        x: center.x / height,
+                        y: -center.y / width,
+                    }
+                }
+            })
+        )
+
+    }, 100);
 }
 
 

@@ -32,7 +32,7 @@ let uiGroup, movementBar, messageGroup, textGroup;
 // helpers
 let buttonsArray, buttonCount, origin2d, euler, intersection, intersected, oldIntersected, oldTime;
 
-let fingers, canvasTexture;
+let fingers, canvasTexture, center;
 
 class Orbi extends Object3D {
     constructor(cam, props) {
@@ -42,10 +42,21 @@ class Orbi extends Object3D {
             throw new Error("OrBI: Type of camera argument have to be PerspectiveCamera")
         }
 
-        window.addEventListener('changed', function (e) {  
-          fingers = e.detail.fingers;
-        }, false);
-        
+        // window.addEventListener('changed', function (e) {  
+        //   fingers = e.detail.fingers;
+        // }, false);
+
+        window.addEventListener('center', (e) => {
+            center = e.detail.center;
+
+            console.log(center);
+
+            if(cursor) {
+                cursor.position.x = center.x;
+                cursor.position.y = center.y;
+            }
+        });
+
 
         config = {
             display: new Vector2(4, 1),
@@ -310,7 +321,7 @@ class Orbi extends Object3D {
             uiGroup.rotation.x = euler.x;
         }
 
-        if (rayClock.getElapsedTime() > 0.2 && fingers > 0) {
+        if (rayClock.getElapsedTime() > 0.2) {
             rayClock.start();
 
             raycaster.setFromCamera(origin2d, camera);

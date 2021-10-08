@@ -34,9 +34,9 @@
                 height = value.height;
                 start({ camera: true })
             });
-        
-            let isReturn = false;
-            window.addEventListener('keydown', () => { isReturn = true})
+
+        let isReturn = false;
+        window.addEventListener('keydown', () => { isReturn = true })
 
         function start(info) {
             cvHasLoaded = cvHasLoaded || info.cv;
@@ -101,6 +101,8 @@
             const fingerTips = [];
             let numbFingers = 0;
 
+            let center;
+
             // colors for drawing points
             const colors = [];
             for (let i = 0; i < maxCorners; i++) {
@@ -132,6 +134,8 @@
                     if (!hasFeatures) {
                         cv.goodFeaturesToTrack(grayFrame, features, maxCorners, qualityLevel, minDistance);
 
+                        center = cv.minEnclosingCircle(contours.get(contourArea.id)).center;
+
                         if (features.rows >= MIN_FEATURES) {
                             hasFeatures = true;
                             mask.setTo(BLACK);
@@ -143,25 +147,50 @@
 
                         goodNew.length = 0;
                         goodOld.length = 0;
+                        let avx = 0, avy = 0, size = 0;
 
                         for (let i = 0; i < stats.rows; i++) {
                             if (stats.data[i] === 1) {
                                 goodNew.push(new cv.Point(features2.data32F[i * 2], features2.data32F[i * 2 + 1]));
                                 goodOld.push(new cv.Point(features.data32F[i * 2], features.data32F[i * 2 + 1]));
+
+                                // console.log(goodNew[i], goodOld[i])
+                                if (goodNew[i] && goodOld[i]) {
+                                    avx += goodNew[i].x //- goodOld[i].x;
+                                    avy += goodNew[i].y //- goodOld[i].y
+                                    size++;
+                                }
                             }
                         }
 
-                        // for (let i = 0; i < goodNew.length; i++) {
-                        //     cv.circle(dst, goodNew[i], 5, colors[i], -1);
-                        //     // cv.line(mask, goodNew[i], goodOld[i], colors[i], 2);
-                        // }
+                        avx /= size;
+                        avy /= size;
 
-                        obtainFingers(contours.get(contourArea.id), fingerTips);
+                        center.x = avx;
+                        center.y = avy;
+
+                        // if(center.x < 0) center.x = 0;
+                        // if(center.y < 0) center.y = 0;
+
+                        // if(center.x > height) center.x = height;
+                        // if(center.y > width) center.y = width;
+
+                        cv.circle(dst, center, 7, colors[0], -1)
+
+                        for (let i = 0; i < goodNew.length; i++) {
+                            cv.circle(dst, goodNew[i], 5, colors[i], 1);
+                            // cv.line(mask, goodNew[i], goodOld[i], colors[i], 2);
+                        }
+
+                        // obtainFingers(contours.get(contourArea.id), fingerTips);
 
                         // for (let i = 0; i < fingerTips.length; i++) {
                         //     cv.circle(dst, fingerTips[i], 5, colors[i], 3);
                         // }
-                        if(isReturn) return;
+
+
+
+                        if (isReturn) return;
 
                         // mask.setTo(BLACK);
                         cv.add(dst, mask, dst);
@@ -275,11 +304,11 @@
                     // console.log('\n-------\n')
 
                     let angle = Math.acos(
-                        (vec1.x * vec2.x + vec1.y * vec2.y) / ( Math.sqrt(vec1.x * vec1.x + vec1.y * vec1.y) * Math.sqrt(vec2.x * vec2.x + vec2.y * vec2.y) )
+                        (vec1.x * vec2.x + vec1.y * vec2.y) / (Math.sqrt(vec1.x * vec1.x + vec1.y * vec1.y) * Math.sqrt(vec2.x * vec2.x + vec2.y * vec2.y))
                     );
                     angle = angle * 180 / Math.PI;
                     // console.log(angle)
-                    if(angle < 60) numbFingers++;
+                    if (angle < 60) numbFingers++;
 
                     cv.line(dst, start, far, colors[i + 5], 2, cv.LINE_AA, 0);
                     cv.line(dst, far, end, colors[i + 5], 2, cv.LINE_AA, 0);
@@ -297,8 +326,8 @@
                 cv.drawContours(binaryMask, contours, areaIdx, RED, -1, cv.LINE_8, hierarchy, 1);
                 cv.bitwise_and(source, source, destination, binaryMask);
             }
-        
-            setInterval( ()=> {
+
+            setInterval(() => {
                 const p = document.getElementById("info");
                 p.innerHTML = 'Fingers:  ' + numbFingers;
             }, 1000);
