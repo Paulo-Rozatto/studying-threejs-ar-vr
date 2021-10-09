@@ -83,7 +83,7 @@ function main() {
     let numbFingers = 0;
     let oldFingers = -1;
 
-    let center;
+    let center = { x: 0, y: 0 };
 
     // colors for drawing points
     const colors = [];
@@ -106,7 +106,8 @@ function main() {
             hasFeatures = false;
             dst.setTo(BLACK);
 
-            center = {x: 0, y: 0}
+            center.x = 0;
+            center.y = 0;
         }
         else {
             dst.setTo(BLACK)
@@ -118,7 +119,9 @@ function main() {
             if (!hasFeatures) {
                 cv.goodFeaturesToTrack(grayFrame, features, maxCorners, qualityLevel, minDistance);
 
-                center = cv.minEnclosingCircle(contours.get(contourArea.id)).center;
+                // center = cv.minEnclosingCircle(contours.get(contourArea.id)).center;
+                center.x = 0;
+                center.y = 0;
 
                 if (features.rows >= MIN_FEATURES) {
                     hasFeatures = true;
@@ -136,7 +139,9 @@ function main() {
                 if (!hasFeatures) {
                     cv.goodFeaturesToTrack(grayFrame, features, maxCorners, qualityLevel, minDistance);
 
-                    center = cv.minEnclosingCircle(contours.get(contourArea.id)).center;
+                    // center = cv.minEnclosingCircle(contours.get(contourArea.id)).center;
+                    center.x = 0;
+                    center.y = 0;
 
                     if (features.rows >= MIN_FEATURES) {
                         hasFeatures = true;
@@ -158,18 +163,20 @@ function main() {
 
                             // console.log(goodNew[i], goodOld[i])
                             if (goodNew[i] && goodOld[i]) {
-                                avx += goodNew[i].x //- goodOld[i].x;
-                                avy += goodNew[i].y //- goodOld[i].y
+                                avx += goodNew[i].x - goodOld[i].x;
+                                avy += goodNew[i].y - goodOld[i].y
                                 size++;
                             }
                         }
                     }
 
-                    avx /= size;
-                    avy /= size;
+                    if (size > 0) {
+                        avx /= size;
+                        avy /= size;
 
-                    center.x = avx;
-                    center.y = avy;
+                        center.x += avx;
+                        center.y += avy;
+                    }
 
                     // if(center.x < 0) center.x = 0;
                     // if(center.y < 0) center.y = 0;

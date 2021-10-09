@@ -49,8 +49,6 @@ class Orbi extends Object3D {
         window.addEventListener('center', (e) => {
             center = e.detail.center;
 
-            console.log(center);
-
             if(cursor) {
                 cursor.position.x = center.x;
                 cursor.position.y = center.y;
@@ -145,7 +143,6 @@ class Orbi extends Object3D {
 
 
         canvasTexture = new CanvasTexture(context.canvas)
-        console.log('ctx', context);
 
         const messageBgGeo = new PlaneBufferGeometry(1, 0.08);
         const messageBgMat = new MeshBasicMaterial({
