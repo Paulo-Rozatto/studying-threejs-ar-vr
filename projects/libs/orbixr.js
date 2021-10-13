@@ -17,8 +17,10 @@ import {
     TextBufferGeometry,
     Texture,
     TextureLoader,
-    CanvasTexture
+    CanvasTexture,
 } from '../build2/three.module.js';
+
+// import { GLTFLoader } from '../build2/jsm/loaders/GLTFLoader.js'
 
 // propertys
 let currentOrbit, isFusing, config;
@@ -30,9 +32,9 @@ let camera, cursor, raycaster, rayClock, fusingClock, messageBg, message, textBg
 let uiGroup, movementBar, messageGroup, textGroup;
 
 // helpers
-let buttonsArray, buttonCount, origin2d, euler, intersection, intersected, oldIntersected, oldTime;
+let buttonsArray, buttonCount, origin2d, euler, intersection, intersected, oldIntersected;
 
-let fingers, canvasTexture, center;
+let fingers, canvasTexture, center, hand;
 
 class Orbi extends Object3D {
     constructor(cam, props) {
@@ -42,14 +44,28 @@ class Orbi extends Object3D {
             throw new Error("OrBI: Type of camera argument have to be PerspectiveCamera")
         }
 
-        // window.addEventListener('changed', function (e) {  
-        //   fingers = e.detail.fingers;
-        // }, false);
+        window.addEventListener('changed', function (e) {
+            if (!hand) return;
+            fingers = e.detail.fingers;
+
+            if (fingers > 0) {
+                config.hand.action.reset();
+                //   config.hand.setEffectiveTimeScale(-1)
+                config.hand.action.play()
+                //   config.action.time = -1;
+            }
+            else {
+                config.hand.action.reset();
+                config.hand.action.time = -1;
+                config.hand.loop = true;
+                // config.hand.action.play();
+            }
+        }, false);
 
         window.addEventListener('center', (e) => {
             center = e.detail.center;
 
-            if(cursor) {
+            if (cursor) {
                 cursor.position.x = center.x;
                 cursor.position.y = center.y;
             }
@@ -102,7 +118,12 @@ class Orbi extends Object3D {
             raycaster: {
                 near: 0.1,
                 far: 1.5,
-            }
+            },
+            hand: {
+                model: null,
+                mixer: null,
+                action: null
+            },
         }
         assingProps(config, props);
 
@@ -116,13 +137,30 @@ class Orbi extends Object3D {
 
         cursor = camera.getObjectByName("orbi-cursor");
         if (!cursor) {
-            cursor = new Mesh(
-                new RingBufferGeometry(config.cursor.innerRadius, config.cursor.outerRadius, 24),
-                new MeshBasicMaterial({ color: config.cursor.color, depthWrite: false, depthTest: false, transparent: true })
-            );
-            cursor.name = "orbi-cursor";
-            cursor.position.copy(config.cursor.position);
-            cursor.renderOrder = 5000;
+            if (config.hand.model) {
+                hand = config.hand.model;
+
+                hand.scene.traverse(child => {
+                    if (child.isMesh) {
+                        let color = child.material.color;
+                        child.material = new MeshBasicMaterial({ color });
+                    }
+                });
+
+                hand.scene.scale.set(0.05, 0.05, 0.05);
+                hand.scene.position.set(0, 0, -1);
+                cursor = hand.scene;
+
+            }
+            else {
+                cursor = new Mesh(
+                    new RingBufferGeometry(config.cursor.innerRadius, config.cursor.outerRadius, 24),
+                    new MeshBasicMaterial({ color: config.cursor.color, depthWrite: false, depthTest: false, transparent: true })
+                );
+                cursor.name = "orbi-cursor";
+                cursor.position.copy(config.cursor.position);
+                cursor.renderOrder = 5000;
+            }
             camera.add(cursor);
         }
 

@@ -108,6 +108,7 @@ function main() {
 
             center.x = 0;
             center.y = 0;
+            numbFingers = 0;
         }
         else {
             dst.setTo(BLACK)
@@ -122,6 +123,7 @@ function main() {
                 // center = cv.minEnclosingCircle(contours.get(contourArea.id)).center;
                 center.x = 0;
                 center.y = 0;
+                numbFingers = 0;
 
                 if (features.rows >= MIN_FEATURES) {
                     hasFeatures = true;
@@ -191,7 +193,7 @@ function main() {
                         // cv.line(mask, goodNew[i], goodOld[i], colors[i], 2);
                     }
 
-                    // obtainFingers(contours.get(contourArea.id), fingerTips);
+                    obtainFingers(contours.get(contourArea.id), fingerTips);
 
                     // for (let i = 0; i < fingerTips.length; i++) {
                     //     cv.circle(dst, fingerTips[i], 5, colors[i], 3);
@@ -347,18 +349,6 @@ function main() {
     }
 
     setInterval(() => {
-        // if (numbFingers != oldFingers) {
-        //     let event = new CustomEvent("changed", {
-        //         detail: {
-        //             fingers: numbFingers
-        //         }
-        //     });
-        //     window.dispatchEvent(event);
-
-        //     oldFingers = numbFingers;
-        // }
-        // console.log(numbFingers);
-
         window.dispatchEvent(
             new CustomEvent("center", {
                 detail: {
@@ -371,6 +361,22 @@ function main() {
         )
 
     }, 100);
+
+    setInterval(() => {
+        if(numbFingers > 0) numbFingers = 1;
+
+        if (numbFingers != oldFingers) {
+            let event = new CustomEvent("changed", {
+                detail: {
+                    fingers: numbFingers
+                }
+            });
+            window.dispatchEvent(event);
+
+            oldFingers = numbFingers;
+        }
+        // console.log(numbFingers);
+    });
 }
 
 
