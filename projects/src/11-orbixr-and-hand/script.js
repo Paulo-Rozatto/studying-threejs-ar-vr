@@ -128,9 +128,9 @@ new GLTFLoader().load(
 );
 
 // Listen for the event.
-window.addEventListener('changed', function (e) {
-  orbi.showMessage('F: ' + e.detail.fingers)
-}, false);
+// window.addEventListener('changed', function (e) {
+//   orbi.showMessage('F: ' + e.detail.fingers)
+// }, false);
 
 
 
