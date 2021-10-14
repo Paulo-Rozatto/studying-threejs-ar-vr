@@ -44,6 +44,8 @@ class Orbi extends Object3D {
             throw new Error("OrBI: Type of camera argument have to be PerspectiveCamera")
         }
 
+        console.log(gCenter);
+
         window.addEventListener('changed', function (e) {
             if (!hand) return;
             fingers = e.detail.fingers;
@@ -62,14 +64,14 @@ class Orbi extends Object3D {
             }
         }, false);
 
-        window.addEventListener('center', (e) => {
-            center = e.detail.center;
+        // window.addEventListener('center', (e) => {
+        //     center = e.detail.center;
 
-            if (cursor) {
-                cursor.position.x = center.x;
-                cursor.position.y = center.y;
-            }
-        });
+        //     if (cursor) {
+        //         cursor.position.x = center.x;
+        //         cursor.position.y = center.y;
+        //     }
+        // });
 
 
         config = {
@@ -388,7 +390,7 @@ class Orbi extends Object3D {
             else if (isFusing) {
                 isFusing = false;
                 fusingClock.stop();
-                cursor.scale.set(1, 1, 1);
+                // cursor.scale.set(1, 1, 1);
             }
         }
 
@@ -396,11 +398,11 @@ class Orbi extends Object3D {
             this.fusingTime = fusingClock.elapsedTime;
 
             if (this.fusingTime < config.cursor.fusingTime) {
-                cursor.scale.addScalar(-fusingClock.getDelta());
+                // cursor.scale.addScalar(-fusingClock.getDelta());
             }
             else {
                 handleClick(intersected);
-                cursor.scale.set(1, 1, 1);
+                // cursor.scale.set(1, 1, 1);
                 isFusing = false;
                 fusingClock.stop();
             }
@@ -408,6 +410,8 @@ class Orbi extends Object3D {
 
         canvasTexture.needsUpdate = true;
 
+        cursor.position.x = gCenter.x;
+        cursor.position.y = gCenter.y;
     }
 
     click() {
@@ -440,7 +444,7 @@ class Orbi extends Object3D {
         else if (isFusing) {
             isFusing = false;
             fusingClock.stop();
-            cursor.scale.set(1, 1, 1);
+            // cursor.scale.set(1, 1, 1);
         }
     }
 }

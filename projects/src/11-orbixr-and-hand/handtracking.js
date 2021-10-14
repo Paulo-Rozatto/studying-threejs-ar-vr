@@ -1,3 +1,5 @@
+var gCenter = {x: 0, y: 0};
+
 // variables to know when both opencv and camera loaded
 let cvHasLoaded = false,
     cameraHasLoaded = false;
@@ -33,7 +35,7 @@ function start(info) {
 
 function main() {
     // -- Constants -- //
-    const FPS = 24;
+    const FPS = 15;
     const BLACK = new cv.Scalar(0, 0, 0, 255); // helper scalar for black color
     const RED = new cv.Scalar(255, 0, 0); // helper scalar for red color
 
@@ -193,7 +195,7 @@ function main() {
                         // cv.line(mask, goodNew[i], goodOld[i], colors[i], 2);
                     }
 
-                    obtainFingers(contours.get(contourArea.id), fingerTips);
+                    // obtainFingers(contours.get(contourArea.id), fingerTips);
 
                     // for (let i = 0; i < fingerTips.length; i++) {
                     //     cv.circle(dst, fingerTips[i], 5, colors[i], 3);
@@ -218,6 +220,8 @@ function main() {
 
         cv.imshow("canvasFrame", dst);
 
+        gCenter.x = center.x / height;
+        gCenter.y = -center.y / width;
 
         delay = 1000 / FPS - (Date.now() - begin);
         setTimeout(processVideo, delay);
@@ -349,20 +353,6 @@ function main() {
     }
 
     setInterval(() => {
-        window.dispatchEvent(
-            new CustomEvent("center", {
-                detail: {
-                    center: {
-                        x: center.x / height,
-                        y: -center.y / width,
-                    }
-                }
-            })
-        )
-
-    }, 100);
-
-    setInterval(() => {
         if(numbFingers > 0) numbFingers = 1;
 
         if (numbFingers != oldFingers) {
@@ -387,8 +377,8 @@ async function startVideo(video) {
     const constraints = {
         video: {
             facingMode: "environment",
-            width: 480,
-            height: 360
+            width: 360,
+            height: 240
         },
         audio: false
     }
