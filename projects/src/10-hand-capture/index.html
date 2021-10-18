@@ -57,8 +57,13 @@
             const RED = new cv.Scalar(255, 0, 0); // helper scalar for red color
 
             // Thesholds for pixel color classification
-            const LOW = new cv.Mat(height, width, cv.CV_8UC3, [0, 133, 77, 0]);
-            const HIGH = new cv.Mat(height, width, cv.CV_8UC3, [255, 173, 127, 255]);
+            // const LOW = new cv.Mat(height, width, cv.CV_8UC3, [0, 133, 77, 0]);
+            // const HIGH = new cv.Mat(height, width, cv.CV_8UC3, [255, 173, 127, 255]);
+
+            // Personalized threshold
+            const LOW = new cv.Mat(height, width, cv.CV_8UC3, [0, 133, 95, 0]);
+            const HIGH = new cv.Mat(height, width, cv.CV_8UC3, [255, 153, 117, 255]);
+
 
             // Minimum occupied area threshold
             const MIN_AREA = height * width * 0.1;

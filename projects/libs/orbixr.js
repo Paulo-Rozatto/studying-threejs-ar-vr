@@ -18,6 +18,7 @@ import {
     Texture,
     TextureLoader,
     CanvasTexture,
+    ArrowHelper,
 } from '../build2/three.module.js';
 
 // import { GLTFLoader } from '../build2/jsm/loaders/GLTFLoader.js'
@@ -32,7 +33,8 @@ let camera, cursor, raycaster, rayClock, fusingClock, messageBg, message, textBg
 let uiGroup, movementBar, messageGroup, textGroup;
 
 // helpers
-let buttonsArray, buttonCount, origin2d, euler, intersection, intersected, oldIntersected;
+let buttonsArray, buttonCount, origin2d, direction, euler, intersection, intersected, oldIntersected;
+let arrow, pos;
 
 let fingers, canvasTexture, center, hand;
 
@@ -52,27 +54,14 @@ class Orbi extends Object3D {
 
             if (fingers > 0) {
                 config.hand.action.reset();
-                //   config.hand.setEffectiveTimeScale(-1)
                 config.hand.action.play()
-                //   config.action.time = -1;
             }
             else {
                 config.hand.action.reset();
                 config.hand.action.time = -1;
                 config.hand.loop = true;
-                // config.hand.action.play();
             }
         }, false);
-
-        // window.addEventListener('center', (e) => {
-        //     center = e.detail.center;
-
-        //     if (cursor) {
-        //         cursor.position.x = center.x;
-        //         cursor.position.y = center.y;
-        //     }
-        // });
-
 
         config = {
             display: new Vector2(4, 1),
@@ -118,7 +107,7 @@ class Orbi extends Object3D {
                 opacity: 0.5
             },
             raycaster: {
-                near: 0.1,
+                near: 0.0,
                 far: 1.5,
             },
             hand: {
@@ -149,10 +138,13 @@ class Orbi extends Object3D {
                     }
                 });
 
-                hand.scene.scale.set(0.05, 0.05, 0.05);
-                hand.scene.position.set(0, 0, -1);
+                hand.scene.scale.set(0.025, 0.025, 0.025);
+                hand.scene.position.set(0, 0, -0.9);
                 cursor = hand.scene;
 
+                arrow = new ArrowHelper(new Vector3(0, 0, -1), cursor.position, config.raycaster.far, '#ff0000')
+                console.log(camera);
+                camera.parent.add(arrow);
             }
             else {
                 cursor = new Mesh(
@@ -252,6 +244,8 @@ class Orbi extends Object3D {
 
         // helpers
         origin2d = new Vector2();
+        direction = new Vector3(0, 0, -1);
+        pos = new Vector3();
         buttonCount = 0;
         euler = new Euler(0, 0, 0, 'YXZ');
         intersection = [];
@@ -361,7 +355,21 @@ class Orbi extends Object3D {
         if (rayClock.getElapsedTime() > 0.2) {
             rayClock.start();
 
-            raycaster.setFromCamera(origin2d, camera);
+            // raycaster.setFromCamera(origin2d, cursor);
+            cursor.getWorldPosition(pos)
+            // camera.getWorldDirection(direction)
+            direction.copy(cursor.position).normalize();
+
+            // direction.copy(pos);
+            // direction.z += 1;
+            // direction.normalize().multiplyScalar(-1);
+            // direction.normalize().multiplyScalar(-1);
+            raycaster.set(pos, direction);
+
+            arrow.position.x = raycaster.ray.origin.x;
+            arrow.position.y = raycaster.ray.origin.y;
+            arrow.position.z = raycaster.ray.origin.z;
+            arrow.setDirection(raycaster.ray.direction);
 
             intersection.length = 0;
 
@@ -391,6 +399,8 @@ class Orbi extends Object3D {
                 isFusing = false;
                 fusingClock.stop();
                 // cursor.scale.set(1, 1, 1);
+                cursor.children[0].children[1].material.color.g = 0.5;
+                cursor.children[0].children[1].material.needsUpdate = true;
             }
         }
 
@@ -399,10 +409,14 @@ class Orbi extends Object3D {
 
             if (this.fusingTime < config.cursor.fusingTime) {
                 // cursor.scale.addScalar(-fusingClock.getDelta());
+                cursor.children[0].children[1].material.color.g += fusingClock.getDelta();
+                cursor.children[0].children[1].material.needsUpdate = true;
             }
             else {
                 handleClick(intersected);
                 // cursor.scale.set(1, 1, 1);
+                cursor.children[0].children[1].material.color.g = 0.5;
+                cursor.children[0].children[1].material.needsUpdate = true;
                 isFusing = false;
                 fusingClock.stop();
             }
@@ -415,7 +429,9 @@ class Orbi extends Object3D {
     }
 
     click() {
-        raycaster.setFromCamera(origin2d, camera);
+        // raycaster.setFromCamera(origin2d, camera);
+        cursor.getWorldPosition(pos)
+        raycaster.set(pos, direction);
 
         intersection.length = 0;
 
@@ -423,7 +439,7 @@ class Orbi extends Object3D {
             raycaster.intersectObject(this.stopButton, false, intersection);
         }
         else {
-            raycaster.intersectObjects(buttonsArray, false, intersection);
+            raycaster.intersectObjects(buttonsArray, true, intersection);
         }
 
         if (intersection.length > 0) {
@@ -475,7 +491,7 @@ function createMovementBar(orbi) {
     let size = config.button.size.x > config.button.size.y ?
         config.button.size.x :
         config.button.size.y;
-    size /= 4;
+    size /= 3;
 
     const btnGeo = new PlaneBufferGeometry(size, size);
 

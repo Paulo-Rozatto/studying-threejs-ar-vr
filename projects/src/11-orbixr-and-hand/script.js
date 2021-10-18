@@ -74,7 +74,6 @@ let mixer;
 new GLTFLoader().load(
   '/projects/assets/models/hand1.glb',
   (gltf) => {
-    console.log(gltf)
     mixer = new THREE.AnimationMixer(gltf.scene);
 
     // gltf.animations.forEach( function ( clip ) {
