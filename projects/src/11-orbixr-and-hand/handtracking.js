@@ -68,7 +68,7 @@ function main() {
     // features variables - https://docs.opencv.org/3.4/dd/d1a/group__imgproc__feature.html#ga1d6bb77486c8f92d79c8793ad995d541
     let [maxCorners, qualityLevel, minDistance, blockSize] = [40, 0.2, 15, 7];
     let features = new cv.Mat();
-    let hasFeatures = true;
+    let hasFeatures = false;
 
     // optical flow variables - https://docs.opencv.org/3.4/dc/d6b/group__video__track.html#ga473e4b886d0bcc6b65831eb88ed93323
     let features2 = new cv.Mat(); // -rename it
@@ -195,7 +195,7 @@ function main() {
                         // cv.line(mask, goodNew[i], goodOld[i], colors[i], 2);
                     }
 
-                    // obtainFingers(contours.get(contourArea.id), fingerTips);
+                    obtainFingers(contours.get(contourArea.id), fingerTips);
 
                     // for (let i = 0; i < fingerTips.length; i++) {
                     //     cv.circle(dst, fingerTips[i], 5, colors[i], 3);
