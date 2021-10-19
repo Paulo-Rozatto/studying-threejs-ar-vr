@@ -34,7 +34,7 @@ let uiGroup, movementBar, messageGroup, textGroup;
 
 // helpers
 let buttonsArray, buttonCount, origin2d, direction, direction2, euler, intersection, intersected, oldIntersected;
-let arrow, pos, prevPos;
+let arrow, pos;
 
 let fingers, canvasTexture, center, hand;
 
@@ -142,9 +142,8 @@ class Orbi extends Object3D {
                 hand.scene.position.set(0, 0, -0.6);
                 cursor = hand.scene;
 
-                arrow = new ArrowHelper(new Vector3(0, 0, -1), cursor.position, config.raycaster.far, '#ff0000')
-                console.log(camera);
-                camera.parent.add(arrow);
+                // arrow = new ArrowHelper(new Vector3(0, 0, -1), cursor.position, config.raycaster.far, '#ff0000')
+                // camera.parent.add(arrow);
             }
             else {
                 cursor = new Mesh(
@@ -247,7 +246,6 @@ class Orbi extends Object3D {
         direction = new Vector3(0, 0, -1);
         direction2 = new Vector3(1, 0, -1);
         pos = new Vector3();
-        prevPos = new Vector3();
         buttonCount = 0;
         euler = new Euler(0, 0, 0, 'YXZ');
         intersection = [];
@@ -372,10 +370,10 @@ class Orbi extends Object3D {
 
             raycaster.set(pos, direction);
 
-            arrow.position.x = raycaster.ray.origin.x;
-            arrow.position.y = raycaster.ray.origin.y;
-            arrow.position.z = raycaster.ray.origin.z;
-            arrow.setDirection(raycaster.ray.direction);
+            // arrow.position.x = raycaster.ray.origin.x;
+            // arrow.position.y = raycaster.ray.origin.y;
+            // arrow.position.z = raycaster.ray.origin.z;
+            // arrow.setDirection(raycaster.ray.direction);
 
             intersection.length = 0;
 
