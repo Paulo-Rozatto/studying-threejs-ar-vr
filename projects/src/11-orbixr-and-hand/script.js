@@ -72,7 +72,8 @@ let mixer;
 
 
 new GLTFLoader().load(
-  '/projects/assets/models/hand1.glb',
+  // '/projects/assets/models/hand1.glb',
+  '../../assets/models/hand1.glb',
   (gltf) => {
     mixer = new THREE.AnimationMixer(gltf.scene);
 
