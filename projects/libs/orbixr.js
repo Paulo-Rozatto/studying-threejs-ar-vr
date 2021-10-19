@@ -33,8 +33,8 @@ let camera, cursor, raycaster, rayClock, fusingClock, messageBg, message, textBg
 let uiGroup, movementBar, messageGroup, textGroup;
 
 // helpers
-let buttonsArray, buttonCount, origin2d, direction, euler, intersection, intersected, oldIntersected;
-let arrow, pos;
+let buttonsArray, buttonCount, origin2d, direction, direction2, euler, intersection, intersected, oldIntersected;
+let arrow, pos, prevPos;
 
 let fingers, canvasTexture, center, hand;
 
@@ -139,7 +139,7 @@ class Orbi extends Object3D {
                 });
 
                 hand.scene.scale.set(0.025, 0.025, 0.025);
-                hand.scene.position.set(0, 0, -0.9);
+                hand.scene.position.set(0, 0, -0.6);
                 cursor = hand.scene;
 
                 arrow = new ArrowHelper(new Vector3(0, 0, -1), cursor.position, config.raycaster.far, '#ff0000')
@@ -245,7 +245,9 @@ class Orbi extends Object3D {
         // helpers
         origin2d = new Vector2();
         direction = new Vector3(0, 0, -1);
+        direction2 = new Vector3(1, 0, -1);
         pos = new Vector3();
+        prevPos = new Vector3();
         buttonCount = 0;
         euler = new Euler(0, 0, 0, 'YXZ');
         intersection = [];
@@ -352,18 +354,22 @@ class Orbi extends Object3D {
             uiGroup.rotation.x = euler.x;
         }
 
-        if (rayClock.getElapsedTime() > 0.2) {
+        if (fingers < 1) {
+            isFusing = false;
+            fusingClock.stop();
+            cursor.children[0].children[1].material.color.g = 0.5;
+            cursor.children[0].children[1].material.needsUpdate = true;
+        }
+        else if (rayClock.getElapsedTime() > 0.2) {
             rayClock.start();
 
-            // raycaster.setFromCamera(origin2d, cursor);
             cursor.getWorldPosition(pos)
-            // camera.getWorldDirection(direction)
-            direction.copy(cursor.position).normalize();
 
-            // direction.copy(pos);
-            // direction.z += 1;
-            // direction.normalize().multiplyScalar(-1);
-            // direction.normalize().multiplyScalar(-1);
+            direction.x = pos.x;
+            direction.y = pos.y - 1.6;
+            direction.z = pos.z;
+            direction.normalize();
+
             raycaster.set(pos, direction);
 
             arrow.position.x = raycaster.ray.origin.x;
@@ -429,18 +435,17 @@ class Orbi extends Object3D {
     }
 
     click() {
+        // dont remember why rayscater were being set here
         // raycaster.setFromCamera(origin2d, camera);
-        cursor.getWorldPosition(pos)
-        raycaster.set(pos, direction);
 
-        intersection.length = 0;
+        // intersection.length = 0;
 
-        if (this.moveVertically || this.moveHorizontally) {
-            raycaster.intersectObject(this.stopButton, false, intersection);
-        }
-        else {
-            raycaster.intersectObjects(buttonsArray, true, intersection);
-        }
+        // if (this.moveVertically || this.moveHorizontally) {
+        //     raycaster.intersectObject(this.stopButton, false, intersection);
+        // }
+        // else {
+        //     raycaster.intersectObjects(buttonsArray, true, intersection);
+        // }
 
         if (intersection.length > 0) {
             intersected = intersection[0].object;
