@@ -29,12 +29,11 @@
 <body>
     <video id="videoInput" style="display: none;"></video>
     <canvas id="canvasFrame"></canvas>
+    <p id="info"></p>
     <canvas id="roi"></canvas>
 
     <button id="btn1">Calibrate</button>
     <button id="btn2">Start</button>
-    <p id="info"></p>
-
     <script src="handtrack2.js"></script>
     <script async src="libs/opencv1.js" onload="cv['onRuntimeInitialized']=()=>{start({cv: true});}; " type="text/javascript"></script>
 </body>
