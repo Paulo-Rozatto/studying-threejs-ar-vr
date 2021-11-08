@@ -16,8 +16,8 @@ startVideo(video)
         start({ camera: true })
     });
 
-// let isReturn = false;
-// window.addEventListener('keydown', () => { isReturn = true })
+let isReturn = false;
+window.addEventListener('keydown', () => { isReturn = true })
 
 function start(info) {
     cvHasLoaded = cvHasLoaded || info.cv;
@@ -37,7 +37,7 @@ function calibration() {
     const HIGH = new cv.Mat(height, width, cv.CV_8UC3, [255, 173, 127, 255]);
 
     // Calibrated thresholds
-    let caliLow = { cr: 0, cb: 0 }, caliHigh = { cr: 0, cb: 0 };
+    let caliLow = { cr: 133, cb: 77 }, caliHigh = { cr: 173, cb: 127 };
 
     const src = new cv.Mat(height, width, cv.CV_8UC4); // storages image source
     const aux = new cv.Mat(height, width, cv.CV_8UC4); // storages final result
@@ -121,7 +121,7 @@ function calibration() {
         meanCr /= size;
         meanCb /= size;
 
-        console.log('Means: ', meanCr, meanCb);
+        // console.log('Means: ', meanCr, meanCb);
 
         for (let row = 0; row < roi.rows; row++) {
             for (let col = 0; col < roi.cols; col++) {
@@ -137,15 +137,18 @@ function calibration() {
         sdCr = Math.sqrt(sdCr / size);
         sdCb = Math.sqrt(sdCb / size);
 
-        console.log('SD: ', sdCr, sdCb);
+        // console.log('SD: ', sdCr, sdCb);
 
-        sdCb *= 1.5;
-        sdCr *= 1.5;
+        sdCb *= 2;
+        sdCr *= 2;
 
         caliLow.cr = meanCr - sdCr;
         caliLow.cb = meanCb - sdCb;
         caliHigh.cr = meanCr + sdCr;
         caliHigh.cb = meanCb + sdCb;
+
+        console.log('low:', caliLow);
+        console.log('high:', caliHigh);
 
         // let low = [0, meanCr - sdCr, meanCb - sdCb, 0];
         // let high = [255, meanCr + sdCr, meanCb + sdCb, 255];
@@ -174,7 +177,7 @@ function calibration() {
     });
 
     // setTimeout(processVideo, 0);
-    processVideo();
+    // processVideo();
 
 }
 
@@ -201,6 +204,7 @@ function main(low, high) {
     const dst = new cv.Mat(height, width, cv.CV_8UC4); // storages final result
     const binaryMask = new cv.Mat(height, width, 0);
     const rectMask = new cv.Mat(height, width, 0);
+    const transform = new cv.Mat(height, width, cv.CV_32F);
     const aux = new cv.Mat(height, width, cv.CV_8UC4); // helper mat - rename it
     const grayFrame = new cv.Mat(height, width, cv.CV_8UC4);
     const oldFrame = new cv.Mat(height, width, cv.CV_8UC4); // helper mat - rename it
@@ -234,6 +238,7 @@ function main(low, high) {
     let p1 = new cv.Point(0, 0);
     let p2 = new cv.Point(0, 0);
     let info = document.querySelector('#info');
+    let labels = new cv.Mat(height, width, cv.CV_32SC1);
 
     // colors for drawing points
     const colors = [];
@@ -244,6 +249,8 @@ function main(low, high) {
     let begin, delay; // fps helpers
     function processVideo() {
         begin = Date.now();
+
+        if (isReturn) return;
 
         context.drawImage(video, 0, 0, width, height);
         src.data.set(context.getImageData(0, 0, width, height).data);
@@ -265,7 +272,7 @@ function main(low, high) {
             cv.cvtColor(dst, grayFrame, cv.COLOR_RGB2GRAY);
 
             if (!hasFeatures) {
-                cv.imshow("roi", binaryMask);
+                // cv.imshow("roi", binaryMask);
 
                 cv.goodFeaturesToTrack(grayFrame, features, maxCorners, qualityLevel, minDistance, binaryMask);
 
@@ -314,20 +321,22 @@ function main(low, high) {
                 // if(center.x > height) center.x = height;
                 // if(center.y > width) center.y = width;
 
-                cv.circle(dst, center, 7, colors[0], -1)
+                // cv.circle(dst, center, 7, colors[0], -1)
 
                 // for (let i = 0; i < 1; i++) {
                 let flag = false;
+                let py = contours.get(contourArea.id).row(0).data32S[1];
+                // console.log(py); 
                 for (let i = 0; i < goodNew.length; i++) {
                     cv.circle(dst, goodNew[i], 5, colors[i], 1);
 
-                    if (!flag && (center.y - goodNew[i].y) > 50) {
+                    if (!flag && (center.y - py) > 50) {
                         info.innerHTML = 'Raised finger'
                         flag = true;
                     }
                     // cv.line(mask, goodNew[i], goodOld[i], colors[i], 2);
                 }
-                if(!flag) {
+                if (!flag) {
                     info.innerHTML = 'No raised finger'
                 }
 
@@ -468,28 +477,53 @@ function main(low, high) {
 
     function detachForeground(source, destination, contours, areaIdx) {
         binaryMask.setTo(BLACK);
-
-        cv.drawContours(binaryMask, contours, areaIdx, RED, -1, cv.LINE_8, hierarchy, 1);
-
-        if (!center)
-            return;
-        // center = cv.minEnclosingCircle(contours.get(contourArea.id)).center;
-
         rectMask.setTo(BLACK);
 
-        let quarter = 50;
-        p1.x = center.x - 2 * quarter;
-        p1.y = 0 //center.y - 2 * quarter;
-        p2.x = center.x + 2 * quarter;
-        p2.y = center.y + quarter;
-        // console.log(p1, p2);
+        cv.drawContours(binaryMask, contours, areaIdx, RED, -1, cv.LINE_8, hierarchy, 1);
+        // cv.bitwise_and(source, source, destination, binaryMask);
+
+        cv.distanceTransform(binaryMask, transform, cv.DIST_L2, cv.DIST_MASK_3);
+        
+        let max = cv.minMaxLoc(transform);
+        console.log(max);
+        cv.circle(dst, max.maxLoc, 7, colors[0], -1)
+
+        cv.circle(dst, max.maxLoc, max.maxVal * 1.1, colors[1], 2)
+
+        cv.circle(rectMask, max.maxLoc, max.maxVal * 1.1, RED, -1);
+        
+        p1.x = max.maxLoc.x - max.maxVal * 3;
+        p1.y = max.maxLoc.y - max.maxVal * 3;
+        p2.x = max.maxLoc.x + max.maxVal * 3;
+        p2.y = max.maxLoc.y + max.maxVal;
         cv.rectangle(rectMask, p1, p2, RED, -1);
 
+        // console.log(binaryMask.type(), rectMask.type())
         cv.bitwise_and(binaryMask, binaryMask, rectMask, rectMask);
+
+        cv.imshow('roi', rectMask);
+
+        // if (!center)
+        //     return;
+        // // center = cv.minEnclosingCircle(contours.get(contourArea.id)).center;
+
+        // rectMask.setTo(BLACK);
+
+        // let quarter = 50;
+        // p1.x = center.x - 2 * quarter;
+        // p1.y = 0 //center.y - 2 * quarter;
+        // p2.x = center.x + 2 * quarter;
+        // p2.y = center.y + quarter;
+        // // console.log(p1, p2);
+        // cv.rectangle(rectMask, p1, p2, RED, -1);
+
+        // cv.bitwise_and(binaryMask, binaryMask, rectMask, rectMask);
 
         cv.bitwise_and(source, source, destination, rectMask);
 
-        cv.imshow('roi', rectMask);
+        // console.log(labels)
+
+        // cv.imshow('bin', binaryMask);
 
     }
 
