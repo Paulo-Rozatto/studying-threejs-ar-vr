@@ -103,57 +103,83 @@ function calibration() {
     function calculateNewThresholds(roi) {
         console.log(roi.type())
         let cr, cb, meanCr = 0, meanCb = 0, sdCr = 0, sdCb = 0, size = 0;
-
+        let Cr = { low: 1000, high: 0 }, Cb = { low: 1000, high: 0 }
 
         for (let row = 0; row < roi.rows; row++) {
             for (let col = 0; col < roi.cols; col++) {
                 cr = roi.data[row * roi.cols * roi.channels() + col * roi.channels() + 1];
                 cb = roi.data[row * roi.cols * roi.channels() + col * roi.channels() + 2];
 
-                if (cr > 0 || cb > 0) {
-                    meanCr += cr;
-                    meanCb += cb;
-                    size += 1;
+                if (cr > 0) {
+                    if (cr < Cr.low) {
+                        Cr.low = cr;
+                    }
+                    else if (cr > Cr.high) {
+                        Cr.high = cr;
+                    }
                 }
+
+                if (cb > 0) {
+                    if (cb < Cb.low) {
+                        Cb.low = cb;
+                    }
+                    else if (cb > Cb.high) {
+                        Cb.high = cb;
+                    }
+                }
+
+                // if (cr > 0 || cb > 0) {
+                //     meanCr += cr;
+                //     meanCb += cb;
+                //     size += 1;
+                // }
             }
         }
-        meanCr /= size;
-        meanCb /= size;
+        // meanCr /= size;
+        // meanCb /= size;
 
         // console.log('Means: ', meanCr, meanCb);
 
-        for (let row = 0; row < roi.rows; row++) {
-            for (let col = 0; col < roi.cols; col++) {
-                cr = roi.data[row * roi.cols * roi.channels() + col * roi.channels() + 1];
-                cb = roi.data[row * roi.cols * roi.channels() + col * roi.channels() + 2];
+        // for (let row = 0; row < roi.rows; row++) {
+        //     for (let col = 0; col < roi.cols; col++) {
+        //         cr = roi.data[row * roi.cols * roi.channels() + col * roi.channels() + 1];
+        //         cb = roi.data[row * roi.cols * roi.channels() + col * roi.channels() + 2];
 
-                if (cr > 0 || cb > 0) {
-                    sdCr += (cr - meanCr) * (cr - meanCr);
-                    sdCb += (cb - meanCb) * (cb - meanCb);
-                }
-            }
-        }
-        sdCr = Math.sqrt(sdCr / size);
-        sdCb = Math.sqrt(sdCb / size);
+        //         if (cr > 0 || cb > 0) {
+        //             sdCr += (cr - meanCr) * (cr - meanCr);
+        //             sdCb += (cb - meanCb) * (cb - meanCb);
+        //         }
+        //     }
+        // }
+        // sdCr = Math.sqrt(sdCr / size);
+        // sdCb = Math.sqrt(sdCb / size);
 
         // console.log('SD: ', sdCr, sdCb);
 
-        sdCb *= 2;
-        sdCr *= 2;
+        // sdCb *= 2;
+        // sdCr *= 2;
 
-        caliLow.cr = meanCr - sdCr;
-        caliLow.cb = meanCb - sdCb;
-        caliHigh.cr = meanCr + sdCr;
-        caliHigh.cb = meanCb + sdCb;
+        // caliLow.cr = meanCr - sdCr;
+        // caliLow.cb = meanCb - sdCb;
+        // caliHigh.cr = meanCr + sdCr;
+        // caliHigh.cb = meanCb + sdCb;
 
-        console.log('low:', caliLow);
-        console.log('high:', caliHigh);
+        // console.log('low:', caliLow);
+        // console.log('high:', caliHigh);
+        console.log('Cr: ', Cr);
+        console.log('Cb: ', Cb);
+
+        caliLow.cr = Cr.low;
+        caliLow.cb = Cb.low;
+        caliHigh.cr = Cr.high;
+        caliHigh.cb = Cb.high;
 
         // let low = [0, meanCr - sdCr, meanCb - sdCb, 0];
         // let high = [255, meanCr + sdCr, meanCb + sdCb, 255];
         // console.log('T: ', low, high);
 
     }
+
     window.addEventListener('keydown', (e) => {
         if (e.key === '1') {
             src.delete(); aux.delete(); dst.delete(); mask.delete();
