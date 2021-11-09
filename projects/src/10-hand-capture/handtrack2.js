@@ -23,6 +23,7 @@ function start(info) {
     cameraHasLoaded = cameraHasLoaded || info.camera;
 
     if (cvHasLoaded && cameraHasLoaded) {
+        document.getElementById('info').innerHTML = "pronto";
         calibration();
     }
 }
@@ -511,11 +512,7 @@ function main(low, high) {
 
         let max = cv.minMaxLoc(transform);
 
-        // cv.circle(dst, max.maxLoc, 7, colors[0], -1)
-
-        // cv.circle(dst, max.maxLoc, max.maxVal * 1.1, colors[1], 2)
-
-        // cv.circle(rectMask, max.maxLoc, max.maxVal * 1.1, RED, -1);
+        cv.circle(rectMask, max.maxLoc, max.maxVal * 1.1, RED, -1);
 
         p1.x = max.maxLoc.x - max.maxVal * 3;
         p1.y = max.maxLoc.y - max.maxVal * 3;
@@ -547,6 +544,10 @@ function main(low, high) {
         // cv.bitwise_and(binaryMask, binaryMask, rectMask, rectMask);
 
         cv.bitwise_and(source, source, destination, rectMask);
+
+        cv.circle(dst, max.maxLoc, 7, colors[0], -1)
+
+        cv.circle(dst, max.maxLoc, max.maxVal * 1.1, colors[1], 2)
 
         // console.log(labels)
 
@@ -604,7 +605,6 @@ function main(low, high) {
     }
 
     // hu moments
-
     function hu(m, hu) {
         let t0 = m.nu30 + m.nu12;
         let t1 = m.nu21 + m.nu03;
