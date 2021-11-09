@@ -17,7 +17,6 @@ startVideo(video)
     });
 
 let isReturn = false;
-window.addEventListener('keydown', () => { isReturn = true })
 
 function start(info) {
     cvHasLoaded = cvHasLoaded || info.cv;
@@ -237,7 +236,7 @@ function main(low, high) {
     let center;
     let p1 = new cv.Point(0, 0);
     let p2 = new cv.Point(0, 0);
-    let info = document.querySelector('#info');
+    const info = document.querySelector('#info');
     let labels = new cv.Mat(height, width, cv.CV_32SC1);
 
     // colors for drawing points
@@ -250,7 +249,7 @@ function main(low, high) {
     function processVideo() {
         begin = Date.now();
 
-        if (isReturn) return;
+        // if (isReturn) return;
 
         context.drawImage(video, 0, 0, width, height);
         src.data.set(context.getImageData(0, 0, width, height).data);
@@ -324,21 +323,21 @@ function main(low, high) {
                 // cv.circle(dst, center, 7, colors[0], -1)
 
                 // for (let i = 0; i < 1; i++) {
-                let flag = false;
-                let py = contours.get(contourArea.id).row(0).data32S[1];
-                // console.log(py); 
-                for (let i = 0; i < goodNew.length; i++) {
-                    cv.circle(dst, goodNew[i], 5, colors[i], 1);
+                // let flag = false;
+                // let py = contours.get(contourArea.id).row(0).data32S[1];
+                // // console.log(py); 
+                // for (let i = 0; i < goodNew.length; i++) {
+                //     cv.circle(dst, goodNew[i], 5, colors[i], 1);
 
-                    if (!flag && (center.y - py) > 50) {
-                        info.innerHTML = 'Raised finger'
-                        flag = true;
-                    }
-                    // cv.line(mask, goodNew[i], goodOld[i], colors[i], 2);
-                }
-                if (!flag) {
-                    info.innerHTML = 'No raised finger'
-                }
+                //     if (!flag && (center.y - py) > 50) {
+                //         info.innerHTML = 'Raised finger'
+                //         flag = true;
+                //     }
+                //     // cv.line(mask, goodNew[i], goodOld[i], colors[i], 2);
+                // }
+                // if (!flag) {
+                //     info.innerHTML = 'No raised finger'
+                // }
 
                 // obtainFingers(contours.get(contourArea.id), fingerTips);
 
@@ -360,7 +359,7 @@ function main(low, high) {
 
         cv.imshow("canvasFrame", dst);
 
-
+        if (isReturn) return;
         delay = 1000 / FPS - (Date.now() - begin);
         setTimeout(processVideo, delay);
     }
@@ -483,15 +482,15 @@ function main(low, high) {
         // cv.bitwise_and(source, source, destination, binaryMask);
 
         cv.distanceTransform(binaryMask, transform, cv.DIST_L2, cv.DIST_MASK_3);
-        
+
         let max = cv.minMaxLoc(transform);
-        console.log(max);
-        cv.circle(dst, max.maxLoc, 7, colors[0], -1)
 
-        cv.circle(dst, max.maxLoc, max.maxVal * 1.1, colors[1], 2)
+        // cv.circle(dst, max.maxLoc, 7, colors[0], -1)
 
-        cv.circle(rectMask, max.maxLoc, max.maxVal * 1.1, RED, -1);
-        
+        // cv.circle(dst, max.maxLoc, max.maxVal * 1.1, colors[1], 2)
+
+        // cv.circle(rectMask, max.maxLoc, max.maxVal * 1.1, RED, -1);
+
         p1.x = max.maxLoc.x - max.maxVal * 3;
         p1.y = max.maxLoc.y - max.maxVal * 3;
         p2.x = max.maxLoc.x + max.maxVal * 3;
@@ -502,6 +501,8 @@ function main(low, high) {
         cv.bitwise_and(binaryMask, binaryMask, rectMask, rectMask);
 
         cv.imshow('roi', rectMask);
+
+        moments(rectMask);
 
         // if (!center)
         //     return;
@@ -526,6 +527,93 @@ function main(low, high) {
         // cv.imshow('bin', binaryMask);
 
     }
+
+    function moments(source) {
+        // https://learnopencv.com/shape-matching-using-hu-moments-c-python/
+
+        let moments = cv.moments(source);
+        let huMoments = [];
+
+        // cv.HuMoments(moments, huMoments);
+        hu(moments, huMoments)
+
+        // log transform - h[i] = -sign(h[i]) * log10|h[i]|
+        for (let i = 0; i < 7; i++) {
+            huMoments[i] = -1 * Math.sign(huMoments[i]) * Math.log10(Math.abs(huMoments[i]))
+        }
+
+        let open = [
+            3.062038994000932,
+            7.197910988639913,
+            10.541061884353944,
+            10.780738946955417,
+            -22.42706340963343,
+            14.923474994972896,
+            -21.443974104478865
+        ]
+
+        let close = [
+            3.1872975810443918,
+            7.822597220182995,
+            12.03476386792147,
+            13.17626716473,
+            25.936605008565586,
+            17.139584355269808,
+            25.928074130157842
+        ]
+
+        // euclidian distance
+        let dist = 0, dist2 = 0;
+        for (let i = 0; i < 7; i++) {
+            dist += ((huMoments[i] - open[i]) * (huMoments[i] - open[i]));
+            dist2 += ((huMoments[i] - close[i]) * (huMoments[i] - close[i]));
+        }
+        // Math.sqrt(dist);
+        // Math.sqrt(dist2)
+
+        // console.log(huMoments);
+
+        // info.innerHTML = `dist ${dist.toFixed(2)}, dist2 ${dist2.toFixed(2)} - classification ${dist < dist2 ? 'open' : 'close'}`;
+        info.innerHTML = `classification: ${dist < dist2 ? 'open' : 'close'}`
+    }
+
+    // hu moments
+
+    function hu(m, hu) {
+        let t0 = m.nu30 + m.nu12;
+        let t1 = m.nu21 + m.nu03;
+
+        let q0 = t0 * t0, q1 = t1 * t1;
+
+        let n4 = 4 * m.nu11;
+        let s = m.nu20 + m.nu02;
+        let d = m.nu20 - m.nu02;
+
+        hu[0] = s;
+        hu[1] = d * d + n4 * m.nu11;
+        hu[3] = q0 + q1;
+        hu[5] = d * (q0 - q1) + n4 * t0 * t1;
+
+        t0 *= q0 - 3 * q1;
+        t1 *= 3 * q0 - q1;
+
+        q0 = m.nu30 - 3 * m.nu12;
+        q1 = 3 * m.nu21 - m.nu03;
+
+        hu[2] = q0 * q0 + q1 * q1;
+        hu[4] = q0 * t0 + q1 * t1;
+        hu[6] = q1 * t0 - q0 * t1;
+    }
+
+    window.addEventListener('keydown', (e) => {
+        switch (e.key) {
+            case 'm':
+                moments(rectMask);
+            default:
+                isReturn = true
+        }
+    });
+
 
     // setInterval(() => {
     //     const p = document.getElementById("info");
