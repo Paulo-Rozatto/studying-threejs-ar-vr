@@ -501,6 +501,122 @@ function main(low, high) {
         hull.delete(); rh.delete(); defect.delete();
     }
 
+
+    // to do - Fazer o bounding trancando as linhas em relacao a rotatcao
+    function bounding(source, cnt) {
+        let rotatedRect = cv.minAreaRect(cnt);
+        // console.log(rotatedRect);
+        let vertices = cv.RotatedRect.points(rotatedRect);
+        let rad = rotatedRect.angle * Math.PI / 180;
+
+        cv.circle(dst, rotatedRect.center, 1, colors[3], 5);
+
+        info.innerHTML = `angle ${rotatedRect.angle}`;
+
+        console.log('b', vertices);
+        vertices.sort((a, b) => a.y - b.y);
+        console.log(vertices);
+        // vertices[1].y = rotatedRect.center.y;
+        // vertices[2].y = rotatedRect.center.y;
+
+
+        // vertices[right].x  = rotatedRect.center.x + rotatedRect.size.width * Math.cos(rad);
+        // vertices[right].y = rotatedRect.center.y + rotatedRect.size.width * Math.sin(rad) / 2;
+
+        // vertices[left].x  = rotatedRect.center.x - rotatedRect.size.width * Math.cos(rad);
+        // vertices[left].y = rotatedRect.center.y //- rotatedRect.size.width * Math.sin(rad) / 2;
+
+        // vertices[3].x  = rotatedRect.center.x - rotatedRect.size.width / 2;
+        // vertices[3].y = rotatedRect.center.y;
+        // vertices[3].y -= Math.cos(rad)
+        // vertices[3].y -= Math.sin(rad);
+
+        // for (let i = 0; i < 4; i++) {
+        //     let j = i + 2;
+        //     cv.line(dst, vertices[i], vertices[j], colors[3], 2, cv.LINE_AA, 0);
+        // }
+        cv.line(dst, vertices[0], vertices[1], colors[3], 2, cv.LINE_AA, 0);
+        cv.line(dst, vertices[1], vertices[3], colors[3], 2, cv.LINE_AA, 0);
+        cv.line(dst, vertices[3], vertices[2], colors[3], 2, cv.LINE_AA, 0);
+        cv.line(dst, vertices[2], vertices[0], colors[3], 2, cv.LINE_AA, 0);
+
+
+        // cv.circle(dst, vertices[0], 1, colors[4], 5);
+        // cv.circle(dst, vertices[2], 1, colors[4], 5);
+
+        cv.circle(dst, vertices[1], 1, colors[10], 5);
+        cv.circle(dst, vertices[3], 1, colors[10], 5);
+
+        let coef = (vertices[0].y - vertices[2].y) / (vertices[0].x - vertices[2].x);
+        let b = vertices[2].y - coef * vertices[2].x;
+        let ny = rotatedRect.center.y ;
+        let nx = (ny - b) / coef;
+        let p1 = { x: nx, y: ny };
+
+        b = vertices[1].y - coef * vertices[1].x
+        // ny = vertices[1].y * p1.y / vertices[0].y; // regra de tres
+        ny = p1.y - (vertices[0].y - vertices[1].y);
+        nx = (ny - b) / coef;
+
+
+        let p2 = { x: nx, y: ny };
+
+        cv.circle(dst, p1, 1, colors[4], 5);
+        // cv.circle(dst, p2, 1, colors[4], 5);
+        cv.line(dst, p1, p2, colors[4], 2, cv.LINE_AA, 0);
+
+        // let min, max;
+        // let size = 0, maxSize = 0, maxCoord = { x: 0, y: 0 };
+        // let white = 255, black = 0;
+        // let row, col;
+        // let angle = rotatedRect.angle * Math.PI / 180;
+        // let cos = Math.cos(angle);
+
+        // // find first white pixel
+        // for (row = 0; row < height; row++) {
+        //     col = nextColor(source, white, row, 0, 1);
+        //     if (col != - 1) break;
+        // }
+        // if (col == - 1) return;
+
+        // row++;
+        // while (row < height) {
+        //     max = min = 0;
+
+        //     while (min != - 1 && max != -1) {
+        //         min = nextColor(source, white, row, max, 1);
+        //         max = nextColor(source, black, row, min, 1);
+
+        //         if (min != -1 && max != -1) {
+        //             size = max - min;
+        //             size /= 2;
+        //             if (maxSize < size) {
+        //                 maxSize = size;
+        //                 maxCoord.x = min + size;
+        //                 maxCoord.y = row;
+        //             }
+        //         }
+        //     }
+
+        //     row++;
+        // }
+
+        // cv.circle(dst, maxCoord, maxSize, colors[5], 5);
+        // console.log(maxSize, maxCoord.x, maxCoord.y);
+
+    }
+
+    function nextColor(source, color, row, col, step, cos) {
+        let value;
+        for (let c = col; c < width && c > -1; c += step) {
+            value = source.data[row * width + c];
+            row += cos;
+
+            if (value == color) return c;
+        }
+        return -1;
+    }
+
     function detachForeground(source, destination, contours, areaIdx) {
         binaryMask.setTo(BLACK);
         rectMask.setTo(BLACK);
@@ -512,16 +628,17 @@ function main(low, high) {
 
         let max = cv.minMaxLoc(transform);
 
-        cv.circle(rectMask, max.maxLoc, max.maxVal * 1.1, RED, -1);
+        // cv.circle(rectMask, max.maxLoc, max.maxVal * 1.1, RED, -1);
 
-        p1.x = max.maxLoc.x - max.maxVal * 3;
-        p1.y = max.maxLoc.y - max.maxVal * 3;
-        p2.x = max.maxLoc.x + max.maxVal * 3;
-        p2.y = max.maxLoc.y + max.maxVal;
-        cv.rectangle(rectMask, p1, p2, RED, -1);
+        // p1.x = max.maxLoc.x - max.maxVal * 3;
+        // p1.y = max.maxLoc.y - max.maxVal * 3;
+        // p2.x = max.maxLoc.x + max.maxVal * 3;
+        // p2.y = max.maxLoc.y + max.maxVal;
+        // cv.rectangle(rectMask, p1, p2, RED, -1);
 
-        // console.log(binaryMask.type(), rectMask.type())
-        cv.bitwise_and(binaryMask, binaryMask, rectMask, rectMask);
+        // cv.bitwise_and(binaryMask, binaryMask, rectMask, rectMask);
+        binaryMask.copyTo(rectMask);
+        bounding(rectMask, contours.get(areaIdx));
 
         cv.imshow('roi', rectMask);
 
@@ -601,7 +718,7 @@ function main(low, high) {
         // console.log(huMoments);
 
         // info.innerHTML = `dist ${dist.toFixed(2)}, dist2 ${dist2.toFixed(2)} - classification ${dist < dist2 ? 'open' : 'close'}`;
-        info.innerHTML = `classification: ${dist < dist2 ? 'open' : 'close'}`
+        // info.innerHTML = `classification: ${dist < dist2 ? 'open' : 'close'}`
     }
 
     // hu moments
