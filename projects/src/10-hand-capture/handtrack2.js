@@ -211,7 +211,9 @@ function main(low, high) {
     // -- Constants -- //
     const FPS = 24;
     const BLACK = new cv.Scalar(0, 0, 0, 255); // helper scalar for black color
-    const RED = new cv.Scalar(255, 0, 0); // helper scalar for red color
+    const WHITE = new cv.Scalar(255, 0, 0); // helper scalar for red color
+    const rd = new cv.Scalar(255, 0, 0, 255);
+    const gr = new cv.Scalar(0, 255, 0, 255);
 
     // Thesholds for pixel color classification
     const LOW = new cv.Mat(height, width, cv.CV_8UC3, [0, low.cr, low.cb, 0]);
@@ -501,69 +503,141 @@ function main(low, high) {
         hull.delete(); rh.delete(); defect.delete();
     }
 
+    function dist(p1, p2) {
+        return Math.sqrt(Math.pow(p1.y - p2.y, 2) + Math.pow(p1.x - p2.x, 2));
+    }
 
-    // to do - Fazer o bounding trancando as linhas em relacao a rotatcao
     function bounding(source, cnt) {
         let rotatedRect = cv.minAreaRect(cnt);
         // console.log(rotatedRect);
         let vertices = cv.RotatedRect.points(rotatedRect);
-        let rad = rotatedRect.angle * Math.PI / 180;
+        // let rad = rotatedRect.angle * Math.PI / 180;
 
         cv.circle(dst, rotatedRect.center, 1, colors[3], 5);
 
-        info.innerHTML = `angle ${rotatedRect.angle}`;
+        // info.innerHTML = `angle ${rotatedRect.angle}`;
 
-        console.log('b', vertices);
-        vertices.sort((a, b) => a.y - b.y);
-        console.log(vertices);
-        // vertices[1].y = rotatedRect.center.y;
-        // vertices[2].y = rotatedRect.center.y;
+        let highest = 0;
+        for (let i = 0; i < 4; i++) {
+            if (vertices[i].y < vertices[highest].y) {
+                highest = i;
+            }
+        }
 
+        let closest = highest == 0 ? 1 : 0;
+        let d = dist(vertices[highest], vertices[closest]);
+        for (let i = 0; i < 4; i++) {
+            if (i != highest && i != closest) {
+                let k = dist(vertices[highest], vertices[i]);
+                if (k < d) {
+                    d = k;
+                    closest = i;
+                }
+            }
+        }
 
-        // vertices[right].x  = rotatedRect.center.x + rotatedRect.size.width * Math.cos(rad);
-        // vertices[right].y = rotatedRect.center.y + rotatedRect.size.width * Math.sin(rad) / 2;
+        let closest2nd;
+        let d2nd;
+        for (let i = 0; i < 4; i++) {
+            if (i != highest && i != closest) {
+                if (!closest2nd) {
+                    closest2nd = i;
+                    d2nd = dist(vertices[highest], vertices[i]);
+                }
+                else {
+                    let k = dist(vertices[highest], vertices[i]);
+                    if (k < d2nd) {
+                        closest2nd = i;
+                        d2nd = k;
+                    }
+                }
+            }
 
-        // vertices[left].x  = rotatedRect.center.x - rotatedRect.size.width * Math.cos(rad);
-        // vertices[left].y = rotatedRect.center.y //- rotatedRect.size.width * Math.sin(rad) / 2;
+        }
 
-        // vertices[3].x  = rotatedRect.center.x - rotatedRect.size.width / 2;
-        // vertices[3].y = rotatedRect.center.y;
-        // vertices[3].y -= Math.cos(rad)
-        // vertices[3].y -= Math.sin(rad);
+        cv.circle(dst, vertices[highest], 15, rd, 4);
+        cv.circle(dst, vertices[closest], 15, gr, 4);
 
-        // for (let i = 0; i < 4; i++) {
-        //     let j = i + 2;
-        //     cv.line(dst, vertices[i], vertices[j], colors[3], 2, cv.LINE_AA, 0);
-        // }
-        cv.line(dst, vertices[0], vertices[1], colors[3], 2, cv.LINE_AA, 0);
-        cv.line(dst, vertices[1], vertices[3], colors[3], 2, cv.LINE_AA, 0);
-        cv.line(dst, vertices[3], vertices[2], colors[3], 2, cv.LINE_AA, 0);
-        cv.line(dst, vertices[2], vertices[0], colors[3], 2, cv.LINE_AA, 0);
+        for (let i = 0; i < 4; i++) {
+            cv.line(dst, vertices[i], vertices[(i + 1) % 4], colors[3], 2, cv.LINE_AA, 0);
+        }
 
+        let center = rotatedRect.center;
 
-        // cv.circle(dst, vertices[0], 1, colors[4], 5);
-        // cv.circle(dst, vertices[2], 1, colors[4], 5);
+        let slope = (vertices[highest].y - center.y) / (vertices[highest].x - center.x);
+        let b = center.y - slope * center.x;
 
-        cv.circle(dst, vertices[1], 1, colors[10], 5);
-        cv.circle(dst, vertices[3], 1, colors[10], 5);
+        if (b > center.y * 1.1) {
+            b = center.y * 1.1;
+        }
 
-        let coef = (vertices[0].y - vertices[2].y) / (vertices[0].x - vertices[2].x);
-        let b = vertices[2].y - coef * vertices[2].x;
-        let ny = rotatedRect.center.y ;
-        let nx = (ny - b) / coef;
+        // let alpha = 1;
+        let ang = Math.atan(slope);
+
+        if (ang < 0) { ang += Math.PI; alpha = -1; }
+        // info.innerHTML = `${ang.toFixed(2)}`;
+
+        d *= 1.3;
+        nx = vertices[highest].x + d * Math.cos(ang);
+        ny = vertices[highest].y + d * Math.sin(ang);
+
+        if (ny < 0) ny *= -1;
+
         let p1 = { x: nx, y: ny };
 
-        b = vertices[1].y - coef * vertices[1].x
-        // ny = vertices[1].y * p1.y / vertices[0].y; // regra de tres
-        ny = p1.y - (vertices[0].y - vertices[1].y);
-        nx = (ny - b) / coef;
+        cv.circle(dst, p1, 5, colors[0], 4);
+        cv.line(dst, p1, vertices[highest], colors[0], 2, cv.LINE_AA, 0);
 
+        if (Math.abs(vertices[highest].x - vertices[closest2nd].x) < 0.0001) slope = 0;
+        else slope = (vertices[highest].y - vertices[closest2nd].y) / (vertices[highest].x - vertices[closest2nd].x);
+
+        if (isNaN(slope) || slope > 2147483647 || slope < -2147483647) slope = 0;
+
+        b = vertices[closest2nd].y - slope * vertices[closest2nd].x;
+        nx = p1.x;
+        nx = p1.x;
+        ny = slope * p1.x + b;
 
         let p2 = { x: nx, y: ny };
 
-        cv.circle(dst, p1, 1, colors[4], 5);
-        // cv.circle(dst, p2, 1, colors[4], 5);
-        cv.line(dst, p1, p2, colors[4], 2, cv.LINE_AA, 0);
+        cv.circle(dst, p2, 5, colors[0], 4);
+        cv.line(dst, p1, p2, colors[0], 2, cv.LINE_AA, 0);
+
+        b = vertices[closest].y - slope * vertices[closest].x;
+        nx = p1.x;
+        ny = slope * p1.x + b;
+
+        let p3 = { x: nx, y: ny };
+
+        // cv.circle(dst, p3, 5, colors[0], 4);
+        // cv.line(dst, p1, p3, colors[0], 2, cv.LINE_AA, 0);
+
+        // console.log(cnt);
+        let pts = [vertices[highest].x, vertices[highest].y, vertices[closest].x, vertices[closest].y, p3.x, p3.y, p2.x, p2.y];
+        let m = cv.matFromArray(1, 4, 12, pts)
+        let v = new cv.MatVector();
+        v.push_back(m);
+
+        source.setTo(BLACK);
+        cv.drawContours(source, v, 0, WHITE, -1, cv.LINE_8);
+        
+        // let slope = (vertices[0].y - vertices[2].y) / (vertices[0].x - vertices[2].x);
+        // let b = vertices[2].y - slope * vertices[2].x;
+        // let ny = rotatedRect.center.y + (vertices[0].y - vertices[1].y) / 2;
+        // let nx = (ny - b) / slope;
+        // let p1 = { x: nx, y: ny };
+
+        // b = vertices[1].y - slope * vertices[1].x
+        // // ny = vertices[1].y * p1.y / vertices[0].y; // regra de tres
+        // ny = p1.y - (vertices[0].y - vertices[1].y);
+        // nx = (ny - b) / slope;
+
+
+        // let p2 = { x: nx, y: ny };
+
+        // cv.circle(dst, p1, 1, colors[4], 5);
+        // cv.circle(dst, p2, 1, colors[4], 8);
+        // cv.line(dst, p1, p2, colors[4], 2, cv.LINE_AA, 0);
 
         // let min, max;
         // let size = 0, maxSize = 0, maxCoord = { x: 0, y: 0 };
@@ -621,12 +695,8 @@ function main(low, high) {
         binaryMask.setTo(BLACK);
         rectMask.setTo(BLACK);
 
-        cv.drawContours(binaryMask, contours, areaIdx, RED, -1, cv.LINE_8, hierarchy, 1);
+        cv.drawContours(binaryMask, contours, areaIdx, WHITE, -1, cv.LINE_8, hierarchy, 1);
         // cv.bitwise_and(source, source, destination, binaryMask);
-
-        cv.distanceTransform(binaryMask, transform, cv.DIST_L2, cv.DIST_MASK_3);
-
-        let max = cv.minMaxLoc(transform);
 
         // cv.circle(rectMask, max.maxLoc, max.maxVal * 1.1, RED, -1);
 
@@ -640,16 +710,23 @@ function main(low, high) {
         binaryMask.copyTo(rectMask);
         bounding(rectMask, contours.get(areaIdx));
 
-        cv.imshow('roi', rectMask);
+        cv.bitwise_and(rectMask, rectMask, binaryMask, binaryMask);
 
+        cv.distanceTransform(binaryMask, transform, cv.DIST_L2, cv.DIST_MASK_3);
+
+        let max = cv.minMaxLoc(transform);
+
+        cv.bitwise_and(source, source, destination, binaryMask);
+        // cv.imshow('roi', rectMask);
+        
         moments(rectMask);
-
+        
         // if (!center)
         //     return;
         // // center = cv.minEnclosingCircle(contours.get(contourArea.id)).center;
-
+        
         // rectMask.setTo(BLACK);
-
+        
         // let quarter = 50;
         // p1.x = center.x - 2 * quarter;
         // p1.y = 0 //center.y - 2 * quarter;
@@ -657,18 +734,18 @@ function main(low, high) {
         // p2.y = center.y + quarter;
         // // console.log(p1, p2);
         // cv.rectangle(rectMask, p1, p2, RED, -1);
-
+        
         // cv.bitwise_and(binaryMask, binaryMask, rectMask, rectMask);
-
-        cv.bitwise_and(source, source, destination, rectMask);
-
+        
+        // cv.bitwise_and(source, source, destination, rectMask);
+        
         cv.circle(dst, max.maxLoc, 7, colors[0], -1)
-
+        
         cv.circle(dst, max.maxLoc, max.maxVal * 1.1, colors[1], 2)
-
+        
         // console.log(labels)
 
-        // cv.imshow('bin', binaryMask);
+        cv.imshow('roi', binaryMask);
 
     }
 
