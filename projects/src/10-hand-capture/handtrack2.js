@@ -211,9 +211,9 @@ function main(low, high) {
     // -- Constants -- //
     const FPS = 24;
     const BLACK = new cv.Scalar(0, 0, 0, 255); // helper scalar for black color
-    const WHITE = new cv.Scalar(255, 0, 0); // helper scalar for red color
-    const rd = new cv.Scalar(255, 0, 0, 255);
-    const gr = new cv.Scalar(0, 255, 0, 255);
+    const WHITE = new cv.Scalar(255, 255, 255, 255); // helper scalar for red color
+    const RED = new cv.Scalar(255, 0, 0, 255);
+    const GREEN = new cv.Scalar(0, 255, 0, 255);
 
     // Thesholds for pixel color classification
     const LOW = new cv.Mat(height, width, cv.CV_8UC3, [0, low.cr, low.cb, 0]);
@@ -258,15 +258,12 @@ function main(low, high) {
     let goodNew = [];
     let goodOld = [];
 
-    // hull variables -
-    const fingerTips = [];
-    let numbFingers = 0;
-
+    // foreground extracting variables
     let center;
     let p1 = new cv.Point(0, 0);
     let p2 = new cv.Point(0, 0);
     const info = document.querySelector('#info');
-    let labels = new cv.Mat(height, width, cv.CV_32SC1);
+    const mt = new cv.matFromArray(1, 4, 12, [0, 0, 0, 0, 0, 0, 0, 0]);
 
     // colors for drawing points
     const colors = [];
@@ -532,97 +529,57 @@ function main(low, high) {
             }
         }
 
-        let closest2nd;
-        let d2nd;
-        for (let i = 0; i < 4; i++) {
-            if (i != highest && i != closest) {
-                if (!closest2nd) {
-                    closest2nd = i;
-                    d2nd = dist(vertices[highest], vertices[i]);
-                }
-                else {
-                    let k = dist(vertices[highest], vertices[i]);
-                    if (k < d2nd) {
-                        closest2nd = i;
-                        d2nd = k;
-                    }
-                }
-            }
+        closest2nd = (closest + 2) % 4;
 
-        }
-
-        cv.circle(dst, vertices[highest], 15, rd, 4);
-        // cv.circle(dst, vertices[closest2nd], 15, gr, 4);
+        cv.circle(dst, vertices[highest], 15, RED, 4);
+        cv.circle(dst, vertices[closest], 15, GREEN, 4);
+        cv.circle(dst, vertices[closest2nd], 15, WHITE, 4);
 
         for (let i = 0; i < 4; i++) {
             cv.line(dst, vertices[i], vertices[(i + 1) % 4], colors[3], 2, cv.LINE_AA, 0);
         }
 
         d *= 1.05;
-        let slope, ang, nx, ny, sign = 1;
+        let slope;
 
         if (Math.abs(vertices[highest].x - vertices[closest2nd].x) < 0.0001) slope = 0;
         else slope = (vertices[highest].y - vertices[closest2nd].y) / (vertices[highest].x - vertices[closest2nd].x);
         if (isNaN(slope) || slope > 2147483647 || slope < -2147483647) slope = 0;
 
-        if (slope < 0) {
-            closest2nd = (closest2nd + 1) % 4;
+        let sign = Math.sign(slope);
 
-            if (Math.abs(vertices[highest].x - vertices[closest2nd].x) < 0.0001) slope = 0;
-            else slope = (vertices[highest].y - vertices[closest2nd].y) / (vertices[highest].x - vertices[closest2nd].x);
-            if (isNaN(slope) || slope > 2147483647 || slope < -2147483647) slope = 0;
-
-            sign = -1;
-
-        }
-
-        cv.circle(dst, vertices[closest2nd], 15, gr, 4);
-
-        ang = Math.atan(slope);
-        // ang = rad;
-
-        // if (ang < 0) {
-        //     ang = -1 * ang //+ Math.PI / 2;
-        //     // ang *= -;
-        // }
-        info.innerHTML = slope.toFixed(2);
-        // ang = rad;
+        let ang = Math.atan(slope);
+        // info.innerHTML = slope.toFixed(2);
         // info.innerHTML = `${ang.toFixed(2)}`
 
-        nx = vertices[highest].x + d * Math.cos(ang) * sign;
-        ny = vertices[highest].y + d * Math.sin(ang) * sign;
+        p1.x = vertices[highest].x + d * Math.cos(ang) * sign;
+        p1.y = vertices[highest].y + d * Math.sin(ang) * sign;
 
-        // console.log(ang, rad);
-        let p2 = { x: nx, y: ny };
+        cv.circle(dst, p1, 5, RED, 4);
 
-        cv.circle(dst, p2, 5, rd, 4);
+        p2.x = vertices[closest].x + d * Math.cos(ang) * sign;
+        p2.y = vertices[closest].y + d * Math.sin(ang) * sign;
 
-        nx = vertices[closest].x + d * Math.cos(ang) * sign;
-        ny = vertices[closest].y + d * Math.sin(ang) * sign;
+        cv.circle(dst, p2, 5, colors[0], 4);
+        cv.line(dst, p1, p2, colors[0], 2, cv.LINE_AA, 0);
 
-        let p3 = { x: nx, y: ny };
+        mt.data32S[0] = vertices[highest].x;
+        mt.data32S[1] = vertices[highest].y;
+        mt.data32S[2] = vertices[closest].x;
+        mt.data32S[3] = vertices[closest].y;
+        mt.data32S[4] = p2.x;
+        mt.data32S[5] = p2.y;
+        mt.data32S[6] = p1.x;
+        mt.data32S[7] = p1.y;
 
-        cv.circle(dst, p3, 5, colors[0], 4);
-        cv.line(dst, p2, p3, colors[0], 2, cv.LINE_AA, 0);
-
-        let pts = [vertices[highest].x, vertices[highest].y, vertices[closest].x, vertices[closest].y, p3.x, p3.y, p2.x, p2.y];
-        let m = cv.matFromArray(1, 4, 12, pts)
+        // ainda preciso descobrir como fazer para nao ficar alocando e desalocando isso aqui
         let v = new cv.MatVector();
-        v.push_back(m);
+        v.push_back(mt);
 
         source.setTo(BLACK);
         cv.drawContours(source, v, 0, WHITE, -1, cv.LINE_8);
-    }
 
-    function nextColor(source, color, row, col, step, cos) {
-        let value;
-        for (let c = col; c < width && c > -1; c += step) {
-            value = source.data[row * width + c];
-            row += cos;
-
-            if (value == color) return c;
-        }
-        return -1;
+        v.delete();
     }
 
     function detachForeground(source, destination, contours, areaIdx) {
@@ -632,55 +589,31 @@ function main(low, high) {
         cv.drawContours(binaryMask, contours, areaIdx, WHITE, -1, cv.LINE_8, hierarchy, 1);
         cv.bitwise_and(source, source, destination, binaryMask);
 
-        // cv.circle(rectMask, max.maxLoc, max.maxVal * 1.1, RED, -1);
-
-        // p1.x = max.maxLoc.x - max.maxVal * 3;
-        // p1.y = max.maxLoc.y - max.maxVal * 3;
-        // p2.x = max.maxLoc.x + max.maxVal * 3;
-        // p2.y = max.maxLoc.y + max.maxVal;
-        // cv.rectangle(rectMask, p1, p2, RED, -1);
-
-        // cv.bitwise_and(binaryMask, binaryMask, rectMask, rectMask);
-        binaryMask.copyTo(rectMask);
+        rectMask.setTo(BLACK)
         bounding(rectMask, contours.get(areaIdx));
-
         cv.bitwise_and(rectMask, rectMask, binaryMask, binaryMask);
 
         cv.distanceTransform(binaryMask, transform, cv.DIST_L2, cv.DIST_MASK_3);
 
+        rectMask.setTo(BLACK);
         let max = cv.minMaxLoc(transform);
 
-        // cv.bitwise_and(source, source, destination, binaryMask);
-        // cv.imshow('roi', rectMask);
+        p1.x = max.maxLoc.x - max.maxVal * 3;
+        p1.y = max.maxLoc.y - max.maxVal * 3;
+        p2.x = max.maxLoc.x + max.maxVal * 3;
+        p2.y = max.maxLoc.y + max.maxVal;
+        cv.rectangle(rectMask, p1, p2, WHITE, -1);
 
-        moments(rectMask);
+        cv.bitwise_and(binaryMask, binaryMask, rectMask, rectMask);
 
-        // if (!center)
-        //     return;
-        // // center = cv.minEnclosingCircle(contours.get(contourArea.id)).center;
+        cv.imshow('roi', rectMask);
+        cv.bitwise_and(source, source, destination, binaryMask);
 
-        // rectMask.setTo(BLACK);
-
-        // let quarter = 50;
-        // p1.x = center.x - 2 * quarter;
-        // p1.y = 0 //center.y - 2 * quarter;
-        // p2.x = center.x + 2 * quarter;
-        // p2.y = center.y + quarter;
-        // // console.log(p1, p2);
-        // cv.rectangle(rectMask, p1, p2, RED, -1);
-
-        // cv.bitwise_and(binaryMask, binaryMask, rectMask, rectMask);
-
-        // cv.bitwise_and(source, source, destination, rectMask);
+        moments(binaryMask);
 
         cv.circle(dst, max.maxLoc, 7, colors[0], -1)
 
         cv.circle(dst, max.maxLoc, max.maxVal * 1.1, colors[1], 2)
-
-        // console.log(labels)
-
-        cv.imshow('roi', binaryMask);
-
     }
 
     function moments(source) {
@@ -729,7 +662,7 @@ function main(low, high) {
         // console.log(huMoments);
 
         // info.innerHTML = `dist ${dist.toFixed(2)}, dist2 ${dist2.toFixed(2)} - classification ${dist < dist2 ? 'open' : 'close'}`;
-        // info.innerHTML = `classification: ${dist < dist2 ? 'open' : 'close'}`
+        info.innerHTML = `classification: ${dist < dist2 ? 'open' : 'close'}`
     }
 
     // hu moments
