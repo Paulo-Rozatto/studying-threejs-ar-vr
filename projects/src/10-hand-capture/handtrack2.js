@@ -265,6 +265,14 @@ function main(low, high) {
     const info = document.querySelector('#info');
     const mt = new cv.matFromArray(1, 4, 12, [0, 0, 0, 0, 0, 0, 0, 0]);
 
+    const open1 = [3.0912769784486693, 7.7366600271469705, 11.305973553808753, 10.968399128352408, -13.164938156199067, 14.907906585875475, 15.353374087584879, 0.9681062034395111]
+
+    const open2 = [3.12765614387537, 7.890141913277302, 11.166666775476504, 11.270622197906857, -20.36886535309352, 9.19620982349387, 20.450965321154378, 1.1455177693993803]
+
+    const closed1 = [3.1844407881299097, 7.9225593297972186, 11.132406073467994, 12.942107787759145, 25.27895813880837, 15.434180121732487, -22.59077766487394, 0.7816794694575135]
+
+    const closed2 = [3.1958532622091687, 8.498186203425494, 11.882128816659606, 13.87883275690292, 10.589385970285894, -0.0972378372045581, 2.469608358003279, 1.1300554542255923]
+
     // colors for drawing points
     const colors = [];
     for (let i = 0; i < maxCorners; i++) {
@@ -301,7 +309,8 @@ function main(low, high) {
 
                 cv.goodFeaturesToTrack(grayFrame, features, maxCorners, qualityLevel, minDistance, binaryMask);
 
-                center = cv.minEnclosingCircle(contours.get(contourArea.id)).center;
+                // center = cv.minEnclosingCircle(contours.get(contourArea.id)).center;
+                center = { x: 0, y: 0 } // temp
 
                 if (features.rows >= MIN_FEATURES) {
                     hasFeatures = true;
@@ -606,56 +615,81 @@ function main(low, high) {
 
         cv.bitwise_and(binaryMask, binaryMask, rectMask, rectMask);
 
-        cv.imshow('roi', rectMask);
+        // cv.imshow('roi', rectMask);
         cv.bitwise_and(source, source, destination, binaryMask);
 
-        moments(binaryMask);
+        moments(binaryMask, contours);
 
         cv.circle(dst, max.maxLoc, 7, colors[0], -1)
 
         cv.circle(dst, max.maxLoc, max.maxVal * 1.1, colors[1], 2)
     }
 
-    function moments(source) {
+    let click = false;
+    let count = 0;
+    let acc = [0, 0, 0, 0, 0, 0, 0, 0];
+    const phu = document.getElementById('hu');
+
+    document.getElementById('btn3').addEventListener('click', () => {
+        click = true;
+    });
+
+    function moments(source, contours) {
         // https://learnopencv.com/shape-matching-using-hu-moments-c-python/
 
         let moments = cv.moments(source);
         let huMoments = [];
+        let rect;
 
         // cv.HuMoments(moments, huMoments);
         hu(moments, huMoments)
 
+
         // log transform - h[i] = -sign(h[i]) * log10|h[i]|
-        for (let i = 0; i < 7; i++) {
+        for (let i = 0; i < huMoments.length; i++) {
             huMoments[i] = -1 * Math.sign(huMoments[i]) * Math.log10(Math.abs(huMoments[i]))
         }
 
-        let open = [
-            3.062038994000932,
-            7.197910988639913,
-            10.541061884353944,
-            10.780738946955417,
-            -22.42706340963343,
-            14.923474994972896,
-            -21.443974104478865
-        ]
+        // cv.findContours(source, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
+        // let cnt = contours.get(0);
+        // if (cnt) {
+        //     rect = cv.boundingRect(cnt);
 
-        let close = [
-            3.1872975810443918,
-            7.822597220182995,
-            12.03476386792147,
-            13.17626716473,
-            25.936605008565586,
-            17.139584355269808,
-            25.928074130157842
-        ]
+        //     huMoments[7] = rect.width / rect.height;
+        //     huMoments[7] *= huMoments[7];
+        // }
+        // else {
+        //     huMoments[7] = 0;
+        // }
+
+        // aux.setTo(BLACK);
+        // cv.drawContours(aux, contours, 0, WHITE, 1, cv.LINE_8);
+        // cv.imshow('roi', aux);
+
+
+        if (click) {
+            click = false;
+            count++;
+
+            phu.innerHTML = `${count} <hr><br/>`
+            for (let i = 0; i < huMoments.length; i++) {
+                acc[i] += huMoments[i];
+                phu.innerHTML += `${acc[i]}, <br/>`
+            }
+        }
 
         // euclidian distance
         let dist = 0, dist2 = 0;
+        let op1 = 0, op2 = 0, cl1 = 0, cl2 = 0;
         for (let i = 0; i < 7; i++) {
-            dist += ((huMoments[i] - open[i]) * (huMoments[i] - open[i]));
-            dist2 += ((huMoments[i] - close[i]) * (huMoments[i] - close[i]));
+            op1 += ((huMoments[i] - open1[i]) * (huMoments[i] - open1[i]));
+            cl1 += ((huMoments[i] - closed1[i]) * (huMoments[i] - closed1[i]));
+
+            op2 += ((huMoments[i] - open2[i]) * (huMoments[i] - open2[i]));
+            cl2 += ((huMoments[i] - closed2[i]) * (huMoments[i] - closed2[i]));
         }
+        dist = op1 < op2 ? op1 : op2;
+        dist2 = cl1 < cl2 ? cl1 : cl2;
         // Math.sqrt(dist);
         // Math.sqrt(dist2)
 
@@ -744,3 +778,66 @@ async function startVideo(video) {
         p.innerHTML = 'Error accesing camera - ' + err;
     }
 }
+
+// let open = [
+        //     3.062038994000932,
+        //     7.197910988639913,
+        //     10.541061884353944,
+        //     10.780738946955417,
+        //     -22.42706340963343,
+        //     14.923474994972896,
+        //     -21.443974104478865
+        // ]
+
+        // let close = [
+        //     3.1872975810443918,
+        //     7.822597220182995,
+        //     12.03476386792147,
+        //     13.17626716473,
+        //     25.936605008565586,
+        //     17.139584355269808,
+        //     25.928074130157842
+        // ]
+
+        // let open = [
+        //     3.0703741947068424,
+        //     7.023749736591466,
+        //     10.678424708639218,
+        //     11.070285031329849,
+        //     11.775164436194975,
+        //     7.107823179828246,
+        //     22.02303654000887,
+        // ]
+
+
+        // let close = [
+        //     3.132797977070457,
+        //     7.14225850278341,
+        //     10.919895309889244,
+        //     12.206212676724647,
+        //     -24.001257937551113,
+        //     -7.579335131995962,
+        //     -11.948504318082689,
+        // ]
+
+        // let open = [
+        //     3.097256283103742,
+        //     7.735830930530247,
+        //     11.237027646736887,
+        //     10.985767570535057,
+        //     6.632480667864994,
+        //     10.601943721838142,
+        //     8.86233799029899,
+        //     0.9218495870545018,
+        // ]
+
+        // let close = [
+        //     3.1793829376573024,
+        //     8.029686307267838,
+        //     11.319173948850136,
+        //     13.4498118250593,
+        //     -0.16808897890120847,
+        //     -2.1141215920751724,
+        //     7.5892095169036065,
+        //     1.1352700262952273,
+        // ];

@@ -31,11 +31,14 @@
     <p id="info">Carregando...</p>
     <canvas id="canvasFrame"></canvas>
     <canvas id="roi"></canvas>
-    <canvas id="bin"></canvas>
-
+    <!-- <canvas id="bin"></canvas> -->
+    
+    
     <br/>
     <button id="btn1">Calibrate</button>
     <button id="btn2">Start</button>
+    <button id="btn3">HuMoments</button>
+    <p id="hu"></p>
     <script src="handtrack2.js"></script>
     <script async src="libs/opencv1.js" onload="cv['onRuntimeInitialized']=()=>{start({cv: true});}; " type="text/javascript"></script>
 </body>
