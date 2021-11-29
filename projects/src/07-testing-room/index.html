@@ -42,11 +42,21 @@
                     `OrBI é uma interface com usuário pensada para realidade virtual.
                     OrBI é posicionada em relação ao usuário e pode ser movida dentro de uma esfera imaginária,
                     como no exemplo à direita.`,
-                    `Nesse teste, será pedido para posicionar interface em algumas posições difertentes para se avaliar a precisão da OrBI e sua facilade
+                    `Nesse teste, será pedido para posicionar interface em algumas posições difertentes para se avaliar a precisão da OrBI e sua facilidade
                     de uso.
                     Clique em próximo para continuar começar.`
                 ]
                 let msgIndex = 0;
+
+                const instructions = [
+                    'Mova a interface para a direita',
+                    'Afaste a interface',
+                    'Afaste a interface mais uma vez',
+                    'Mova a interface para cima',
+                    'Volte a interface ao inicio (esquerda e baixo)',
+                    'Parabéns! Terminou!'
+                ];
+                let instIndex = 0;
 
                 const vrInterface = this.el.components['orbi'];
                 this.testInterface = document.querySelector('#example').components['orbi'];
@@ -58,7 +68,7 @@
                     }
                     else if (msgIndex === 2) {
                         vrInterface.hide();
-                        self.testInterface.showMessage('Mova a interface para direita')
+                        self.testInterface.showMessage(instructions[instIndex++]);
 
                         self.isToAnimateMan = false;
                         self.verticalTurns = 0;
@@ -103,7 +113,7 @@
                 this.square = new THREE.LineSegments(squareEdges, new THREE.LineBasicMaterial({ color: 0xff0000 }));
                 this.square.position.copy(this.squareLocations[0].position);
                 this.square.rotation.copy(this.squareLocations[0].rotation);
-                // this.el.sceneEl.setObject3D('square', this.square);
+                this.el.sceneEl.setObject3D('square', this.square);
 
                 const squareClone = new THREE.LineSegments(squareEdges, new THREE.LineBasicMaterial({ color: 0xff0000 }));
                 squareClone.scale.set(0.77, 0.77, 0.77);
@@ -118,6 +128,9 @@
                 const stopMoving = () => {
                     self.isMoving = false;
 
+                    if (instIndex < 6)
+                        self.testInterface.showMessage(instructions[instIndex++]);
+
                     let theta = self.testInterface.data.theta;
                     let phi = self.testInterface.data.phi;
 
@@ -129,7 +142,9 @@
 
                     self.timeIdx += 1;
                     if (self.timeIdx === 3) {
-                        // sendData();
+                        sendData();
+                        console.log(self.distances);
+                        console.log(self.times);
                         self.square.visible = false;
                         self.movementsRemaining = -1;
                     }
@@ -151,11 +166,14 @@
                 }
 
                 const movementUpdate = () => {
-                    self.movementsRemaining--;
-
-                    if (self.movementsRemaining === 0) {
+                    if (this.auxPosition.distanceToSquared(this.square.position) < 0.04)
                         stopMoving();
-                    }
+
+                    //self.movementsRemaining--;
+
+                    // if (self.movementsRemaining === 0) {
+                    //     stopMoving();
+                    // }
                 }
 
                 this.testInterface.horizMovButtonCallback = startMoving;
@@ -166,6 +184,10 @@
                         self.isMoving = true;
                     }
                     movementUpdate();
+                    if (instIndex == 2 || instIndex == 3) {
+                        console.log(instIndex);
+                        self.testInterface.showMessage(instructions[instIndex++]);
+                    }
                 }
 
                 const manEl = document.querySelector('#man');

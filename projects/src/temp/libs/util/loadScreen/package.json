@@ -1,0 +1,29 @@
+{
+  "name": "loadscreen",
+  "description": "A three.js assets loading wrapper",
+  "version": "0.18.14",
+  "devDependencies": {
+    "grunt": "latest",
+    "grunt-contrib-concat": "latest",
+    "grunt-contrib-uglify": "latest",
+    "grunt-bump": "latest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Astrak/LoadScreen.js.git"
+  },
+  "keywords": [
+    "loadscreen",
+    "loader",
+    "assets",
+    "setup",
+    "wrapper",
+    "progress"
+  ],
+  "dependencies": {
+    "three": "*"
+  },
+  "main": "LoadScreen.js",
+  "author": "Astrak",
+  "license": "MIT"
+}
