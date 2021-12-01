@@ -207,14 +207,14 @@
                     string += '\nFort Point is a masonry seacoast fortification \nlocated on the southern side of the Golden Gate at\n the entrance to San Francisco Bay.';
                     string += '\nIt is also the geographic name of the promontory \nupon which the fort and the southern approach of\n the Golden Gate Bridge were constructed.\n\n';
 
-                    orbi.showSideText(string);
+                    // orbi.showSideText(string);
 
                     orbi.addButton('fort', '#fort', () => {
                         skyEl.setAttribute('src', '#fort-point');
                         string = '\nPLACE: San Francisco, California United States of America.\n';
                         string += '\nFort Point is a masonry seacoast fortification \nlocated on the southern side of the Golden Gate at\n the entrance to San Francisco Bay.';
                         string += '\nIt is also the geographic name of the promontory \nupon which the fort and the southern approach of\n the Golden Gate Bridge were constructed.\n\n';
-                        orbi.showSideText(string);
+                        // orbi.showSideText(string);
                     });
 
                     orbi.addButton('time', '#time', () => {
@@ -230,7 +230,7 @@
                         string = '\nPLACE: City of Miami, Florida, United States of America.\n';
                         string += '\nMiami is a metropolis located in southeastern \nFlorida in the United States.It is the third most \npopulous metropolis on the East coast of the \nUnited States, and it is the seventh largest in the \ncountry.';
                         string += 'It is also the major center and leader in \nfinance, commerce, culture, arts, and international trade.\n\n\n';
-                        orbi.showSideText(string);
+                        // orbi.showSideText(string);
                     });
 
                     orbi.addButton('italy1', '#italy1', () => {
@@ -238,7 +238,7 @@
                         string = '\nPLACE: Bolzano, Trentino-Alto Adige, Italy.\n';
                         string += '\nBrennero is located in South Tyrol, in Italy.\nIt is famous for its ski resorts and \nreceives many visitors in the winter.';
                         string += '\nIt is also have the Plessi Museum \nthat has a amazing architecture.\n\n\n';
-                        orbi.showSideText(string);
+                        // orbi.showSideText(string);
                     });
 
                     orbi.addButton('gavea1', '#gavea1', () => {
@@ -246,7 +246,7 @@
                         string = '\nPLACE: City of Rio de Janeiro, Rio de Janeiro, Brazil.\n';
                         string += '\nGavea is a favorite residential area and lies \nclose to Leblon, Lagoa, Jardim Botanico and São \nConrado.It has its own quaint charm and \nattractions that makes it a popular tourist spot.';
                         string += '\nIt is also offers lots of different cultural \nattractions around the neighborhood, and is home\n to one of the largest universities in the country, PUC.\n\n';
-                        orbi.showSideText(string);
+                        // orbi.showSideText(string);
                     });
 
                     orbi.addButton('palacioO', '#palacioO', () => {
@@ -254,7 +254,7 @@
                         string = '\nPLACE:  Zaragoza, Aragon, Spain.\n';
                         string += '\nThe Aljafería Palace is a fortified medieval palace\n built during the second half of the 11th century\n in the Taifa of Zaragoza in Al-Andalus,\n present day Zaragoza, Aragon, Spain.';
                         string += '\nThe structure holds unique importance in that it\n is the only conserved testimony of a large \nbuilding of Spanish Islamic architecture of the \nera of the Taifas (independent kingdoms). \n\n\n';
-                        orbi.showSideText(string);
+                        // orbi.showSideText(string);
                     });
 
                     orbi.addButton('prerow1', '#prerow1', () => {
@@ -262,7 +262,7 @@
                         string = '\nPLACE: Prerow,  Mecklenburg-Vorpommern, Germany.\n';
                         string += '\nPrerow is a municipality in the district of \nVorpommern-Rügen in the German state of Mecklenburg-Vorpommern.';
                         string += '\nThe seaside resort of Prerow is located within\n the Western Pomerania Lagoon Area National Park\n which stretches from Ahrenshoop along\n the southern coast to the island of Hiddensee. \n\n\n\n';
-                        orbi.showSideText(string);
+                        // orbi.showSideText(string);
                     });
 
                     orbi.addButton('st-pter1', '#st-pter1', () => {
@@ -270,10 +270,10 @@
                         string = '\nPLACE: Saint Petersburg, Northwestern, Russia.\n';
                         string += '\nSaint Petersburg is situated on the Neva River,\n at the head of the Gulf of Finland on the Baltic \nSea, with a population of roughly 5.4 million \nresidents.';
                         string += 'Saint Petersburg is known as the \n"Cultural Capital of Russia", and received over \n15 million tourists in 2018, and is considered \nan important economic, scientific, cultural, and \ntourism centre of Russia and Europe. \n\n';
-                        orbi.showSideText(string);
+                        // orbi.showSideText(string);
                     });
 
-                    orbi.hide();
+                    // orbi.hide();
                     const imgs = ['#time-square', '#fort-point', '#miami', '#italy', '#gavea', '#castle', '#prerow', '#st-pter'];
                     let i = 0;
                     // skyEl.setAttribute('src', imgs[0]);
@@ -341,7 +341,7 @@
 
         <a-entity orbi="dimension: 4 2; orbits: 1 1.5 2; theta: 90; phi: 0 ; transparency: true; gap: 0.01 0.01; border: 1.2 #6d7584; 
             font:assets/fonts/roboto-msdf.json; negate: false; messageColor: yellow; messageSize: 1.2; sideTextSize: 0.88 1.3; sideTextRotation: -40; 
-            bgTransparency: false;" config button-controls>
+            bgTransparency: false; movementBar: false;" config button-controls>
         </a-entity>
 
         <a-entity id="rig" position="0 0 0" rotation="0 0 0">
