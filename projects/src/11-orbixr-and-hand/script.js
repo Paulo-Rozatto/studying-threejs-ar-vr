@@ -2,7 +2,7 @@
 import * as THREE from '../../build2/three.module.js';
 import { GLTFLoader } from '../../build2/jsm/loaders/GLTFLoader.js'
 import { VRButton } from '../../build2/jsm/webxr/VRButton.js';
-import { Orbi } from '../../libs/orbixr.js';
+import { Orbi } from '../../libs/orbixr_handtracking.js';
 // import {
 //   onWindowResize,
 // } from "../../libs/util/util.js";

@@ -18,7 +18,10 @@ import {
     Texture,
     TextureLoader,
     CanvasTexture,
+    ArrowHelper,
 } from '../build2/three.module.js';
+
+// import { GLTFLoader } from '../build2/jsm/loaders/GLTFLoader.js'
 
 // propertys
 let currentOrbit, isFusing, config;
@@ -31,7 +34,7 @@ let uiGroup, movementBar, messageGroup, textGroup;
 
 // helpers
 let buttonsArray, buttonCount, origin2d, direction, direction2, euler, intersection, intersected, oldIntersected;
-let pos;
+let arrow, pos;
 
 let fingers, canvasTexture, center, hand;
 
@@ -42,6 +45,8 @@ class Orbi extends Object3D {
         if (!cam || cam.type != "PerspectiveCamera") {
             throw new Error("OrBI: Type of camera argument have to be PerspectiveCamera")
         }
+
+        console.log(gCenter);
 
         window.addEventListener('changed', function (e) {
             if (!hand) return;
@@ -136,6 +141,9 @@ class Orbi extends Object3D {
                 hand.scene.scale.set(0.025, 0.025, 0.025);
                 hand.scene.position.set(0, 0, -0.6);
                 cursor = hand.scene;
+
+                // arrow = new ArrowHelper(new Vector3(0, 0, -1), cursor.position, config.raycaster.far, '#ff0000')
+                // camera.parent.add(arrow);
             }
             else {
                 cursor = new Mesh(
@@ -165,7 +173,7 @@ class Orbi extends Object3D {
         uiGroup.add(messageGroup);
 
 
-        // canvasTexture = new CanvasTexture(context.canvas)
+        canvasTexture = new CanvasTexture(context.canvas)
 
         const messageBgGeo = new PlaneBufferGeometry(1, 0.08);
         const messageBgMat = new MeshBasicMaterial({
@@ -188,9 +196,10 @@ class Orbi extends Object3D {
 
         const textBgGeo = new PlaneBufferGeometry(config.text.size.x, config.text.size.y);
         const textBgMat = new MeshBasicMaterial({
-            color: config.text.bgColor,
-            transparent: config.text.transparent,
-            opacity: config.text.opacity,
+            map: canvasTexture,
+            // color: config.text.bgColor,
+            // transparent: config.text.transparent,
+            // opacity: config.text.opacity,
         });
         textBg = new Mesh(textBgGeo, textBgMat);
         textBg.position.x = config.text.size.x * 0.5 + 0.01;
@@ -311,20 +320,20 @@ class Orbi extends Object3D {
     }
 
     showText(txt) {
-        if (!this.font) {
-            console.error('OrBI: No font specified.');
-            return;
-        }
+        // if (!this.font) {
+        //     console.error('OrBI: No font specified.');
+        //     return;
+        // }
 
-        const textGeo = new TextBufferGeometry(txt, {
-            font: this.font,
-            size: 0.04,
-            height: 0,
-        });
-        // textGeo.computeBoundingBox()
+        // const textGeo = new TextBufferGeometry(txt, {
+        //     font: this.font,
+        //     size: 0.04,
+        //     height: 0,
+        // });
+        // // textGeo.computeBoundingBox()
 
-        text.geometry = textGeo;
-        text.geometry.needsUpdate = true;
+        // text.geometry = textGeo;
+        // text.geometry.needsUpdate = true;
 
         textGroup.visible = true;
     }
@@ -361,6 +370,11 @@ class Orbi extends Object3D {
 
             raycaster.set(pos, direction);
 
+            // arrow.position.x = raycaster.ray.origin.x;
+            // arrow.position.y = raycaster.ray.origin.y;
+            // arrow.position.z = raycaster.ray.origin.z;
+            // arrow.setDirection(raycaster.ray.direction);
+
             intersection.length = 0;
 
             if (this.moveVertically || this.moveHorizontally) {
@@ -388,9 +402,9 @@ class Orbi extends Object3D {
             else if (isFusing) {
                 isFusing = false;
                 fusingClock.stop();
-                cursor.scale.set(1, 1, 1);
-                // cursor.children[0].children[1].material.color.g = 0.5;
-                // cursor.children[0].children[1].material.needsUpdate = true;
+                // cursor.scale.set(1, 1, 1);
+                cursor.children[0].children[1].material.color.g = 0.5;
+                cursor.children[0].children[1].material.needsUpdate = true;
             }
         }
 
@@ -398,21 +412,24 @@ class Orbi extends Object3D {
             this.fusingTime = fusingClock.elapsedTime;
 
             if (this.fusingTime < config.cursor.fusingTime) {
-                cursor.scale.addScalar(-fusingClock.getDelta());
-                // cursor.children[0].children[1].material.color.g += fusingClock.getDelta();
-                // cursor.children[0].children[1].material.needsUpdate = true;
+                // cursor.scale.addScalar(-fusingClock.getDelta());
+                cursor.children[0].children[1].material.color.g += fusingClock.getDelta();
+                cursor.children[0].children[1].material.needsUpdate = true;
             }
             else {
                 handleClick(intersected);
-                cursor.scale.set(1, 1, 1);
-                // cursor.children[0].children[1].material.color.g = 0.5;
-                // cursor.children[0].children[1].material.needsUpdate = true;
+                // cursor.scale.set(1, 1, 1);
+                cursor.children[0].children[1].material.color.g = 0.5;
+                cursor.children[0].children[1].material.needsUpdate = true;
                 isFusing = false;
                 fusingClock.stop();
             }
         }
 
-        // canvasTexture.needsUpdate = true;
+        canvasTexture.needsUpdate = true;
+
+        cursor.position.x = gCenter.x;
+        cursor.position.y = gCenter.y;
     }
 
     click() {
