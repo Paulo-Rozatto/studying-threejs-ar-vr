@@ -161,6 +161,7 @@ class Orbi extends Object3D {
         messageGroup = new Group();
         messageGroup.name = "message-wrapper"
         messageGroup.position.y = (config.button.size.y + config.gap.y) * config.display.x * 0.5 + 0.05;
+        messageGroup.position.z = -config.orbits[currentOrbit];
         messageGroup.visible = false;
         uiGroup.add(messageGroup);
 
@@ -175,7 +176,6 @@ class Orbi extends Object3D {
         });
         messageBg = new Mesh(messageBgGeo, messageBgMat);
         messageBg.name = "background";
-        messageBg.position.z = -config.orbits[currentOrbit];
         messageGroup.add(messageBg);
 
         textGroup = new Group();
@@ -210,6 +210,7 @@ class Orbi extends Object3D {
                     const messageMat = new MeshBasicMaterial({ color: config.message.color });
                     message = new Mesh(msgGeo, messageMat);
                     messageGroup.add(message);
+                    message.position.z = 0.001;
 
                     const textGeo = new TextBufferGeometry('', { font });
                     const textMat = new MeshBasicMaterial({ color: config.text.color });
@@ -300,7 +301,6 @@ class Orbi extends Object3D {
 
         message.position.x = centerOffset;
         message.position.y = -0.04 / 2;
-        message.position.z = -config.orbits[currentOrbit] + 0.001;
 
         messageBg.scale.x = centerOffset * 2.5;
 
@@ -505,6 +505,7 @@ function createMovementBar(orbi) {
         raycaster.far = config.orbits[currentOrbit] + 0.5;
         uiGroup.children.forEach(child => {
             // if (child.isMesh ) {
+            console.log(child);
             child.position.z = -config.orbits[currentOrbit];
             // }
         });
