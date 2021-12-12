@@ -43,7 +43,7 @@ function calibration() {
     const aux = new cv.Mat(height, width, cv.CV_8UC4); // storages final result
     const dst = new cv.Mat(height, width, cv.CV_8UC4); // storages final result
     const mask = new cv.Mat(height, width, cv.CV_8UC4); // storages final result
-    let roi;
+    let roi, needsNewThresholds = false;
 
     let rectSize = 100;
     let point1 = new cv.Point(0.5 * (width - rectSize), 0.5 * (height - rectSize));
@@ -62,42 +62,45 @@ function calibration() {
 
         cv.rectangle(src, point1, point2, BLACK, 2);
 
-        // classifyPixesl(dst, mask, LOW, HIGH);
-        cv.cvtColor(dst, dst, cv.COLOR_RGB2YCrCb);
+        if (needsNewThresholds) {
+            // classifyPixesl(dst, mask, LOW, HIGH);
+            cv.cvtColor(dst, dst, cv.COLOR_RGB2YCrCb);
 
-        dst.copyTo(mask);
-        cv.inRange(mask, LOW, HIGH, mask);
+            dst.copyTo(mask);
+            cv.inRange(mask, LOW, HIGH, mask);
 
-        aux.setTo(BLACK);
-        cv.bitwise_and(dst, dst, aux, mask);
-        roi = aux.roi(rect);
+            aux.setTo(BLACK);
+            cv.bitwise_and(dst, dst, aux, mask);
+            roi = aux.roi(rect);
 
-        calculateNewThresholds(roi)
+            calculateNewThresholds(roi)
 
-        // src.copyTo(dst);
-        // cv.inRange(roi,LOW, HIGH, roi);
-        // cv.cvtColor(roi, roi, cv.COLOR_RGB2GRAY);
+            // src.copyTo(dst);
+            // cv.inRange(roi,LOW, HIGH, roi);
+            // cv.cvtColor(roi, roi, cv.COLOR_RGB2GRAY);
 
-        // dst.copyTo(src.rowRange(0, 100).colRange(0, 100));
-        // cv.addWeighted(roi, 1, roi, 0, 0.0, dst, -1)
+            // dst.copyTo(src.rowRange(0, 100).colRange(0, 100));
+            // cv.addWeighted(roi, 1, roi, 0, 0.0, dst, -1)
 
-        // dst = dst.rowRange(1, rectSize).colRange(1, rectSize)
+            // dst = dst.rowRange(1, rectSize).colRange(1, rectSize)
 
-        // for (let row = point1.x + 1; row < point2.x; row++) {
-        //     for (let col = point1.y; col < point2.y - 1; col++) {
-        //         dst.data[(row - 60) * src.cols * src.channels() + (col + 60) * src.channels()] = roiMask.data[(row - point1.x) * roiMask.cols * roiMask.channels() + (col - point2.y) * roiMask.channels()];
-        //         dst.data[(row - 60) * src.cols * src.channels() + (col + 60) * src.channels() + 1] = roiMask.data[(row - point1.x) * roiMask.cols * roiMask.channels() + (col - point2.y) * roiMask.channels() + 1];
-        //         dst.data[(row - 60) * src.cols * src.channels() + (col + 60) * src.channels() + 2] = roiMask.data[(row - point1.x) * roiMask.cols * roiMask.channels() + (col - point2.y) * roiMask.channels() + 2];
-        //         // src.data[row * src.cols * src.channels() + col * src.channels() + 3] = roi.data[(row - point1.x) * roi.cols * roi.channels() + (col - point2.y) * roi.channels() + 3];
-        //     }
-        // }
+            // for (let row = point1.x + 1; row < point2.x; row++) {
+            //     for (let col = point1.y; col < point2.y - 1; col++) {
+            //         dst.data[(row - 60) * src.cols * src.channels() + (col + 60) * src.channels()] = roiMask.data[(row - point1.x) * roiMask.cols * roiMask.channels() + (col - point2.y) * roiMask.channels()];
+            //         dst.data[(row - 60) * src.cols * src.channels() + (col + 60) * src.channels() + 1] = roiMask.data[(row - point1.x) * roiMask.cols * roiMask.channels() + (col - point2.y) * roiMask.channels() + 1];
+            //         dst.data[(row - 60) * src.cols * src.channels() + (col + 60) * src.channels() + 2] = roiMask.data[(row - point1.x) * roiMask.cols * roiMask.channels() + (col - point2.y) * roiMask.channels() + 2];
+            //         // src.data[row * src.cols * src.channels() + col * src.channels() + 3] = roi.data[(row - point1.x) * roi.cols * roi.channels() + (col - point2.y) * roi.channels() + 3];
+            //     }
+            // }
 
+            cv.imshow("roi", roi);
+            
+            roi.delete();
+            needsNewThresholds = false;
+        }
         cv.imshow("canvasFrame", src);
-        cv.imshow("roi", roi);
-
-        roi.delete();
-        // delay = 1000 / FPS - (Date.now() - begin);
-        // setTimeout(processVideo, delay);
+        delay = 1000 / FPS - (Date.now() - begin);
+        setTimeout(processVideo, delay);
 
     }
 
@@ -193,7 +196,8 @@ function calibration() {
     })
 
     document.getElementById('btn1').addEventListener('click', () => {
-        processVideo();
+        // processVideo();
+        needsNewThresholds = true;
     });
     document.getElementById('btn2').addEventListener('click', () => {
         src.delete(); aux.delete(); dst.delete(); mask.delete();
@@ -202,7 +206,7 @@ function calibration() {
         }, 0);
     });
 
-    // setTimeout(processVideo, 0);
+    setTimeout(processVideo, 0);
     // processVideo();
 
 }
