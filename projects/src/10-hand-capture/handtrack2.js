@@ -94,7 +94,7 @@ function calibration() {
             // }
 
             cv.imshow("roi", roi);
-            
+
             roi.delete();
             needsNewThresholds = false;
         }
@@ -282,6 +282,10 @@ function main(low, high) {
     for (let i = 0; i < maxCorners; i++) {
         colors.push(new cv.Scalar(parseInt(Math.random() * 255), parseInt(Math.random() * 255), parseInt(Math.random() * 255), 255));
     }
+
+    // testing mophorlogic
+    let M = cv.Mat.ones(5, 5, cv.CV_8U);
+    let anchor = new cv.Point(-1, -1);
 
     let begin, delay; // fps helpers
     function processVideo() {
@@ -600,6 +604,18 @@ function main(low, high) {
         rectMask.setTo(BLACK);
 
         cv.drawContours(binaryMask, contours, areaIdx, WHITE, -1, cv.LINE_8, hierarchy, 1);
+
+        cv.imshow("roi", binaryMask);
+
+        cv.morphologyEx(binaryMask, binaryMask, cv.MORPH_OPEN, M, anchor, 1,
+            cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());
+
+        
+        cv.morphologyEx(binaryMask, binaryMask, cv.MORPH_CLOSE, M, anchor, 1,
+            cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());
+        
+        cv.imshow("bin", binaryMask)
+
         cv.bitwise_and(source, source, destination, binaryMask);
 
         rectMask.setTo(BLACK)
@@ -700,7 +716,7 @@ function main(low, high) {
         // console.log(huMoments);
 
         // info.innerHTML = `dist ${dist.toFixed(2)}, dist2 ${dist2.toFixed(2)} - classification ${dist < dist2 ? 'open' : 'close'}`;
-        info.innerHTML = `classification: ${dist < dist2 ? 'open' : 'close'}`
+        info.innerHTML = `classification: ${dist < dist2 ? 'open' : 'close'} - ${dist < dist2 ? dist.toFixed(2) : dist2.toFixed(2)}`
     }
 
     // hu moments
