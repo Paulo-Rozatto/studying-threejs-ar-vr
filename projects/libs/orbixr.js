@@ -144,6 +144,7 @@ class Orbi extends Object3D {
                 );
                 cursor.name = "orbi-cursor";
                 cursor.position.copy(config.cursor.position);
+                cursor.position.z = -config.orbits[currentOrbit] + 0.1;
                 cursor.renderOrder = 5000;
             }
             camera.add(cursor);
@@ -227,7 +228,9 @@ class Orbi extends Object3D {
 
         raycaster = new Raycaster(new Vector3(), new Vector3(0, 0, -1));
         raycaster.near = config.raycaster.near;
-        raycaster.far = config.raycaster.far;
+        // raycaster.far = config.raycaster.far;
+        raycaster.far = config.orbits[currentOrbit] + 0.5;
+        
 
         rayClock = new Clock(true);
         fusingClock = new Clock(false);
@@ -505,7 +508,6 @@ function createMovementBar(orbi) {
         raycaster.far = config.orbits[currentOrbit] + 0.5;
         uiGroup.children.forEach(child => {
             // if (child.isMesh ) {
-            console.log(child);
             child.position.z = -config.orbits[currentOrbit];
             // }
         });
