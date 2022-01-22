@@ -269,13 +269,23 @@ function main(low, high) {
     const info = document.querySelector('#info');
     const mt = new cv.matFromArray(1, 4, 12, [0, 0, 0, 0, 0, 0, 0, 0]);
 
-    const open1 = [3.0912769784486693, 7.7366600271469705, 11.305973553808753, 10.968399128352408, -13.164938156199067, 14.907906585875475, 15.353374087584879, 0.9681062034395111]
+    const open1 = [3.0912769784486693, 7.7366600271469705, 11.305973553808753, 10.968399128352408, -13.164938156199067, 14.907906585875475, 15.353374087584879, 0.9681062034395111, 0, 0.8326351262]
 
-    const open2 = [3.12765614387537, 7.890141913277302, 11.166666775476504, 11.270622197906857, -20.36886535309352, 9.19620982349387, 20.450965321154378, 1.1455177693993803]
+    const open2 = [3.12765614387537, 7.890141913277302, 11.166666775476504, 11.270622197906857, -20.36886535309352, 9.19620982349387, 20.450965321154378, 1.1455177693993803, 0, 0.8326351262]
 
-    const closed1 = [3.1844407881299097, 7.9225593297972186, 11.132406073467994, 12.942107787759145, 25.27895813880837, 15.434180121732487, -22.59077766487394, 0.7816794694575135]
+    const closed1 = [3.1844407881299097, 7.9225593297972186, 11.132406073467994, 12.942107787759145, 25.27895813880837, 15.434180121732487, -22.59077766487394, 0.7816794694575135, 0, 0, 0.6453160090]
 
-    const closed2 = [3.1958532622091687, 8.498186203425494, 11.882128816659606, 13.87883275690292, 10.589385970285894, -0.0972378372045581, 2.469608358003279, 1.1300554542255923]
+    const closed2 = [3.1958532622091687, 8.498186203425494, 11.882128816659606, 13.87883275690292, 10.589385970285894, -0.0972378372045581, 2.469608358003279, 1.1300554542255923, 0, 0, 0.6453160090]
+
+
+    let click = false;
+    let count = 0;
+    let acc = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const phu = document.getElementById('hu');
+
+    document.getElementById('btn3').addEventListener('click', () => {
+        click = true;
+    });
 
     // colors for drawing points
     const colors = [];
@@ -409,7 +419,7 @@ function main(low, high) {
 
     setTimeout(processVideo, 0);
 
-    function classifyPixesl(source, destination,) {
+    function classifyPixesl(source, destination) {
         cv.cvtColor(source, destination, cv.COLOR_RGB2YCrCb);
         cv.inRange(destination, LOW, HIGH, destination);
     }
@@ -599,22 +609,23 @@ function main(low, high) {
         v.delete();
     }
 
+    let ratio = 0, orientation = 0;
     function detachForeground(source, destination, contours, areaIdx) {
         binaryMask.setTo(BLACK);
-        rectMask.setTo(BLACK);
+        // rectMask.setTo(BLACK);
 
         cv.drawContours(binaryMask, contours, areaIdx, WHITE, -1, cv.LINE_8, hierarchy, 1);
 
-        cv.imshow("roi", binaryMask);
+        // cv.imshow("roi", binaryMask);
 
         cv.morphologyEx(binaryMask, binaryMask, cv.MORPH_OPEN, M, anchor, 1,
             cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());
 
-        
+
         cv.morphologyEx(binaryMask, binaryMask, cv.MORPH_CLOSE, M, anchor, 1,
             cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());
-        
-        cv.imshow("bin", binaryMask)
+
+        // cv.imshow("bin", binaryMask)
 
         cv.bitwise_and(source, source, destination, binaryMask);
 
@@ -636,23 +647,57 @@ function main(low, high) {
         cv.bitwise_and(binaryMask, binaryMask, rectMask, rectMask);
 
         // cv.imshow('roi', rectMask);
+        cv.imshow('bin', binaryMask);
         cv.bitwise_and(source, source, destination, binaryMask);
 
+        let cnt = new cv.MatVector(); //storages contours
+        let hie = new cv.Mat();
+
+        cv.findContours(binaryMask, cnt, hie, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
+
+        // console.log(cnt.get(0), cv.contourArea(contour, false));
+        rectMask.setTo(BLACK);
+        if (cnt.get(0) && cv.contourArea(cnt.get(0), false) > 100) {
+            cv.drawContours(rectMask, cnt, 0, RED, 1, cv.LINE_8, hie, 1);
+
+            // fit elipse and get semi-major axis
+            console.log(cnt.get(0), cv.contourArea(cnt.get(0), false));
+            let rotatedRect = cv.fitEllipse(cnt.get(0));
+            // let major, minor, orientation, ratio;
+
+            orientation = rotatedRect.angle;
+            // acc[7] = rotatedRect.angle;
+            ratio = rotatedRect.size.width / rotatedRect.size.height;
+            // acc[8] = rotatedRect.size.width / rotatedRect.size.height;
+
+            // if (rotatedRect.size.width > rotatedRect.size.height) {
+            //     major = rotatedRect.size.width;
+            //     minor = rotatedRect.size.height;
+            // }
+            // else {
+            //     major = rotatedRect.size.height;
+            //     minor = rotatedRect.size.width;
+            // }
+
+            cv.ellipse1(dst, rotatedRect, RED, 1, cv.LINE_8);
+            // console.log(rotatedRect);
+        }
+        cv.imshow("roi", rectMask);
+
         moments(binaryMask, contours);
+
+        // definitions of circularity, roundness , etc:
+        // https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4706773/
+
+
 
         cv.circle(dst, max.maxLoc, 7, colors[0], -1)
 
         cv.circle(dst, max.maxLoc, max.maxVal * 1.1, colors[1], 2)
+
+        cnt.delete();
+        hie.delete();
     }
-
-    let click = false;
-    let count = 0;
-    let acc = [0, 0, 0, 0, 0, 0, 0, 0];
-    const phu = document.getElementById('hu');
-
-    document.getElementById('btn3').addEventListener('click', () => {
-        click = true;
-    });
 
     function moments(source, contours) {
         // https://learnopencv.com/shape-matching-using-hu-moments-c-python/
@@ -696,14 +741,29 @@ function main(low, high) {
                 acc[i] += huMoments[i];
                 phu.innerHTML += `${acc[i]}, <br/>`
             }
+            acc[7] += orientation;
+            acc[8] += ratio;
+            phu.innerHTML += `${acc[7]}, <br/>`
+            phu.innerHTML += `${acc[8]}, <br/>`
         }
+        huMoments[7] = orientation;
+        huMoments[8] = ratio;
 
         // euclidian distance
         let dist = 0, dist2 = 0;
         let op1 = 0, op2 = 0, cl1 = 0, cl2 = 0;
-        for (let i = 0; i < 7; i++) {
+        let cont1 = 0, cont2 = 0, aux1, aux2;
+        for (let i = 0; i < huMoments.length; i++) {
             op1 += ((huMoments[i] - open1[i]) * (huMoments[i] - open1[i]));
             cl1 += ((huMoments[i] - closed1[i]) * (huMoments[i] - closed1[i]));
+
+            aux1 = Math.abs(huMoments[i] - open1[i])
+            aux2 = Math.abs(huMoments[i] - closed1[i])
+
+            if (aux1 < aux2)
+                cont1++;
+            else
+                cont2++;
 
             op2 += ((huMoments[i] - open2[i]) * (huMoments[i] - open2[i]));
             cl2 += ((huMoments[i] - closed2[i]) * (huMoments[i] - closed2[i]));
@@ -716,7 +776,9 @@ function main(low, high) {
         // console.log(huMoments);
 
         // info.innerHTML = `dist ${dist.toFixed(2)}, dist2 ${dist2.toFixed(2)} - classification ${dist < dist2 ? 'open' : 'close'}`;
-        info.innerHTML = `classification: ${dist < dist2 ? 'open' : 'close'} - ${dist < dist2 ? dist.toFixed(2) : dist2.toFixed(2)}`
+        info.innerHTML = `classification:<br\>
+        distace: ${dist < dist2 ? 'open' : 'close'}<br\>
+        cont: ${cont1 > cont2 ? 'open' : 'close'}`;
     }
 
     // hu moments

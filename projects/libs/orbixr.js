@@ -18,6 +18,7 @@ import {
     Texture,
     TextureLoader,
     CanvasTexture,
+    ArrowHelper
 } from '../build2/three.module.js';
 
 // propertys
@@ -32,6 +33,7 @@ let uiGroup, movementBar, messageGroup, textGroup;
 // helpers
 let buttonsArray, buttonCount, origin2d, direction, direction2, euler, intersection, intersected, oldIntersected;
 let pos;
+const arrowHelper = new ArrowHelper(new Vector3(), new Vector3(), 1, 0xff0000);
 
 let fingers, canvasTexture, center, hand;
 
@@ -224,13 +226,18 @@ class Orbi extends Object3D {
                 null,
                 function (e) { console.error(e) }
             )
+
+            window.setTimeout(() => {
+                console.log(this.parent.parent)
+                this.parent.parent.add(arrowHelper);
+            }, 500);
         }
 
         raycaster = new Raycaster(new Vector3(), new Vector3(0, 0, -1));
         raycaster.near = config.raycaster.near;
         // raycaster.far = config.raycaster.far;
         raycaster.far = config.orbits[currentOrbit] + 0.5;
-        
+
 
         rayClock = new Clock(true);
         fusingClock = new Clock(false);
@@ -355,7 +362,7 @@ class Orbi extends Object3D {
         else if (rayClock.getElapsedTime() > 0.2) {
             rayClock.start();
 
-            cursor.getWorldPosition(pos)
+            cursor.getWorldPosition(pos);
 
             direction.x = pos.x;
             direction.y = pos.y - 1.6;
@@ -363,6 +370,23 @@ class Orbi extends Object3D {
             direction.normalize();
 
             raycaster.set(pos, direction);
+
+            if (this.parent && this.parent.parent) {
+                let v3 = new Vector3();
+                this.parent.getWorldPosition(v3);
+                console.log(v3);
+
+                pos.sub(v3);
+
+                direction.x = pos.x;
+                direction.y = pos.y - 1.6;
+                direction.z = pos.z;
+                direction.normalize();
+
+                arrowHelper.position.copy(pos);
+                console.log(arrowHelper.position);
+                arrowHelper.setDirection(direction);
+            }
 
             intersection.length = 0;
 

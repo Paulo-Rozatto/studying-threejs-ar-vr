@@ -16,7 +16,7 @@ renderer.setClearColor(new THREE.Color("#232323"));
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.xr.enabled = true;
-// renderer.xr.cameraAutoUpdate = false;
+renderer.xr.cameraAutoUpdate = false;
 renderer.gammaFactor = 2.2;
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.shadowMap.enabled = false;
@@ -35,12 +35,9 @@ console.log(renderer.xr.getSession());
 
 //-- 'Camera Holder' to help moving the camera
 const cameraHolder = new THREE.Object3D();
-cameraHolder.position.set(0, 0, -10)
+// cameraHolder.position.set(0, 1.6, 0)
 cameraHolder.add(camera);
 scene.add(cameraHolder);
-let v3 = new THREE.Vector3();
-cameraHolder.getWorldPosition(v3)
-console.log(v3)
 
 // controllers
 const controller1 = renderer.xr.getController(0);
@@ -92,9 +89,8 @@ function animate() {
 }
 
 function render() {
-  // renderer.xr.updateCamera(camera);
+  renderer.xr.updateCamera(camera);
   orbi.update();
-  // cameraHolder.translateZ(-0.01)
   renderer.render(scene, camera);
 }
 
