@@ -269,13 +269,13 @@ function main(low, high) {
     const info = document.querySelector('#info');
     const mt = new cv.matFromArray(1, 4, 12, [0, 0, 0, 0, 0, 0, 0, 0]);
 
-    const open1 = [3.0912769784486693, 7.7366600271469705, 11.305973553808753, 10.968399128352408, -13.164938156199067, 14.907906585875475, 15.353374087584879, 0.9681062034395111, 0, 0.8326351262]
+    const open1 = [3.0912769784486693, 7.7366600271469705, 11.305973553808753, 10.968399128352408, -13.164938156199067, 14.907906585875475, 15.353374087584879, 0.9681062034395111, 0.2637487229, 0.8326351262]
 
-    const open2 = [3.12765614387537, 7.890141913277302, 11.166666775476504, 11.270622197906857, -20.36886535309352, 9.19620982349387, 20.450965321154378, 1.1455177693993803, 0, 0.8326351262]
+    const open2 = [3.12765614387537, 7.890141913277302, 11.166666775476504, 11.270622197906857, -20.36886535309352, 9.19620982349387, 20.450965321154378, 1.1455177693993803, 0.2637487229, 0.8326351262]
 
-    const closed1 = [3.1844407881299097, 7.9225593297972186, 11.132406073467994, 12.942107787759145, 25.27895813880837, 15.434180121732487, -22.59077766487394, 0.7816794694575135, 0, 0, 0.6453160090]
+    const closed1 = [3.1844407881299097, 7.9225593297972186, 11.132406073467994, 12.942107787759145, 25.27895813880837, 15.434180121732487, -22.59077766487394, 0.7816794694575135, 0.7125208160, 0.6453160090]
 
-    const closed2 = [3.1958532622091687, 8.498186203425494, 11.882128816659606, 13.87883275690292, 10.589385970285894, -0.0972378372045581, 2.469608358003279, 1.1300554542255923, 0, 0, 0.6453160090]
+    const closed2 = [3.1958532622091687, 8.498186203425494, 11.882128816659606, 13.87883275690292, 10.589385970285894, -0.0972378372045581, 2.469608358003279, 1.1300554542255923, 0.7125208160, 0.6453160090]
 
 
     let click = false;
@@ -609,7 +609,7 @@ function main(low, high) {
         v.delete();
     }
 
-    let ratio = 0, orientation = 0;
+    let ratio = 0, orientation = 0, circularity = 0;
     function detachForeground(source, destination, contours, areaIdx) {
         binaryMask.setTo(BLACK);
         // rectMask.setTo(BLACK);
@@ -657,30 +657,35 @@ function main(low, high) {
 
         // console.log(cnt.get(0), cv.contourArea(contour, false));
         rectMask.setTo(BLACK);
-        if (cnt.get(0) && cv.contourArea(cnt.get(0), false) > 100) {
-            cv.drawContours(rectMask, cnt, 0, RED, 1, cv.LINE_8, hie, 1);
+        if (cnt.get(0)) {
+            let area = cv.contourArea(cnt.get(0), false);
 
-            // fit elipse and get semi-major axis
-            console.log(cnt.get(0), cv.contourArea(cnt.get(0), false));
-            let rotatedRect = cv.fitEllipse(cnt.get(0));
-            // let major, minor, orientation, ratio;
+            if (area > 100) {
+                cv.drawContours(rectMask, cnt, 0, RED, 1, cv.LINE_8, hie, 1);
 
-            orientation = rotatedRect.angle;
-            // acc[7] = rotatedRect.angle;
-            ratio = rotatedRect.size.width / rotatedRect.size.height;
-            // acc[8] = rotatedRect.size.width / rotatedRect.size.height;
+                let perimeter = cv.arcLength(cnt.get(0), true);
+                circularity = 4 * Math.PI * area / Math.pow(perimeter, 2);
 
-            // if (rotatedRect.size.width > rotatedRect.size.height) {
-            //     major = rotatedRect.size.width;
-            //     minor = rotatedRect.size.height;
-            // }
-            // else {
-            //     major = rotatedRect.size.height;
-            //     minor = rotatedRect.size.width;
-            // }
+                // fit elipse and get semi-major axis
+                let rotatedRect = cv.fitEllipse(cnt.get(0));
 
-            cv.ellipse1(dst, rotatedRect, RED, 1, cv.LINE_8);
-            // console.log(rotatedRect);
+                orientation = rotatedRect.angle;
+                ratio = rotatedRect.size.width / rotatedRect.size.height;
+
+                // acc[7] = rotatedRect.angle;
+                // acc[8] = rotatedRect.size.width / rotatedRect.size.height;
+
+                // if (rotatedRect.size.width > rotatedRect.size.height) {
+                //     major = rotatedRect.size.width;
+                //     minor = rotatedRect.size.height;
+                // }
+                // else {
+                //     major = rotatedRect.size.height;
+                //     minor = rotatedRect.size.width;
+                // }
+
+                cv.ellipse1(dst, rotatedRect, RED, 1, cv.LINE_8);
+            }
         }
         cv.imshow("roi", rectMask);
 
@@ -699,12 +704,12 @@ function main(low, high) {
         hie.delete();
     }
 
-    function moments(source, contours) {
+    function moments(source) {
         // https://learnopencv.com/shape-matching-using-hu-moments-c-python/
 
         let moments = cv.moments(source);
         let huMoments = [];
-        let rect;
+        // let rect;
 
         // cv.HuMoments(moments, huMoments);
         hu(moments, huMoments)
@@ -741,18 +746,19 @@ function main(low, high) {
                 acc[i] += huMoments[i];
                 phu.innerHTML += `${acc[i]}, <br/>`
             }
-            acc[7] += orientation;
+            acc[7] += circularity;
             acc[8] += ratio;
             phu.innerHTML += `${acc[7]}, <br/>`
             phu.innerHTML += `${acc[8]}, <br/>`
         }
-        huMoments[7] = orientation;
+        huMoments[7] = circularity;
         huMoments[8] = ratio;
 
         // euclidian distance
         let dist = 0, dist2 = 0;
         let op1 = 0, op2 = 0, cl1 = 0, cl2 = 0;
-        let cont1 = 0, cont2 = 0, aux1, aux2;
+        let cont1 = 0, cont2 = 0, cont3 = 0, cont4 = 0;
+        let aux1, aux2;
         for (let i = 0; i < huMoments.length; i++) {
             op1 += ((huMoments[i] - open1[i]) * (huMoments[i] - open1[i]));
             cl1 += ((huMoments[i] - closed1[i]) * (huMoments[i] - closed1[i]));
@@ -767,9 +773,20 @@ function main(low, high) {
 
             op2 += ((huMoments[i] - open2[i]) * (huMoments[i] - open2[i]));
             cl2 += ((huMoments[i] - closed2[i]) * (huMoments[i] - closed2[i]));
+
+            aux1 = Math.abs(huMoments[i] - open2[i])
+            aux2 = Math.abs(huMoments[i] - closed2[i])
+
+            if (aux1 < aux2)
+                cont3++;
+            else
+                cont4++;
         }
         dist = op1 < op2 ? op1 : op2;
         dist2 = cl1 < cl2 ? cl1 : cl2;
+
+        if (cont3 > cont1) cont1 = cont3;
+        if (cont4 > cont2) cont2 = cont4;
         // Math.sqrt(dist);
         // Math.sqrt(dist2)
 
