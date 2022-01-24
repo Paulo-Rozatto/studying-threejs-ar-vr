@@ -33,7 +33,7 @@
         <div class="container">
             <div class="canvas-wrapper">
                 <h5 style="display: inline-block;">FPS:</h5>
-                <h5 id="fps" style="display: inline-block;">30</h5>
+                <h5 id="fps" style="display: inline-block;">video e modelo ainda sendo carregados...</h5>
                 <br>
                 <canvas id="output"></canvas>
                 <video id="video" playsinline
@@ -51,7 +51,7 @@
 </script>
 <script type="text/javascript">
     posenet.load().then(async function (net) {
-        const imageScaleFactor = 0.50;
+        const imageScaleFactor = 0.20;
         const flipHorizontal = false;
         const outputStride = 8;
 
