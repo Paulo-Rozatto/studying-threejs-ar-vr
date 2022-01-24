@@ -32,6 +32,9 @@
     <div id="main">
         <div class="container">
             <div class="canvas-wrapper">
+                <h5 style="display: inline-block;">FPS:</h5>
+                <h5 id="fps" style="display: inline-block;">30</h5>
+                <br>
                 <canvas id="output"></canvas>
                 <video id="video" playsinline
                     style="-webkit-transform: scaleX(-1); transform: scaleX(-1); visibility: hidden; width: auto; height: auto;">
@@ -50,10 +53,11 @@
     posenet.load().then(async function (net) {
         const imageScaleFactor = 0.50;
         const flipHorizontal = false;
-        const outputStride = 16;
+        const outputStride = 8;
 
         const FPS = 30;
         const video = document.getElementById('video');
+        const fpsDisplay = document.getElementById('fps');
 
         await startVideo(video);
 
@@ -68,7 +72,7 @@
         ctx.fillStyle = "#FF0000";
 
 
-        let pose;
+        let pose //= await net.estimateSinglePose(video, imageScaleFactor, flipHorizontal, outputStride);;
 
         let begin, delay; // fps helpers
         async function processVideo() {
@@ -88,7 +92,10 @@
             }
 
             delay = 1000 / FPS - (Date.now() - begin);
-            setTimeout(processVideo, delay);
+            setTimeout(() => {
+                fpsDisplay.innerText = (1000 / (Date.now() - begin)).toFixed(0);
+                processVideo();
+            }, delay);
         }
 
         setTimeout(processVideo, 0);
@@ -100,9 +107,9 @@
 
         const constraints = {
             video: {
-                facingMode: "environment",
-                width: 360,
-                height: 360
+                facingMode: "user",
+                width: 240,
+                height: 240
             },
             audio: false
         }
