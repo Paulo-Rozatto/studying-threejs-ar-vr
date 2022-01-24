@@ -754,48 +754,57 @@ function main(low, high) {
         huMoments[7] = circularity;
         huMoments[8] = ratio;
 
-        // euclidian distance
-        let dist = 0, dist2 = 0;
-        let op1 = 0, op2 = 0, cl1 = 0, cl2 = 0;
-        let cont1 = 0, cont2 = 0, cont3 = 0, cont4 = 0;
-        let aux1, aux2;
+        let euclideanOpen1 = 0, euclideanOpen2 = 0;
+        let euclideanClose1 = 0, euclideanClose2 = 0;
+        let manhatanOpen1 = 0, manhatanOpen2 = 0;
+        let manhatanClose1 = 0, manhatanClose2 = 0;
+        let contOpen1 = 0, contOpen2 = 0;
+        let contClose1 = 0, contClose2 = 0;
+        let absOpen1, absOpen2, absClose1, absClose2;
+
         for (let i = 0; i < huMoments.length; i++) {
-            op1 += ((huMoments[i] - open1[i]) * (huMoments[i] - open1[i]));
-            cl1 += ((huMoments[i] - closed1[i]) * (huMoments[i] - closed1[i]));
+            absOpen1 = Math.abs(huMoments[i] - open1[i]);
+            absClose1 = Math.abs(huMoments[i] - closed1[i]);
+            absOpen2 = Math.abs(huMoments[i] - open2[i]);
+            absClose2 = Math.abs(huMoments[i] - closed2[i]);
 
-            aux1 = Math.abs(huMoments[i] - open1[i])
-            aux2 = Math.abs(huMoments[i] - closed1[i])
+            euclideanOpen1 += (absOpen1 * absOpen1);
+            euclideanClose1 += (absClose1 * absClose1);
+            euclideanOpen2 += (absOpen2 * absOpen2);
+            euclideanClose2 += (absClose2 * absClose2);
 
-            if (aux1 < aux2)
-                cont1++;
-            else
-                cont2++;
+            manhatanOpen1 += absOpen1;
+            manhatanClose1 += absClose1;
+            manhatanOpen2 += absOpen2;
+            manhatanClose2 += absClose2;
 
-            op2 += ((huMoments[i] - open2[i]) * (huMoments[i] - open2[i]));
-            cl2 += ((huMoments[i] - closed2[i]) * (huMoments[i] - closed2[i]));
+            if (absOpen1 < absClose1) {
+                contOpen1++;
+            }
+            else {
+                contClose1++;
+            }
 
-            aux1 = Math.abs(huMoments[i] - open2[i])
-            aux2 = Math.abs(huMoments[i] - closed2[i])
-
-            if (aux1 < aux2)
-                cont3++;
-            else
-                cont4++;
+            if (absOpen2 < absClose2) {
+                contOpen2++;
+            }
+            else {
+                contClose2++;
+            }
         }
-        dist = op1 < op2 ? op1 : op2;
-        dist2 = cl1 < cl2 ? cl1 : cl2;
-
-        if (cont3 > cont1) cont1 = cont3;
-        if (cont4 > cont2) cont2 = cont4;
-        // Math.sqrt(dist);
-        // Math.sqrt(dist2)
+        if (euclideanOpen2 < euclideanOpen1) euclideanOpen1 = euclideanOpen2;
+        if (euclideanClose2 < euclideanClose1) euclideanClose1 = euclideanClose2;
+        if (manhatanOpen2 < manhatanOpen1) manhatanOpen1 = manhatanOpen2;
+        if (manhatanClose2 < manhatanClose1) manhatanClose1 = manhatanClose2;
+        if (contOpen2 > contOpen1) contOpen1 = contOpen2;
+        if (contClose2 > contClose1) contClose1 = contClose2;
 
         // console.log(huMoments);
 
-        // info.innerHTML = `dist ${dist.toFixed(2)}, dist2 ${dist2.toFixed(2)} - classification ${dist < dist2 ? 'open' : 'close'}`;
         info.innerHTML = `classification:<br\>
-        distace: ${dist < dist2 ? 'open' : 'close'}<br\>
-        cont: ${cont1 > cont2 ? 'open' : 'close'}`;
+        euclidean: ${euclideanOpen1 < euclideanClose1 ? 'open' : 'close'}<br\>
+        manhatan: ${manhatanOpen1 < manhatanClose1 ? 'open' : 'close'}<br\>
+        cont: ${contOpen1 > contClose1 ? 'open' : 'close'}`;
     }
 
     // hu moments
