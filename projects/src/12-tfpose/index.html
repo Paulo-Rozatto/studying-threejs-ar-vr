@@ -25,22 +25,25 @@
 <!-- Load Posenet -->
 <script src="https://unpkg.com/@tensorflow-models/posenet">
 </script>
-<script src="../../libs/dat.gui.min.js"></script>
+<!-- <script src="../../libs/dat.gui.min.js"></script> -->
 <script src="../../libs/stats.min.js"></script>
 <script type="text/javascript">
-    const controls = {
-        size: 0.5
-    }
-    let w = controls.size * window.innerWidth;
-    let h = controls.size * window.innerHeight;
-
-    let gui = new dat.GUI();
     let stats = initStats()
+
+    // let gui = new dat.GUI();
+
+    // const controls = {
+    //     size: video.width / window.innerWidth
+    // }
+    // let w = video.width;
+    // let h = video.height;
+
+    // gui.add(controls, 'size', 0.1, 1.0, 0.05).onChange(change);
 
 
     posenet.load().then(async function (net) {
         const imageScaleFactor = 0.50;
-        const flipHorizontal = true;
+        const flipHorizontal = false;
         const outputStride = 16;
         const MIN_SCORE = 0.5;
 
@@ -49,23 +52,16 @@
         const fpsDisplay = document.getElementById('stats');
 
         await startVideo(video);
-
         video.width = video.videoWidth;
         video.height = video.videoHeight;
 
         const canvas = document.getElementById("output");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-        canvas.width = w;
-        canvas.height = h;
-
-        const ctx = canvas.getContext("2d");
         const radius = 3;
-        
-        ctx.beginPath();
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "black";
-        ctx.fill();
-        
+        const ctx = canvas.getContext("2d");
+
         ctx.fillStyle = "#FF0000";
         ctx.strokeStyle = "#FFFF00";
         ctx.lineWidth = 3;
@@ -77,7 +73,7 @@
             begin = Date.now();
             stats.update();
 
-            pose = await net.estimateSinglePose(ctx.getImageData(0, 0, canvas.width, canvas.height), imageScaleFactor, flipHorizontal, outputStride);
+            pose = await net.estimateSinglePose(video, imageScaleFactor, flipHorizontal, outputStride);
 
             ctx.fillStyle = "black";
             ctx.beginPath();
@@ -86,10 +82,14 @@
 
             ctx.fillStyle = "#FF0000";
 
-            if (canvas.width >= canvas.height)
+            let offsetX = canvas.width / video.width,
+                offsetY = canvas.height / video.height;
+
+            if (canvas.width >= canvas.height) {
                 ctx.drawImage(video, 0, (canvas.height / 2) - (canvas.width * video.height / video.width / 2), canvas.width, canvas.width * video.height / video.width);
-            else
-                ctx.drawImage(video, (canvas.width / 2) - (canvas.height * video.width / video.height / 2), 0, canvas.height * video.width / video.height, canvas.height);
+            } else {
+                ctx.drawImage(video, (canvas.width - video.width * offsetX) / 2, 0, video.width * offsetX, canvas.height);
+            }
 
             // console.log(pose);
 
@@ -103,9 +103,9 @@
             for (let i = 0; i < 5; i++) {
                 kp = pose.keypoints[i];
 
-                if (kp.score > 0.1) {
-                    ctx.moveTo(kp.position.x + radius, kp.position.y);
-                    ctx.arc(kp.position.x, kp.position.y, radius, 0, 2 * Math.PI);
+                if (kp.score > MIN_SCORE) {
+                    ctx.moveTo(kp.position.x * offsetX + radius, kp.position.y * offsetY);
+                    ctx.arc(kp.position.x * offsetX, kp.position.y * offsetY, radius, 0, 2 * Math.PI);
                 }
             }
 
@@ -114,13 +114,15 @@
             for (let pair of adjacent) {
                 for (let i = 0; i < 2; i++) {
                     if (pair[i].score > MIN_SCORE) {
-                        ctx.moveTo(pair[i].position.x + radius, pair[i].position.y);
-                        ctx.arc(pair[i].position.x, pair[i].position.y, radius, 0, 2 * Math.PI);
+                        ctx.moveTo(pair[i].position.x * offsetX + radius, pair[i].position.y * offsetY);
+
+                        // if (pair[i].position.y * offsetY < canvas.height)
+                        ctx.arc(pair[i].position.x * offsetX, pair[i].position.y * offsetY, radius, 0, 2 * Math.PI);
                     }
                 }
 
                 if (pair[0].score > MIN_SCORE && pair[1].score > MIN_SCORE) {
-                    ctx.lineTo(pair[0].position.x, pair[0].position.y);
+                    ctx.lineTo(pair[0].position.x * offsetX, pair[0].position.y * offsetY);
                 }
             }
             ctx.fill();
@@ -136,14 +138,12 @@
 
         setTimeout(processVideo, 0);
 
-        gui.add(controls, 'size', 0.1, 1.0, 0.05).onChange(change);
-
         function change() {
-            w = controls.size * window.innerWidth;
-            h = controls.size * window.innerHeight;
+            // w = controls.size * window.innerWidth;
+            // h = controls.size * window.innerHeight;
 
-            canvas.width = w //video.videoWidth;
-            canvas.height = h //video.videoHeight;
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
         }
         window.addEventListener('resize', change, false);
     });
