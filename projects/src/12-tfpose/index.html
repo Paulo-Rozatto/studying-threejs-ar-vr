@@ -39,9 +39,10 @@
 
 
     posenet.load().then(async function (net) {
-        const imageScaleFactor = 0.20;
-        const flipHorizontal = false;
-        const outputStride = 8;
+        const imageScaleFactor = 0.50;
+        const flipHorizontal = true;
+        const outputStride = 16;
+        const MIN_SCORE = 0.5;
 
         const FPS = 60;
         const video = document.getElementById('video');
@@ -58,13 +59,16 @@
         canvas.height = h;
 
         const ctx = canvas.getContext("2d");
-
+        const radius = 3;
+        
         ctx.beginPath();
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = "black";
         ctx.fill();
-
+        
         ctx.fillStyle = "#FF0000";
+        ctx.strokeStyle = "#FFFF00";
+        ctx.lineWidth = 3;
 
         let pose //= await net.estimateSinglePose(video, imageScaleFactor, flipHorizontal, outputStride);;
 
@@ -73,22 +77,55 @@
             begin = Date.now();
             stats.update();
 
+            pose = await net.estimateSinglePose(ctx.getImageData(0, 0, canvas.width, canvas.height), imageScaleFactor, flipHorizontal, outputStride);
+
+            ctx.fillStyle = "black";
+            ctx.beginPath();
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fill();
+
+            ctx.fillStyle = "#FF0000";
+
             if (canvas.width >= canvas.height)
                 ctx.drawImage(video, 0, (canvas.height / 2) - (canvas.width * video.height / video.width / 2), canvas.width, canvas.width * video.height / video.width);
             else
                 ctx.drawImage(video, (canvas.width / 2) - (canvas.height * video.width / video.height / 2), 0, canvas.height * video.width / video.height, canvas.height);
 
-            pose = await net.estimateSinglePose(ctx.getImageData(0, 0, canvas.width, canvas.height), imageScaleFactor, flipHorizontal, outputStride);
+            // console.log(pose);
 
+            let adjacent = posenet.getAdjacentKeyPoints(pose.keypoints, 0)
+            // console.log(adjacent)
 
-            for (let keypoint of pose.keypoints) {
-                if (keypoint.score > 0.5) {
-                    const circle = new Path2D();
-                    circle.arc(keypoint.position.x, keypoint.position.y, 3, 0, 2 * Math.PI);
-                    ctx.fill(circle);
-                    ctx.stroke(circle);
+            ctx.beginPath()
+            let kp;
+
+            // Desenha pontos do rosto que nao sao objtidos pelo getAdjacentKeyPoints()
+            for (let i = 0; i < 5; i++) {
+                kp = pose.keypoints[i];
+
+                if (kp.score > 0.1) {
+                    ctx.moveTo(kp.position.x + radius, kp.position.y);
+                    ctx.arc(kp.position.x, kp.position.y, radius, 0, 2 * Math.PI);
                 }
             }
+
+            // Desenha pointos ajacentes e traca linha caso os dois tenham bom score
+            ctx.strokeStyle = "#FF0000";
+            for (let pair of adjacent) {
+                for (let i = 0; i < 2; i++) {
+                    if (pair[i].score > MIN_SCORE) {
+                        ctx.moveTo(pair[i].position.x + radius, pair[i].position.y);
+                        ctx.arc(pair[i].position.x, pair[i].position.y, radius, 0, 2 * Math.PI);
+                    }
+                }
+
+                if (pair[0].score > MIN_SCORE && pair[1].score > MIN_SCORE) {
+                    ctx.lineTo(pair[0].position.x, pair[0].position.y);
+                }
+            }
+            ctx.fill();
+            ctx.stroke();
+
 
             delay = 1000 / FPS - (Date.now() - begin);
             setTimeout(() => {
@@ -107,13 +144,6 @@
 
             canvas.width = w //video.videoWidth;
             canvas.height = h //video.videoHeight;
-
-            ctx.beginPath();
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "black";
-            ctx.fill();
-
-            ctx.fillStyle = "#FF0000";
         }
         window.addEventListener('resize', change, false);
     });
