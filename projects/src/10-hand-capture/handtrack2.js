@@ -280,11 +280,26 @@ function main(low, high) {
 
     let click = false;
     let count = 0;
-    let acc = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let accumulator = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let allData = [];
     const phu = document.getElementById('hu');
 
     document.getElementById('btn3').addEventListener('click', () => {
         click = true;
+    });
+
+    document.getElementById('btn4').addEventListener('click', () =>{
+        let data = "";
+
+        console.log(allData.length)
+        allData.forEach(vector => {
+            for(let numb of vector) {
+                data += numb.toFixed(10) + "\t"
+            }
+            data += "\n"
+        });
+
+        phu.innerHTML = data;
     });
 
     // colors for drawing points
@@ -708,51 +723,37 @@ function main(low, high) {
         // https://learnopencv.com/shape-matching-using-hu-moments-c-python/
 
         let moments = cv.moments(source);
-        let huMoments = [];
+        let features = [];
         // let rect;
 
         // cv.HuMoments(moments, huMoments);
-        hu(moments, huMoments)
-
+        hu(moments, features)
 
         // log transform - h[i] = -sign(h[i]) * log10|h[i]|
-        for (let i = 0; i < huMoments.length; i++) {
-            huMoments[i] = -1 * Math.sign(huMoments[i]) * Math.log10(Math.abs(huMoments[i]))
+        for (let i = 0; i < features.length; i++) {
+            features[i] = -1 * Math.sign(features[i]) * Math.log10(Math.abs(features[i]))
         }
-
-        // cv.findContours(source, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
-        // let cnt = contours.get(0);
-        // if (cnt) {
-        //     rect = cv.boundingRect(cnt);
-
-        //     huMoments[7] = rect.width / rect.height;
-        //     huMoments[7] *= huMoments[7];
-        // }
-        // else {
-        //     huMoments[7] = 0;
-        // }
-
-        // aux.setTo(BLACK);
-        // cv.drawContours(aux, contours, 0, WHITE, 1, cv.LINE_8);
-        // cv.imshow('roi', aux);
-
+        features[7] = circularity;
+        features[8] = ratio;
+        
 
         if (click) {
             click = false;
             count++;
 
-            phu.innerHTML = `${count} <hr><br/>`
-            for (let i = 0; i < huMoments.length; i++) {
-                acc[i] += huMoments[i];
-                phu.innerHTML += `${acc[i]}, <br/>`
+            allData.push(features);
+
+            for (let i = 0; i < features.length; i++) {
+                accumulator[i] += features[i];
             }
-            acc[7] += circularity;
-            acc[8] += ratio;
-            phu.innerHTML += `${acc[7]}, <br/>`
-            phu.innerHTML += `${acc[8]}, <br/>`
+
+            phu.innerHTML = `Mean ${count}:<hr><br>[`
+            for (let i = 0; i < features.length; i++) {
+                phu.innerHTML += `${accumulator[i] / count}`;
+                if (i < 8) phu.innerHTML += ", ";
+            }
+            phu.innerHTML += ']';
         }
-        huMoments[7] = circularity;
-        huMoments[8] = ratio;
 
         let euclideanOpen1 = 0, euclideanOpen2 = 0;
         let euclideanClose1 = 0, euclideanClose2 = 0;
@@ -762,11 +763,11 @@ function main(low, high) {
         let contClose1 = 0, contClose2 = 0;
         let absOpen1, absOpen2, absClose1, absClose2;
 
-        for (let i = 0; i < huMoments.length; i++) {
-            absOpen1 = Math.abs(huMoments[i] - open1[i]);
-            absClose1 = Math.abs(huMoments[i] - closed1[i]);
-            absOpen2 = Math.abs(huMoments[i] - open2[i]);
-            absClose2 = Math.abs(huMoments[i] - closed2[i]);
+        for (let i = 0; i < features.length; i++) {
+            absOpen1 = Math.abs(features[i] - open1[i]);
+            absClose1 = Math.abs(features[i] - closed1[i]);
+            absOpen2 = Math.abs(features[i] - open2[i]);
+            absClose2 = Math.abs(features[i] - closed2[i]);
 
             euclideanOpen1 += (absOpen1 * absOpen1);
             euclideanClose1 += (absClose1 * absClose1);
