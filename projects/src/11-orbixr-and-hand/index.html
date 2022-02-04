@@ -19,10 +19,23 @@
 <body>
   <div id="webgl-output">
   </div>
+
+  <video id="videoInput" style="display: none;"></video>
+  <p id="info">Carregando...</p>
   <canvas id="canvasFrame"></canvas>
-  <video id="videoInput"></video>
-  <script src="handtracking.js"></script>
-  <script async src="libs/opencv0.js" onload="start({cv: true});" type="text/javascript"></script>
+  <canvas id="roi"></canvas>
+  <canvas id="bin"></canvas>
+  
+  
+  <br/>
+  <button id="btn1">Calibrate</button>
+  <button id="btn2">Start</button>
+  <button id="btn3">HuMoments</button>
+  <button id="btn4">All</button>
+  <pre id="hu"></pre>
+
+  <script async src="../10-hand-capture/libs/opencv0.js" onload="start({cv: true});" type="text/javascript"></script>
+  <script src="../10-hand-capture/handtrack2.js"></script>
   <script type="module" src="script.js"></script>
 </body>
 

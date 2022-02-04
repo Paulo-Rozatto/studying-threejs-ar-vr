@@ -434,6 +434,9 @@ function main(low, high) {
 
     setTimeout(processVideo, 0);
 
+    let event = new CustomEvent("handtrack-started");
+    window.dispatchEvent(event);
+
     function classifyPixesl(source, destination) {
         cv.cvtColor(source, destination, cv.COLOR_RGB2YCrCb);
         cv.inRange(destination, LOW, HIGH, destination);
@@ -456,90 +459,6 @@ function main(low, high) {
 
         contourArea.id = areaIdx;
         contourArea.value = biggerArea;
-    }
-
-    function obtainFingers(contour, fingerTips) {
-        let hull = new cv.Mat();
-
-        let fingerIndexes = [];
-
-        cv.convexHull(contour, hull, false, false);
-
-        hull.data32S.sort((a, b) => a - b);
-
-        // define cluster as being a group of hull indexes that are less than 100 units apart
-        let firstMember = hull.data32S[0]; // indicates the first member of a cluster
-        let firstIndex = 0; // member index in the array data32S
-        let counter = 0;
-
-        fingerTips.length = 0;
-        for (let i = 0; i < hull.rows; i++) {
-            let member = hull.data32S[i];
-
-            if (Math.abs(firstMember - member) > 100) {
-                let middleIndex = firstIndex + Math.trunc(counter / 2);
-                let middleMember = hull.data32S[middleIndex];
-
-                fingerTips.push(new cv.Point(
-                    contour.data32S[middleMember * 2],
-                    contour.data32S[middleMember * 2 + 1]
-                ));
-
-                firstIndex = i;
-                firstMember = member;
-                counter = 0;
-
-                fingerIndexes.push(member);
-            }
-            counter++;
-        }
-
-        let rh = new cv.Mat(fingerIndexes.length, 1, 4);
-        let rhIdx = 0;
-        let defect = new cv.Mat();
-
-        fingerIndexes.map((e, i) => { rh.data32S[i] = e });
-
-        cv.convexityDefects(contour, rh, defect);
-
-        numbFingers = 0;
-        for (let i = 0; i < defect.rows; ++i) {
-            let start = new cv.Point(contour.data32S[defect.data32S[i * 4] * 2],
-                contour.data32S[defect.data32S[i * 4] * 2 + 1]);
-            let end = new cv.Point(contour.data32S[defect.data32S[i * 4 + 1] * 2],
-                contour.data32S[defect.data32S[i * 4 + 1] * 2 + 1]);
-            let far = new cv.Point(contour.data32S[defect.data32S[i * 4 + 2] * 2],
-                contour.data32S[defect.data32S[i * 4 + 2] * 2 + 1]);
-
-            let nextI = i + 1 === defect.rows ? 0 : i + 1;
-            let nextStart = new cv.Point(contour.data32S[defect.data32S[nextI * 4] * 2],
-                contour.data32S[defect.data32S[nextI * 4] * 2 + 1]);
-            let nextFar = new cv.Point(contour.data32S[defect.data32S[nextI * 4 + 2] * 2],
-                contour.data32S[defect.data32S[nextI * 4 + 2] * 2 + 1]);
-
-            let vec1 = new cv.Point(end.x - far.x, end.y - far.y);
-            let vec2 = new cv.Point(nextStart.x - nextFar.x, nextStart.y - nextFar.y);
-            // console.log('vec1', vec1);
-            // console.log('vec2', vec2);
-            // console.log('prod',  (vec1.x * vec2.x),  (vec1.y * vec2.y) )
-            // console.log('dot: ',  (vec1.x * vec2.x + vec1.y * vec2.y) )
-            // console.log('\n-------\n')
-
-            let angle = Math.acos(
-                (vec1.x * vec2.x + vec1.y * vec2.y) / (Math.sqrt(vec1.x * vec1.x + vec1.y * vec1.y) * Math.sqrt(vec2.x * vec2.x + vec2.y * vec2.y))
-            );
-            angle = angle * 180 / Math.PI;
-            // console.log(angle)
-            if (angle < 60) numbFingers++;
-
-            cv.line(dst, start, far, colors[i + 5], 2, cv.LINE_AA, 0);
-            cv.line(dst, far, end, colors[i + 5], 2, cv.LINE_AA, 0);
-            cv.circle(dst, far, 5, colors[i + 5], 2);
-            cv.circle(dst, end, 5, colors[i + 5], -1);
-        }
-
-
-        hull.delete(); rh.delete(); defect.delete();
     }
 
     function dist(p1, p2) {
@@ -843,12 +762,6 @@ function main(low, high) {
                 isReturn = true
         }
     });
-
-
-    // setInterval(() => {
-    //     const p = document.getElementById("info");
-    //     p.innerHTML = 'Fingers:  ' + numbFingers;
-    // }, 1000);
 }
 
 

@@ -2,7 +2,7 @@
 import * as THREE from '../../build2/three.module.js';
 import { GLTFLoader } from '../../build2/jsm/loaders/GLTFLoader.js'
 import { VRButton } from '../../build2/jsm/webxr/VRButton.js';
-import { Orbi } from '../../libs/orbixr_handtracking.js';
+import { Orbi } from '../../libs/orbixr.js';
 // import {
 //   onWindowResize,
 // } from "../../libs/util/util.js";
@@ -70,62 +70,65 @@ const config = {
 let orbi;
 let mixer;
 
+window.addEventListener("handtrack-started", init, false)
 
-new GLTFLoader().load(
-  // '/projects/assets/models/hand1.glb',
-  '../../assets/models/hand1.glb',
-  (gltf) => {
-    mixer = new THREE.AnimationMixer(gltf.scene);
+function init() {
+  new GLTFLoader().load(
+    // '/projects/assets/models/hand1.glb',
+    '../../assets/models/hand1.glb',
+    (gltf) => {
+      mixer = new THREE.AnimationMixer(gltf.scene);
 
-    // gltf.animations.forEach( function ( clip ) {
-    //   console.log(clip);
-    //   let act = mixer.clipAction( clip );
-    //   // console.log(act);
-    //   // act.setLoop(THREE.LoopRepeat);
-    //   // act.startAt(2000)
-    //   act.play();
-    // } );
-    let act = mixer.clipAction(gltf.animations[0]);
-    act.setLoop( THREE.LoopOnce )
-    act.clampWhenFinished = true
-    act.enable = true
+      // gltf.animations.forEach( function ( clip ) {
+      //   console.log(clip);
+      //   let act = mixer.clipAction( clip );
+      //   // console.log(act);
+      //   // act.setLoop(THREE.LoopRepeat);
+      //   // act.startAt(2000)
+      //   act.play();
+      // } );
+      let act = mixer.clipAction(gltf.animations[0]);
+      act.setLoop(THREE.LoopOnce)
+      act.clampWhenFinished = true
+      act.enable = true
 
-    // act.play();
+      // act.play();
 
-    config.hand.model = gltf;
-    config.hand.mixer = mixer;
-    config.hand.action = act;
+      config.hand.model = gltf;
+      config.hand.mixer = mixer;
+      config.hand.action = act;
 
-    // gltf.scene.position.set(0, 1.6, -1);
-    // gltf.scene.scale.set(0.05, 0.05, 0.05);
-    // scene.add(gltf.scene);
+      // gltf.scene.position.set(0, 1.6, -1);
+      // gltf.scene.scale.set(0.05, 0.05, 0.05);
+      // scene.add(gltf.scene);
 
 
-    orbi = new Orbi(camera, config);
-    cameraHolder.add(orbi);
+      orbi = new Orbi(camera, config);
+      cameraHolder.add(orbi);
 
-    orbi.addButton('1', '../07-testing-room/img/action1.png', () => { orbi.showMessage('button 1') });
-    orbi.addButton('2', '../07-testing-room/img/action2.png', () => { orbi.showMessage('button 2') });
-    orbi.addButton('3', '../07-testing-room/img/action3.png', () => { orbi.showMessage('button 3') });
-    orbi.addButton('4', '../07-testing-room/img/action4.png', () => { orbi.showMessage('button 4') })
+      orbi.addButton('1', '../07-testing-room/img/action1.png', () => { orbi.showMessage('button 1') });
+      orbi.addButton('2', '../07-testing-room/img/action2.png', () => { orbi.showMessage('button 2') });
+      orbi.addButton('3', '../07-testing-room/img/action3.png', () => { orbi.showMessage('button 3') });
+      orbi.addButton('4', '../07-testing-room/img/action4.png', () => { orbi.showMessage('button 4') })
 
-    orbi.showText('Olá')
+      orbi.showText('Olá')
 
-    createScene();
-    animate();
-  },
-  (xhr) => {
+      createScene();
+      animate();
+    },
+    (xhr) => {
 
-    console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+      console.log((xhr.loaded / xhr.total * 100) + '% loaded');
 
-  },
-  // called when loading has errors
-  (error) => {
+    },
+    // called when loading has errors
+    (error) => {
 
-    console.log('An error happened', error);
+      console.log('An error happened', error);
 
-  }
-);
+    }
+  );
+}
 
 // Listen for the event.
 // window.addEventListener('changed', function (e) {
