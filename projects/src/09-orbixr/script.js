@@ -31,16 +31,15 @@ const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerH
 
 // let xrCamera = renderer.xr.getCamera();
 // console.log(xrCamera);
-console.log(renderer.xr.getSession());
+// console.log(renderer.xr.getSession());
 
 //-- 'Camera Holder' to help moving the camera
 const cameraHolder = new THREE.Object3D();
-cameraHolder.position.set(0, 0, -10)
 cameraHolder.add(camera);
+cameraHolder.position.set(-2, 5, 5)
 scene.add(cameraHolder);
 let v3 = new THREE.Vector3();
 cameraHolder.getWorldPosition(v3)
-console.log(v3)
 
 // controllers
 const controller1 = renderer.xr.getController(0);
