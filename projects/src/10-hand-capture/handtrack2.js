@@ -428,7 +428,7 @@ function main(low, high) {
             }
         }
 
-        cv.imshow("canvasFrame", dst);
+        // cv.imshow("canvasFrame", dst);
 
         if (download) {
             downloandCanvas();
@@ -629,8 +629,9 @@ function main(low, high) {
                 cv.ellipse1(dst, rotatedRect, RED, 1, cv.LINE_8);
             }
         }
-        cv.imshow("roi", rectMask);
+        // cv.imshow("roi", rectMask);
 
+        cv.imshow("canvasFrame", binaryMask);
         moments(binaryMask, contours);
 
         // definitions of circularity, roundness , etc:
