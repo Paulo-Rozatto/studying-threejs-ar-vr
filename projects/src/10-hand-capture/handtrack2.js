@@ -6,6 +6,8 @@ let cvHasLoaded = false,
 const context = document.getElementById("canvasFrame").getContext("2d");
 const video = document.getElementById("videoInput");
 
+var download = false;
+
 // start video and get its properties
 let width, height;
 
@@ -288,18 +290,19 @@ function main(low, high) {
         click = true;
     });
 
-    document.getElementById('btn4').addEventListener('click', () =>{
-        let data = "";
+    document.getElementById('btn4').addEventListener('click', () => {
+        download = true;
+        // let data = "";
 
-        console.log(allData.length)
-        allData.forEach(vector => {
-            for(let numb of vector) {
-                data += numb.toFixed(10) + "\t"
-            }
-            data += "\n"
-        });
+        // console.log(allData.length)
+        // allData.forEach(vector => {
+        //     for (let numb of vector) {
+        //         data += numb.toFixed(10) + "\t"
+        //     }
+        //     data += "\n"
+        // });
 
-        phu.innerHTML = data;
+        // phu.innerHTML = data;
     });
 
     // colors for drawing points
@@ -426,6 +429,11 @@ function main(low, high) {
         }
 
         cv.imshow("canvasFrame", dst);
+
+        if (download) {
+            downloandCanvas();
+            download = false;
+        }
 
         if (isReturn) return;
         delay = 1000 / FPS - (Date.now() - begin);
@@ -654,7 +662,7 @@ function main(low, high) {
         }
         features[7] = circularity;
         features[8] = ratio;
-        
+
 
         if (click) {
             click = false;
@@ -758,6 +766,10 @@ function main(low, high) {
         switch (e.key) {
             case 'm':
                 moments(rectMask);
+                break;
+            case 'd':
+                download = true;
+                break;
             default:
                 isReturn = true
         }
@@ -768,6 +780,20 @@ function main(low, high) {
 function classifyPixesl(source, destination, low, high) {
     cv.cvtColor(source, destination, cv.COLOR_RGB2YCrCb);
     cv.inRange(destination, low, high, destination);
+}
+
+function downloandCanvas() {
+    const date = new Date();
+    let hour = (date.getHours()).toString().padStart(2, '0');
+    let min = (date.getMinutes()).toString().padStart(2, '0');
+    let ms = (date.getMilliseconds()).toString().padStart(3, '0');
+    console.log(hour, typeof hour);
+    const canvas = document.getElementById('canvasFrame')
+    const link = document.createElement('a');
+    link.download = `hand-${hour}-${min}-${ms}.png`;
+    link.href = canvas.toDataURL();
+    link.click();
+    link.delete;
 }
 
 

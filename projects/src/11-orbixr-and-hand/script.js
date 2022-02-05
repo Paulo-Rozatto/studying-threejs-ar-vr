@@ -23,6 +23,19 @@ renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.shadowMap.enabled = false;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
 
+renderer.xr.addEventListener('sessionstart', function (event) {
+  setTimeout(() => {
+    window.addEventListener('click', () => {
+      // download = true;
+      orbi.showMessage('cliack')
+    })
+  }, 1000)
+});
+
+renderer.xr.addEventListener('sessionend', function (event) {
+  window.removeEventListener('click')
+});
+
 
 //-- Setting scene and camera -------------------------------------------------------------------
 const scene = new THREE.Scene();
@@ -71,6 +84,10 @@ let orbi;
 let mixer;
 
 window.addEventListener("handtrack-started", init, false)
+controller1.addEventListener('selectstart', () => {
+  download = true;
+});
+
 
 function init() {
   new GLTFLoader().load(

@@ -11,7 +11,7 @@
     body {
       margin: 0 auto;
       overflow: hidden;
-      background-color: #000;
+      background-color: rgb(177, 16, 16);
     }
   </style>
 </head>
@@ -22,16 +22,16 @@
 
   <video id="videoInput" style="display: none;"></video>
   <p id="info">Carregando...</p>
+  <button id="btn4">All</button>
   <canvas id="canvasFrame"></canvas>
-  <canvas id="roi"></canvas>
-  <canvas id="bin"></canvas>
+  <canvas id="roi" style="display: none;"></canvas>
+  <canvas id="bin" style="display: none;"></canvas>
   
   
   <br/>
   <button id="btn1">Calibrate</button>
   <button id="btn2">Start</button>
   <button id="btn3">HuMoments</button>
-  <button id="btn4">All</button>
   <pre id="hu"></pre>
 
   <script async src="../10-hand-capture/libs/opencv0.js" onload="start({cv: true});" type="text/javascript"></script>
