@@ -290,7 +290,7 @@ function main(low, high) {
         click = true;
     });
 
-    document.getElementById('btn4').addEventListener('click', async() => {
+    document.getElementById('btn4').addEventListener('click', async () => {
         isReturn = true
         video.pause();
 
@@ -355,10 +355,34 @@ function main(low, high) {
                 co += cont[j] === 'open';
             }
 
-            phu.innerText = `Acertos\n`;
-            phu.innerText += `euclidean: ${eu}\n`;
-            phu.innerText += `manhatan: ${ma}\n`;
-            phu.innerText += `cont: ${co}\n`;
+
+            phu.innerText += `euclidean: ${eu} acertos -`;
+            phu.innerText += `\t[`
+            for (let j = 0; j < 10; j++)
+                phu.innerText += `${euclidean[j]}, `
+            phu.innerText += `* ,`
+            for (let j = 10; j < 20; j++)
+                phu.innerText += `${euclidean[j]}, `
+            phu.innerText += `]\n`
+
+            phu.innerText += `manhatan:  ${ma} acertos -`;
+            phu.innerText += `\t[`
+            for (let j = 0; j < 10; j++)
+                phu.innerText += `${manhatan[j]}, `
+            phu.innerText += `* ,`
+            for (let j = 10; j < 20; j++)
+                phu.innerText += `${manhatan[j]}, `
+            phu.innerText += `]\n`
+
+
+            phu.innerText += `cont:      ${co} acertos -`;
+            phu.innerText += `\t[`
+            for (let j = 0; j < 10; j++)
+                phu.innerText += `${cont[j]}, `
+            phu.innerText += `* ,`
+            for (let j = 10; j < 20; j++)
+                phu.innerText += `${cont[j]}, `
+            phu.innerText += `]\n`
         }
 
 
