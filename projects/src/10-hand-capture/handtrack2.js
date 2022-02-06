@@ -290,8 +290,78 @@ function main(low, high) {
         click = true;
     });
 
-    document.getElementById('btn4').addEventListener('click', () => {
-        download = true;
+    document.getElementById('btn4').addEventListener('click', async() => {
+        isReturn = true
+        video.pause();
+
+        // await new Promise(r => setTimeout(r, 200));
+        console.log('GO')
+
+        let img = new Image();
+        let euclidean = [],
+            manhatan = [],
+            cont = [];
+        let i;
+
+        // const low = new cv.Mat(height, width, cv.CV_8UC3, [100, 100, 100, 255]);
+        const hh = new cv.Mat(height, width, cv.CV_8UC3, [255, 255, 255, 255]);
+        const low = 100;
+        const high = 255;
+
+        img.onload = () => {
+            // console.log(i)
+            context.drawImage(img, 0, 0, 360, 240)
+
+            window.setTimeout(classify, 100);
+        }
+
+        i = 1;
+        img.src = `./img/handpose${i.toString().padStart(2, '0')}.jpeg`;
+
+        function classify() {
+            context.drawImage(img, 0, 0, width, height);
+            src.data.set(context.getImageData(0, 0, width, height).data);
+
+            cv.cvtColor(src, binaryMask, cv.COLOR_RGB2GRAY);
+
+            cv.imshow('roi', binaryMask);
+
+            let { eu, ma, co } = moments(binaryMask);
+
+            euclidean.push(eu);
+            manhatan.push(ma);
+            cont.push(co);
+
+            if (i == 20)
+                finalResults();
+            else {
+                i += 1;
+                img.src = `./img/handpose${i.toString().padStart(2, '0')}.jpeg`;
+            }
+        }
+
+        function finalResults() {
+            let eu = 0, ma = 0, co = 0;
+
+            for (let j = 0; j < 10; j++) {
+                eu += euclidean[j] === 'close';
+                ma += manhatan[j] === 'close';
+                co += cont[j] === 'close';
+            }
+
+            for (let j = 10; j < 20; j++) {
+                eu += euclidean[j] === 'open';
+                ma += manhatan[j] === 'open';
+                co += cont[j] === 'open';
+            }
+
+            phu.innerText = `Acertos\n`;
+            phu.innerText += `euclidean: ${eu}\n`;
+            phu.innerText += `manhatan: ${ma}\n`;
+            phu.innerText += `cont: ${co}\n`;
+        }
+
+
         // let data = "";
 
         // console.log(allData.length)
@@ -435,7 +505,10 @@ function main(low, high) {
             download = false;
         }
 
-        if (isReturn) return;
+        if (isReturn) {
+            info.innerHTML = "Video parado<br>" + phu.innerHTML;
+            return;
+        }
         delay = 1000 / FPS - (Date.now() - begin);
         setTimeout(processVideo, delay);
     }
@@ -734,6 +807,12 @@ function main(low, high) {
         euclidean: ${euclideanOpen1 < euclideanClose1 ? 'open' : 'close'}<br\>
         manhatan: ${manhatanOpen1 < manhatanClose1 ? 'open' : 'close'}<br\>
         cont: ${contOpen1 > contClose1 ? 'open' : 'close'}`;
+
+        return {
+            eu: euclideanOpen1 < euclideanClose1 ? 'open' : 'close',
+            ma: manhatanOpen1 < manhatanClose1 ? 'open' : 'close',
+            co: contOpen1 > contClose1 ? 'open' : 'close'
+        }
     }
 
     // hu moments
@@ -791,7 +870,7 @@ function downloandCanvas() {
     console.log(hour, typeof hour);
     const canvas = document.getElementById('canvasFrame')
     const link = document.createElement('a');
-    link.download = `hand-${hour}-${min}-${ms}.png`;
+    link.download = `hand- ${hour} -${min} -${ms}.png`;
     link.href = canvas.toDataURL();
     link.click();
     link.delete;
