@@ -44,8 +44,8 @@
     posenet.load().then(async function (net) {
         const imageScaleFactor = 0.50;
         const flipHorizontal = false;
-        const outputStride = 16;
-        const MIN_SCORE = 0.5;
+        const outputStride = 32;
+        const MIN_SCORE = 0.3;
 
         const FPS = 60;
         const video = document.getElementById('video');
@@ -66,11 +66,11 @@
         ctx.strokeStyle = "#FFFF00";
         ctx.lineWidth = 3;
 
-        const MAX_RELATIVE = 0.07 // biggest displacement allowed in percetage of the image
+        const MAX_RELATIVE = 0.1 // biggest displacement allowed in percetage of the image
         let MAX_SQUARED = squareDistace({ x: 0, y: 0 }, { x: canvas.width, y: canvas.height }) * Math.pow(MAX_RELATIVE, 2);
 
         const DIFFS_TO_RESET = 8;
-        const FRAMES_TO_RESET = 100;
+        const FRAMES_TO_RESET = 10;
         let resetByDiff, resetByFrame;
         let pose, renderPose, lastPose;
         // let selectedPose
@@ -87,7 +87,8 @@
             }
         })
 
-        resetByFrame = FRAMES_TO_RESET;
+        // resetByFrame = FRAMES_TO_RESET;
+        resetByFrame = 0;
 
         let begin, delay; // fps helpers
         async function processVideo() {
@@ -96,41 +97,65 @@
 
             pose = await net.estimateSinglePose(video, imageScaleFactor, flipHorizontal, outputStride);
 
-            resetByDiff = DIFFS_TO_RESET;
-
             if (lastPose) {
-                for (let i = 0; i < renderPose.keypoints.length; i++) {
+                for (let i = 0; i < 17; i++) {
                     if (squareDistace(pose.keypoints[i].position, lastPose.keypoints[i].position) > MAX_SQUARED) {
-                        resetByDiff -= 1;
-                        renderPose.keypoints[i].position.x = lastPose.keypoints[i].position.x
-                        renderPose.keypoints[i].position.y = lastPose.keypoints[i].position.y
-                    }
-                    else {
-                        renderPose.keypoints[i].position.x = pose.keypoints[i].position.x
-                        renderPose.keypoints[i].position.y = pose.keypoints[i].position.y
-                    }
-                    if (resetByDiff == 0) {
-                        // console.log('reset')
-                        resetByDiff = DIFFS_TO_RESET;
-                        renderPose = pose;
-                        break;
+                        pose.keypoints[i].position.x = lastPose.keypoints[i].position.x
+                        pose.keypoints[i].position.y = lastPose.keypoints[i].position.y
                     }
                 }
             }
-            else {
-                console.log('yep')
+
+            for (let i = 0; i < 17; i++) {
+                renderPose.keypoints[i].position.x = pose.keypoints[i].position.x
+                renderPose.keypoints[i].position.y = pose.keypoints[i].position.y
             }
 
+            lastPose = undefined
 
-            if (resetByFrame == 0) {
-                console.log('reset by frame')
-                lastPose = null;
-                resetByFrame = FRAMES_TO_RESET;
+            if (resetByFrame === FRAMES_TO_RESET) {
+                resetByFrame = 0;
             }
             else {
-                resetByFrame -= 1;
-                lastPose = renderPose;
+                lastPose = pose;
+                resetByFrame += 1;
             }
+
+            // resetByDiff = DIFFS_TO_RESET;
+
+            // if (lastPose) {
+            //     for (let i = 0; i < renderPose.keypoints.length; i++) {
+            //         if (squareDistace(pose.keypoints[i].position, lastPose.keypoints[i].position) > MAX_SQUARED) {
+            //             resetByDiff -= 1;
+            //             renderPose.keypoints[i].position.x = lastPose.keypoints[i].position.x
+            //             renderPose.keypoints[i].position.y = lastPose.keypoints[i].position.y
+            //         }
+            //         else {
+            //             renderPose.keypoints[i].position.x = pose.keypoints[i].position.x
+            //             renderPose.keypoints[i].position.y = pose.keypoints[i].position.y
+            //         }
+            //         if (resetByDiff == 0) {
+            //             // console.log('reset')
+            //             resetByDiff = DIFFS_TO_RESET;
+            //             renderPose = pose;
+            //             break;
+            //         }
+            //     }
+            // }
+            // else {
+            //     console.log('yep')
+            // }
+
+
+            // if (resetByFrame == 0) {
+            //     console.log('reset by frame')
+            //     lastPose = null;
+            //     resetByFrame = FRAMES_TO_RESET;
+            // }
+            // else {
+            //     resetByFrame -= 1;
+            //     lastPose = renderPose;
+            // }
 
             ctx.fillStyle = "black";
             ctx.beginPath();
@@ -230,8 +255,8 @@
         const constraints = {
             video: {
                 facingMode: "user",
-                width: { ideal: 4096 },
-                height: { ideal: 2160 }
+                width: { ideal: 720 },
+                height: { ideal: 480 }
             },
             audio: false
         }
