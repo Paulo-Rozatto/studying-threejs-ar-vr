@@ -42,10 +42,10 @@
 
 
     posenet.load().then(async function (net) {
-        const imageScaleFactor = 0.50;
+        const imageScaleFactor = 0.75;
         const flipHorizontal = false;
-        const outputStride = 32;
-        const MIN_SCORE = 0.3;
+        const outputStride = 16;
+        const MIN_SCORE = 0.1;
 
         const FPS = 60;
         const video = document.getElementById('video');
@@ -71,7 +71,7 @@
 
         const DIFFS_TO_RESET = 8;
         const FRAMES_TO_RESET = 10;
-        let resetByDiff, resetByFrame;
+        let lastCont, drawCont;
         let pose, renderPose, lastPose;
         // let selectedPose
 
@@ -88,7 +88,6 @@
         })
 
         // resetByFrame = FRAMES_TO_RESET;
-        resetByFrame = 0;
 
         let begin, delay; // fps helpers
         async function processVideo() {
@@ -97,11 +96,14 @@
 
             pose = await net.estimateSinglePose(video, imageScaleFactor, flipHorizontal, outputStride);
 
+            lastCont = drawCont = 0;
+
             if (lastPose) {
                 for (let i = 0; i < 17; i++) {
                     if (squareDistace(pose.keypoints[i].position, lastPose.keypoints[i].position) > MAX_SQUARED) {
                         pose.keypoints[i].position.x = lastPose.keypoints[i].position.x
                         pose.keypoints[i].position.y = lastPose.keypoints[i].position.y
+                        lastCont += 1;
                     }
                 }
             }
@@ -110,52 +112,6 @@
                 renderPose.keypoints[i].position.x = pose.keypoints[i].position.x
                 renderPose.keypoints[i].position.y = pose.keypoints[i].position.y
             }
-
-            lastPose = undefined
-
-            if (resetByFrame === FRAMES_TO_RESET) {
-                resetByFrame = 0;
-            }
-            else {
-                lastPose = pose;
-                resetByFrame += 1;
-            }
-
-            // resetByDiff = DIFFS_TO_RESET;
-
-            // if (lastPose) {
-            //     for (let i = 0; i < renderPose.keypoints.length; i++) {
-            //         if (squareDistace(pose.keypoints[i].position, lastPose.keypoints[i].position) > MAX_SQUARED) {
-            //             resetByDiff -= 1;
-            //             renderPose.keypoints[i].position.x = lastPose.keypoints[i].position.x
-            //             renderPose.keypoints[i].position.y = lastPose.keypoints[i].position.y
-            //         }
-            //         else {
-            //             renderPose.keypoints[i].position.x = pose.keypoints[i].position.x
-            //             renderPose.keypoints[i].position.y = pose.keypoints[i].position.y
-            //         }
-            //         if (resetByDiff == 0) {
-            //             // console.log('reset')
-            //             resetByDiff = DIFFS_TO_RESET;
-            //             renderPose = pose;
-            //             break;
-            //         }
-            //     }
-            // }
-            // else {
-            //     console.log('yep')
-            // }
-
-
-            // if (resetByFrame == 0) {
-            //     console.log('reset by frame')
-            //     lastPose = null;
-            //     resetByFrame = FRAMES_TO_RESET;
-            // }
-            // else {
-            //     resetByFrame -= 1;
-            //     lastPose = renderPose;
-            // }
 
             ctx.fillStyle = "black";
             ctx.beginPath();
@@ -188,6 +144,7 @@
                 if (kp.score > MIN_SCORE) {
                     ctx.moveTo(kp.position.x * offsetX + radius, kp.position.y * offsetY);
                     ctx.arc(kp.position.x * offsetX, kp.position.y * offsetY, radius, 0, 2 * Math.PI);
+                    drawCont += 1;
                 }
             }
 
@@ -200,6 +157,7 @@
 
                         // if (pair[i].position.y * offsetY < canvas.height)
                         ctx.arc(pair[i].position.x * offsetX, pair[i].position.y * offsetY, radius, 0, 2 * Math.PI);
+                        drawCont += 1
                     }
                 }
 
@@ -210,14 +168,8 @@
             ctx.fill();
             ctx.stroke();
 
-            // if (reset > 0) {
-            //     lastPose = pose;
-            //     reset -= 1;
-            // }
-            // else {
-            //     lastPose = pose;
-            //     reset = 5
-            // }
+            lastPose = undefined
+            lastPose = pose;
 
             if (pause) return;
 
