@@ -30,6 +30,16 @@ function start(info) {
     }
 }
 
+function startImages() {
+    cvHasLoaded = cvHasLoaded || info.cv;
+    cameraHasLoaded = cameraHasLoaded || info.camera;
+
+    if (cvHasLoaded && cameraHasLoaded) {
+        document.getElementById('info').innerHTML = "pronto";
+        calibration();
+    }
+}
+
 function calibration() {
     const FPS = 20;
     const BLACK = new cv.Scalar(0, 0, 0, 255); // helper scalar for black color
@@ -207,6 +217,19 @@ function calibration() {
             main(caliLow, caliHigh);
         }, 0);
     });
+
+    document.getElementById('btn4').addEventListener('click', startMain);
+
+    function startMain() {
+        src.delete(); aux.delete(); dst.delete(); mask.delete();
+
+        document.getElementById('btn4').removeEventListener('click', startMain);
+
+        setTimeout(() => {
+            main(caliLow, caliHigh);
+            document.getElementById('btn4').click();
+        }, 5);
+    }
 
     setTimeout(processVideo, 0);
     // processVideo();
