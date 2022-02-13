@@ -1,13 +1,15 @@
 // variables to know when both opencv and camera loaded
-var cvHasLoaded = false,
+let cvHasLoaded = false,
     cameraHasLoaded = false;
 
 // canvas context and video
 const context = document.getElementById("canvasFrame").getContext("2d");
 const video = document.getElementById("videoInput");
 
+var download = false;
+
 // start video and get its properties
-var width, height;
+let width, height;
 
 startVideo(video)
     .then((value) => {
@@ -19,6 +21,16 @@ startVideo(video)
 let isReturn = false;
 
 function start(info) {
+    cvHasLoaded = cvHasLoaded || info.cv;
+    cameraHasLoaded = cameraHasLoaded || info.camera;
+
+    if (cvHasLoaded && cameraHasLoaded) {
+        document.getElementById('info').innerHTML = "pronto";
+        calibration();
+    }
+}
+
+function startImages() {
     cvHasLoaded = cvHasLoaded || info.cv;
     cameraHasLoaded = cameraHasLoaded || info.camera;
 
@@ -75,6 +87,24 @@ function calibration() {
 
             calculateNewThresholds(roi)
 
+            // src.copyTo(dst);
+            // cv.inRange(roi,LOW, HIGH, roi);
+            // cv.cvtColor(roi, roi, cv.COLOR_RGB2GRAY);
+
+            // dst.copyTo(src.rowRange(0, 100).colRange(0, 100));
+            // cv.addWeighted(roi, 1, roi, 0, 0.0, dst, -1)
+
+            // dst = dst.rowRange(1, rectSize).colRange(1, rectSize)
+
+            // for (let row = point1.x + 1; row < point2.x; row++) {
+            //     for (let col = point1.y; col < point2.y - 1; col++) {
+            //         dst.data[(row - 60) * src.cols * src.channels() + (col + 60) * src.channels()] = roiMask.data[(row - point1.x) * roiMask.cols * roiMask.channels() + (col - point2.y) * roiMask.channels()];
+            //         dst.data[(row - 60) * src.cols * src.channels() + (col + 60) * src.channels() + 1] = roiMask.data[(row - point1.x) * roiMask.cols * roiMask.channels() + (col - point2.y) * roiMask.channels() + 1];
+            //         dst.data[(row - 60) * src.cols * src.channels() + (col + 60) * src.channels() + 2] = roiMask.data[(row - point1.x) * roiMask.cols * roiMask.channels() + (col - point2.y) * roiMask.channels() + 2];
+            //         // src.data[row * src.cols * src.channels() + col * src.channels() + 3] = roi.data[(row - point1.x) * roi.cols * roi.channels() + (col - point2.y) * roi.channels() + 3];
+            //     }
+            // }
+
             cv.imshow("roi", roi);
 
             roi.delete();
@@ -113,19 +143,74 @@ function calibration() {
                         Cb.high = cb;
                     }
                 }
+
+                // if (cr > 0 || cb > 0) {
+                //     meanCr += cr;
+                //     meanCb += cb;
+                //     size += 1;
+                // }
             }
         }
+        // meanCr /= size;
+        // meanCb /= size;
+
+        // console.log('Means: ', meanCr, meanCb);
+
+        // for (let row = 0; row < roi.rows; row++) {
+        //     for (let col = 0; col < roi.cols; col++) {
+        //         cr = roi.data[row * roi.cols * roi.channels() + col * roi.channels() + 1];
+        //         cb = roi.data[row * roi.cols * roi.channels() + col * roi.channels() + 2];
+
+        //         if (cr > 0 || cb > 0) {
+        //             sdCr += (cr - meanCr) * (cr - meanCr);
+        //             sdCb += (cb - meanCb) * (cb - meanCb);
+        //         }
+        //     }
+        // }
+        // sdCr = Math.sqrt(sdCr / size);
+        // sdCb = Math.sqrt(sdCb / size);
+
+        // console.log('SD: ', sdCr, sdCb);
+
+        // sdCb *= 2;
+        // sdCr *= 2;
+
+        // caliLow.cr = meanCr - sdCr;
+        // caliLow.cb = meanCb - sdCb;
+        // caliHigh.cr = meanCr + sdCr;
+        // caliHigh.cb = meanCb + sdCb;
+
+        // console.log('low:', caliLow);
+        // console.log('high:', caliHigh);
+        console.log('Cr: ', Cr);
+        console.log('Cb: ', Cb);
 
         caliLow.cr = Cr.low;
         caliLow.cb = Cb.low;
         caliHigh.cr = Cr.high;
         caliHigh.cb = Cb.high;
+
+        // let low = [0, meanCr - sdCr, meanCb - sdCb, 0];
+        // let high = [255, meanCr + sdCr, meanCb + sdCb, 255];
+        // console.log('T: ', low, high);
+
     }
 
+    window.addEventListener('keydown', (e) => {
+        if (e.key === '1') {
+            src.delete(); aux.delete(); dst.delete(); mask.delete();
+            setTimeout(() => {
+                main(caliLow, caliHigh);
+            }, 0);
+        }
+        else
+            processVideo();
+    })
+
     document.getElementById('btn1').addEventListener('click', () => {
+        // processVideo();
         needsNewThresholds = true;
     });
-
     document.getElementById('btn2').addEventListener('click', () => {
         src.delete(); aux.delete(); dst.delete(); mask.delete();
         setTimeout(() => {
@@ -133,8 +218,22 @@ function calibration() {
         }, 0);
     });
 
+    document.getElementById('btn4').addEventListener('click', startMain);
+
+    function startMain() {
+        src.delete(); aux.delete(); dst.delete(); mask.delete();
+
+        document.getElementById('btn4').removeEventListener('click', startMain);
+
+        setTimeout(() => {
+            main(caliLow, caliHigh);
+            document.getElementById('btn4').click();
+        }, 5);
+    }
 
     setTimeout(processVideo, 0);
+    // processVideo();
+
 }
 
 function main(low, high) {
@@ -195,11 +294,137 @@ function main(low, high) {
     const info = document.querySelector('#info');
     const mt = new cv.matFromArray(1, 4, 12, [0, 0, 0, 0, 0, 0, 0, 0]);
 
+    // const open1 = [3.0912769784486693, 7.7366600271469705, 11.305973553808753, 10.968399128352408, -13.164938156199067, 14.907906585875475, 15.353374087584879, 0.9681062034395111, 0.2637487229, 0.8326351262]
+    // const open2 = [3.12765614387537, 7.890141913277302, 11.166666775476504, 11.270622197906857, -20.36886535309352, 9.19620982349387, 20.450965321154378, 1.1455177693993803, 0.2637487229, 0.8326351262]
+
+    // const closed1 = [3.1844407881299097, 7.9225593297972186, 11.132406073467994, 12.942107787759145, 25.27895813880837, 15.434180121732487, -22.59077766487394, 0.7816794694575135, 0.7125208160, 0.6453160090]
+    // const closed2 = [3.1958532622091687, 8.498186203425494, 11.882128816659606, 13.87883275690292, 10.589385970285894, -0.0972378372045581, 2.469608358003279, 1.1300554542255923, 0.7125208160, 0.6453160090]
+
     const open1 = [3.0912769784486693, 7.7366600271469705, 11.305973553808753, 10.968399128352408, 13.164938156199067, 14.907906585875475, 15.353374087584879, 0.9681062034395111, 0.2637487229, 0.8326351262]
     const open2 = [3.12765614387537, 7.890141913277302, 11.166666775476504, 11.270622197906857, 20.36886535309352, 9.19620982349387, 20.450965321154378, 1.1455177693993803, 0.2637487229, 0.8326351262]
 
     const closed1 = [3.1844407881299097, 7.9225593297972186, 11.132406073467994, 12.942107787759145, 25.27895813880837, 15.434180121732487, 22.59077766487394, 0.7816794694575135, 0.7125208160, 0.6453160090]
     const closed2 = [3.1958532622091687, 8.498186203425494, 11.882128816659606, 13.87883275690292, 10.589385970285894, 0.0972378372045581, 2.469608358003279, 1.1300554542255923, 0.7125208160, 0.6453160090]
+
+
+    let click = false;
+    let count = 0;
+    let accumulator = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+    let allData = [];
+    const phu = document.getElementById('hu');
+
+    document.getElementById('btn3').addEventListener('click', () => {
+        click = true;
+    });
+
+    document.getElementById('btn4').addEventListener('click', async () => {
+        isReturn = true
+        video.pause();
+
+        // await new Promise(r => setTimeout(r, 200));
+        console.log('GO')
+
+        let img = new Image();
+        let euclidean = [],
+            manhatan = [],
+            cont = [];
+        let i;
+
+        // const low = new cv.Mat(height, width, cv.CV_8UC3, [100, 100, 100, 255]);
+        const hh = new cv.Mat(height, width, cv.CV_8UC3, [255, 255, 255, 255]);
+        const low = 100;
+        const high = 255;
+
+        img.onload = () => {
+            // console.log(i)
+            context.drawImage(img, 0, 0, 360, 240)
+
+            window.setTimeout(classify, 100);
+        }
+
+        i = 1;
+        img.src = `./img/handpose${i.toString().padStart(2, '0')}.jpeg`;
+
+        function classify() {
+            context.drawImage(img, 0, 0, width, height);
+            src.data.set(context.getImageData(0, 0, width, height).data);
+
+            cv.cvtColor(src, binaryMask, cv.COLOR_RGB2GRAY);
+
+            cv.imshow('roi', binaryMask);
+
+            let { eu, ma, co } = moments(binaryMask);
+
+            euclidean.push(eu);
+            manhatan.push(ma);
+            cont.push(co);
+
+            if (i == 20)
+                finalResults();
+            else {
+                i += 1;
+                img.src = `./img/handpose${i.toString().padStart(2, '0')}.jpeg`;
+            }
+        }
+
+        function finalResults() {
+            let eu = 0, ma = 0, co = 0;
+
+            for (let j = 0; j < 10; j++) {
+                eu += euclidean[j] === 'close';
+                ma += manhatan[j] === 'close';
+                co += cont[j] === 'close';
+            }
+
+            for (let j = 10; j < 20; j++) {
+                eu += euclidean[j] === 'open';
+                ma += manhatan[j] === 'open';
+                co += cont[j] === 'open';
+            }
+
+
+            phu.innerText += `euclidean: ${eu} acertos -`;
+            phu.innerText += `\t[`
+            for (let j = 0; j < 10; j++)
+                phu.innerText += `${euclidean[j]}, `
+            phu.innerText += `* ,`
+            for (let j = 10; j < 20; j++)
+                phu.innerText += `${euclidean[j]}, `
+            phu.innerText += `]\n`
+
+            phu.innerText += `manhatan:  ${ma} acertos -`;
+            phu.innerText += `\t[`
+            for (let j = 0; j < 10; j++)
+                phu.innerText += `${manhatan[j]}, `
+            phu.innerText += `* ,`
+            for (let j = 10; j < 20; j++)
+                phu.innerText += `${manhatan[j]}, `
+            phu.innerText += `]\n`
+
+
+            phu.innerText += `cont:      ${co} acertos -`;
+            phu.innerText += `\t[`
+            for (let j = 0; j < 10; j++)
+                phu.innerText += `${cont[j]}, `
+            phu.innerText += `* ,`
+            for (let j = 10; j < 20; j++)
+                phu.innerText += `${cont[j]}, `
+            phu.innerText += `]\n`
+        }
+
+
+        // let data = "";
+
+        // console.log(allData.length)
+        // allData.forEach(vector => {
+        //     for (let numb of vector) {
+        //         data += numb.toFixed(10) + "\t"
+        //     }
+        //     data += "\n"
+        // });
+
+        // phu.innerHTML = data;
+    });
 
     // colors for drawing points
     const colors = [];
@@ -207,13 +432,15 @@ function main(low, high) {
         colors.push(new cv.Scalar(parseInt(Math.random() * 255), parseInt(Math.random() * 255), parseInt(Math.random() * 255), 255));
     }
 
-    // Variables for morphologics
+    // testing mophorlogic
     let M = cv.Mat.ones(5, 5, cv.CV_8U);
     let anchor = new cv.Point(-1, -1);
 
     let begin, delay; // fps helpers
     function processVideo() {
         begin = Date.now();
+
+        // if (isReturn) return;
 
         context.drawImage(video, 0, 0, width, height);
         src.data.set(context.getImageData(0, 0, width, height).data);
@@ -230,11 +457,16 @@ function main(low, high) {
             dst.setTo(BLACK)
             detachForeground(src, dst, contours, contourArea.id);
 
+            // let po = contours.get(contourArea.id).row(0).data32S;
+
             cv.cvtColor(dst, grayFrame, cv.COLOR_RGB2GRAY);
 
             if (!hasFeatures) {
+                // cv.imshow("roi", binaryMask);
+
                 cv.goodFeaturesToTrack(grayFrame, features, maxCorners, qualityLevel, minDistance, binaryMask);
 
+                // center = cv.minEnclosingCircle(contours.get(contourArea.id)).center;
                 center = { x: 0, y: 0 } // temp
 
                 if (features.rows >= MIN_FEATURES) {
@@ -272,17 +504,39 @@ function main(low, high) {
                 if (avy > 0)
                     center.y = avy;
 
-                if (center.x < 0) center.x = 0;
-                if (center.y < 0) center.y = 0;
+                // info.innerHTML = goodNew[0].y.toFixed(2) + ' - ' + center.y.toFixed(2);
 
-                if (center.x > height) center.x = height;
-                if (center.y > width) center.y = width;
+                // if(center.x < 0) center.x = 0;
+                // if(center.y < 0) center.y = 0;
 
-                cv.circle(dst, center, 7, colors[0], -1)
+                // if(center.x > height) center.x = height;
+                // if(center.y > width) center.y = width;
 
-                for (let i = 0; i < goodNew.length; i++) {
-                    cv.circle(dst, goodNew[i], 5, colors[i], 1);
-                }
+                // cv.circle(dst, center, 7, colors[0], -1)
+
+                // for (let i = 0; i < 1; i++) {
+                // let flag = false;
+                // let py = contours.get(contourArea.id).row(0).data32S[1];
+                // // console.log(py); 
+                // for (let i = 0; i < goodNew.length; i++) {
+                //     cv.circle(dst, goodNew[i], 5, colors[i], 1);
+
+                //     if (!flag && (center.y - py) > 50) {
+                //         info.innerHTML = 'Raised finger'
+                //         flag = true;
+                //     }
+                //     // cv.line(mask, goodNew[i], goodOld[i], colors[i], 2);
+                // }
+                // if (!flag) {
+                //     info.innerHTML = 'No raised finger'
+                // }
+
+                // obtainFingers(contours.get(contourArea.id), fingerTips);
+
+                // for (let i = 0; i < fingerTips.length; i++) {
+                //     cv.circle(dst, fingerTips[i], 5, colors[i], 3);
+                // }
+
 
                 // mask.setTo(BLACK);
                 cv.add(dst, mask, dst);
@@ -295,10 +549,15 @@ function main(low, high) {
             }
         }
 
-        cv.imshow("canvasFrame", dst);
+        // cv.imshow("canvasFrame", dst);
 
+        if (download) {
+            downloandCanvas();
+            download = false;
+        }
 
         if (isReturn) {
+            info.innerHTML = "Video parado<br>" + phu.innerHTML;
             return;
         }
         delay = 1000 / FPS - (Date.now() - begin);
@@ -310,6 +569,10 @@ function main(low, high) {
     let event = new CustomEvent("handtrack-started");
     window.dispatchEvent(event);
 
+    function classifyPixesl(source, destination) {
+        cv.cvtColor(source, destination, cv.COLOR_RGB2YCrCb);
+        cv.inRange(destination, LOW, HIGH, destination);
+    }
 
     function findBiggestArea(source, contours, contourArea) {
         cv.findContours(source, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
@@ -415,8 +678,11 @@ function main(low, high) {
     let ratio = 0, orientation = 0, circularity = 0;
     function detachForeground(source, destination, contours, areaIdx) {
         binaryMask.setTo(BLACK);
+        // rectMask.setTo(BLACK);
 
         cv.drawContours(binaryMask, contours, areaIdx, WHITE, -1, cv.LINE_8, hierarchy, 1);
+
+        // cv.imshow("roi", binaryMask);
 
         cv.morphologyEx(binaryMask, binaryMask, cv.MORPH_OPEN, M, anchor, 1,
             cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());
@@ -424,6 +690,8 @@ function main(low, high) {
 
         cv.morphologyEx(binaryMask, binaryMask, cv.MORPH_CLOSE, M, anchor, 1,
             cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());
+
+        // cv.imshow("bin", binaryMask)
 
         cv.bitwise_and(source, source, destination, binaryMask);
 
@@ -444,6 +712,8 @@ function main(low, high) {
 
         cv.bitwise_and(binaryMask, binaryMask, rectMask, rectMask);
 
+        // cv.imshow('roi', rectMask);
+        cv.imshow('bin', binaryMask);
         cv.bitwise_and(source, source, destination, binaryMask);
 
         let cnt = new cv.MatVector(); //storages contours
@@ -451,15 +721,13 @@ function main(low, high) {
 
         cv.findContours(binaryMask, cnt, hie, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
 
+        // console.log(cnt.get(0), cv.contourArea(contour, false));
         rectMask.setTo(BLACK);
         if (cnt.get(0)) {
             let area = cv.contourArea(cnt.get(0), false);
 
             if (area > 100) {
                 cv.drawContours(rectMask, cnt, 0, RED, 1, cv.LINE_8, hie, 1);
-
-                // definitions of circularity, roundness , etc:
-                // https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4706773/
 
                 let perimeter = cv.arcLength(cnt.get(0), true);
                 circularity = 4 * Math.PI * area / Math.pow(perimeter, 2);
@@ -470,13 +738,30 @@ function main(low, high) {
                 orientation = rotatedRect.angle;
                 ratio = rotatedRect.size.width / rotatedRect.size.height;
 
+                // acc[7] = rotatedRect.angle;
+                // acc[8] = rotatedRect.size.width / rotatedRect.size.height;
+
+                // if (rotatedRect.size.width > rotatedRect.size.height) {
+                //     major = rotatedRect.size.width;
+                //     minor = rotatedRect.size.height;
+                // }
+                // else {
+                //     major = rotatedRect.size.height;
+                //     minor = rotatedRect.size.width;
+                // }
+
                 cv.ellipse1(dst, rotatedRect, RED, 1, cv.LINE_8);
             }
         }
+        // cv.imshow("roi", rectMask);
 
-        // atual
-        // cv.imshow("canvasFrame", binaryMask);
+        cv.imshow("canvasFrame", binaryMask);
         moments(binaryMask, contours);
+
+        // definitions of circularity, roundness , etc:
+        // https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4706773/
+
+
 
         cv.circle(dst, max.maxLoc, 7, colors[0], -1)
 
@@ -505,6 +790,25 @@ function main(low, high) {
 
         for (let i = 0; i < features.length; i++) {
             features[i] = Math.abs(features[i]);
+        }
+
+
+        if (click) {
+            click = false;
+            count++;
+
+            allData.push(features);
+
+            for (let i = 0; i < features.length; i++) {
+                accumulator[i] += features[i];
+            }
+
+            phu.innerHTML = `Mean ${count}:<hr><br>[`
+            for (let i = 0; i < features.length; i++) {
+                phu.innerHTML += `${accumulator[i] / count}`;
+                if (i < 8) phu.innerHTML += ", ";
+            }
+            phu.innerHTML += ']';
         }
 
         let euclideanOpen1 = 0, euclideanOpen2 = 0;
@@ -595,6 +899,12 @@ function main(low, high) {
 
     window.addEventListener('keydown', (e) => {
         switch (e.key) {
+            case 'm':
+                moments(rectMask);
+                break;
+            case 'd':
+                download = true;
+                break;
             default:
                 isReturn = true
         }
@@ -605,6 +915,20 @@ function main(low, high) {
 function classifyPixesl(source, destination, low, high) {
     cv.cvtColor(source, destination, cv.COLOR_RGB2YCrCb);
     cv.inRange(destination, low, high, destination);
+}
+
+function downloandCanvas() {
+    const date = new Date();
+    let hour = (date.getHours()).toString().padStart(2, '0');
+    let min = (date.getMinutes()).toString().padStart(2, '0');
+    let ms = (date.getMilliseconds()).toString().padStart(3, '0');
+    console.log(hour, typeof hour);
+    const canvas = document.getElementById('canvasFrame')
+    const link = document.createElement('a');
+    link.download = `hand- ${hour} -${min} -${ms}.png`;
+    link.href = canvas.toDataURL();
+    link.click();
+    link.delete;
 }
 
 
@@ -637,3 +961,66 @@ async function startVideo(video) {
         p.innerHTML = 'Error accesing camera - ' + err;
     }
 }
+
+// let open = [
+        //     3.062038994000932,
+        //     7.197910988639913,
+        //     10.541061884353944,
+        //     10.780738946955417,
+        //     -22.42706340963343,
+        //     14.923474994972896,
+        //     -21.443974104478865
+        // ]
+
+        // let close = [
+        //     3.1872975810443918,
+        //     7.822597220182995,
+        //     12.03476386792147,
+        //     13.17626716473,
+        //     25.936605008565586,
+        //     17.139584355269808,
+        //     25.928074130157842
+        // ]
+
+        // let open = [
+        //     3.0703741947068424,
+        //     7.023749736591466,
+        //     10.678424708639218,
+        //     11.070285031329849,
+        //     11.775164436194975,
+        //     7.107823179828246,
+        //     22.02303654000887,
+        // ]
+
+
+        // let close = [
+        //     3.132797977070457,
+        //     7.14225850278341,
+        //     10.919895309889244,
+        //     12.206212676724647,
+        //     -24.001257937551113,
+        //     -7.579335131995962,
+        //     -11.948504318082689,
+        // ]
+
+        // let open = [
+        //     3.097256283103742,
+        //     7.735830930530247,
+        //     11.237027646736887,
+        //     10.985767570535057,
+        //     6.632480667864994,
+        //     10.601943721838142,
+        //     8.86233799029899,
+        //     0.9218495870545018,
+        // ]
+
+        // let close = [
+        //     3.1793829376573024,
+        //     8.029686307267838,
+        //     11.319173948850136,
+        //     13.4498118250593,
+        //     -0.16808897890120847,
+        //     -2.1141215920751724,
+        //     7.5892095169036065,
+        //     1.1352700262952273,
+        // ];
