@@ -79,13 +79,16 @@
 
         let pause = false;
 
-        window.addEventListener('keydown', () => {
-            pause = !pause;
+        let isTimer = true;
+        let interval;
 
-            if (!pause) {
-                setTimeout(processVideo, 0);
-            }
-        })
+        // window.addEventListener('keydown', () => {
+        //     pause = !pause;
+
+        //     if (!pause) {
+        //         setTimeout(processVideo, 0);
+        //     }
+        // })
 
         // resetByFrame = FRAMES_TO_RESET;
 
@@ -179,7 +182,36 @@
             }, delay);
         }
 
-        setTimeout(processVideo, 0);
+        setTimeout(() => {
+            isTimer = false;
+            processVideo();
+        }, 5000);
+
+        let cont = 5;
+        interval = setInterval(() => {
+            cont--;
+        }, 1000);
+
+
+        ctx.font = "120px Arial";
+
+        function timer() {
+            if (canvas.width >= canvas.height) {
+                ctx.drawImage(video, 0, (canvas.height / 2) - (canvas.width * video.height / video.width / 2), canvas.width, canvas.width * video.height / video.width);
+            } else {
+                ctx.drawImage(video, (canvas.width - video.width * offsetX) / 2, 0, video.width * offsetX, canvas.height);
+            }
+
+            ctx.fillText(cont.toString(), canvas.width / 2, canvas.height / 2);
+
+            if (isTimer) {
+                delay = 1000 / FPS - (Date.now() - begin);
+                setTimeout(() => {
+                    timer()
+                }, delay);
+            }
+        }
+        setTimeout(timer, 0);
 
         function squareDistace(p1, p2) {
             let a = p1.x - p2.x;
