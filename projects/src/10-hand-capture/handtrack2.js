@@ -9,6 +9,11 @@ const video = document.getElementById("videoInput");
 // start video and get its properties
 var width, height;
 
+var classification = 0;
+var hCenter = { x: 0, y: 0 };
+
+let classificationHelper;
+
 startVideo(video)
     .then((value) => {
         width = value.width;
@@ -189,7 +194,7 @@ function main(low, high) {
     let goodOld = [];
 
     // foreground extracting variables
-    let center;
+    // let center;
     let p1 = new cv.Point(0, 0);
     let p2 = new cv.Point(0, 0);
     const info = document.querySelector('#info');
@@ -211,6 +216,9 @@ function main(low, high) {
     let M = cv.Mat.ones(5, 5, cv.CV_8U);
     let anchor = new cv.Point(-1, -1);
 
+    // center 
+    let center = { x: 0, y: 0 }
+
     let begin, delay; // fps helpers
     function processVideo() {
         begin = Date.now();
@@ -224,6 +232,8 @@ function main(low, high) {
 
         if (contourArea.value < MIN_AREA) {
             hasFeatures = false;
+            center.x = 0;
+            center.y = 0;
             dst.setTo(BLACK);
         }
         else {
@@ -235,7 +245,8 @@ function main(low, high) {
             if (!hasFeatures) {
                 cv.goodFeaturesToTrack(grayFrame, features, maxCorners, qualityLevel, minDistance, binaryMask);
 
-                center = { x: 0, y: 0 } // temp
+                center.x = 0;
+                center.y = 0;
 
                 if (features.rows >= MIN_FEATURES) {
                     hasFeatures = true;
@@ -255,28 +266,21 @@ function main(low, high) {
                         goodNew.push(new cv.Point(features2.data32F[i * 2], features2.data32F[i * 2 + 1]));
                         goodOld.push(new cv.Point(features.data32F[i * 2], features.data32F[i * 2 + 1]));
 
-                        // console.log(goodNew[i], goodOld[i])
                         if (goodNew[i] && goodOld[i]) {
-                            avx += goodNew[i].x //- goodOld[i].x;
-                            avy += goodNew[i].y //- goodOld[i].y
+                            avx += goodNew[i].x - goodOld[i].x;
+                            avy += goodNew[i].y - goodOld[i].y
                             size++;
                         }
                     }
                 }
 
-                avx /= size;
-                avy /= size;
+                if (size > 0) {
+                    avx /= size;
+                    avy /= size;
 
-                if (avx > 0)
-                    center.x = avx;
-                if (avy > 0)
-                    center.y = avy;
-
-                if (center.x < 0) center.x = 0;
-                if (center.y < 0) center.y = 0;
-
-                if (center.x > height) center.x = height;
-                if (center.y > width) center.y = width;
+                    center.x += avx;
+                    center.y += avy;
+                }
 
                 cv.circle(dst, center, 7, colors[0], -1)
 
@@ -295,6 +299,9 @@ function main(low, high) {
             }
         }
 
+        hCenter.x = center.x / width;
+        hCenter.y = -center.y / height;
+
         cv.imshow("canvasFrame", dst);
 
 
@@ -309,6 +316,11 @@ function main(low, high) {
 
     let event = new CustomEvent("handtrack-started");
     window.dispatchEvent(event);
+
+    setInterval(() => {
+        classification = classificationHelper;
+
+    }, 500);
 
 
     function findBiggestArea(source, contours, contourArea) {
@@ -559,11 +571,7 @@ function main(low, high) {
         manhatan: ${manhatanOpen1 < manhatanClose1 ? 'open' : 'close'}<br\>
         cont: ${contOpen1 > contClose1 ? 'open' : 'close'}`;
 
-        return {
-            eu: euclideanOpen1 < euclideanClose1 ? 'open' : 'close',
-            ma: manhatanOpen1 < manhatanClose1 ? 'open' : 'close',
-            co: contOpen1 > contClose1 ? 'open' : 'close'
-        }
+        classificationHelper = contOpen1 > contClose1 ? 1 : 0
     }
 
     // hu moments

@@ -30,8 +30,10 @@ let camera, cursor, raycaster, rayClock, fusingClock, messageBg, message, textBg
 let uiGroup, movementBar, messageGroup, textGroup;
 
 // helpers
-let buttonsArray, buttonCount, origin2d, direction, direction2, euler, intersection, intersected, oldIntersected;
+let buttonsArray, buttonCount, origin2d, direction, direction2, euler, intersection, intersected, oldIntersected, oldClassification;
 let pos;
+
+let debugOn;
 
 let fingers, canvasTexture, center, hand;
 
@@ -42,21 +44,6 @@ class Orbi extends Object3D {
         if (!cam || cam.type != "PerspectiveCamera") {
             throw new Error("OrBI: Type of camera argument have to be PerspectiveCamera")
         }
-
-        window.addEventListener('changed', function (e) {
-            if (!hand) return;
-            fingers = e.detail.fingers;
-
-            if (fingers > 0) {
-                config.hand.action.reset();
-                config.hand.action.play()
-            }
-            else {
-                config.hand.action.reset();
-                config.hand.action.time = -1;
-                config.hand.loop = true;
-            }
-        }, false);
 
         config = {
             display: new Vector2(4, 1),
@@ -110,6 +97,9 @@ class Orbi extends Object3D {
                 mixer: null,
                 action: null
             },
+            debug: {
+                enabled: false
+            }
         }
         assingProps(config, props);
 
@@ -136,6 +126,7 @@ class Orbi extends Object3D {
                 hand.scene.scale.set(0.025, 0.025, 0.025);
                 hand.scene.position.set(0, 0, -0.6);
                 cursor = hand.scene;
+                cursor.isModel = true;
 
                 if (context)
                     canvasTexture = new CanvasTexture(context.canvas)
@@ -149,6 +140,7 @@ class Orbi extends Object3D {
                 cursor.position.copy(config.cursor.position);
                 cursor.position.z = -config.orbits[currentOrbit] + 0.1;
                 cursor.renderOrder = 5000;
+                cursor.isModel = false;
             }
             camera.add(cursor);
         }
@@ -239,7 +231,6 @@ class Orbi extends Object3D {
         // raycaster.far = config.raycaster.far;
         raycaster.far = config.orbits[currentOrbit] + 0.5;
 
-
         rayClock = new Clock(true);
         fusingClock = new Clock(false);
         isFusing = false;
@@ -252,6 +243,9 @@ class Orbi extends Object3D {
         buttonCount = 0;
         euler = new Euler(0, 0, 0, 'YXZ');
         intersection = [];
+
+        // debug mode
+        debugOn = config.debug.enabled;
     }
 
     addButton(name, textureSrc, callback) {
@@ -322,20 +316,26 @@ class Orbi extends Object3D {
     }
 
     showText(txt) {
-        if (!this.font) {
-            console.error('OrBI: No font specified.');
-            // return;
+        console.log(debugOn)
+        if (debugOn) {
+            textGroup.visible = true;
+            return;
         }
 
-        // const textGeo = new TextBufferGeometry(txt, {
-        //     font: this.font,
-        //     size: 0.04,
-        //     height: 0,
-        // });
-        // // textGeo.computeBoundingBox()
+        if (!this.font) {
+            console.error('OrBI: No font specified.');
+            return;
+        }
 
-        // text.geometry = textGeo;
-        // text.geometry.needsUpdate = true;
+        const textGeo = new TextBufferGeometry(txt, {
+            font: this.font,
+            size: 0.04,
+            height: 0,
+        });
+        // textGeo.computeBoundingBox()
+
+        text.geometry = textGeo;
+        text.geometry.needsUpdate = true;
 
         textGroup.visible = true;
     }
@@ -354,13 +354,7 @@ class Orbi extends Object3D {
             uiGroup.rotation.x = euler.x;
         }
 
-        if (fingers < 1) {
-            isFusing = false;
-            fusingClock.stop();
-            cursor.children[0].children[1].material.color.g = 0.5;
-            cursor.children[0].children[1].material.needsUpdate = true;
-        }
-        else if (rayClock.getElapsedTime() > 0.2) {
+        if (rayClock.getElapsedTime() > 0.2) {
             rayClock.start();
 
             cursor.getWorldPosition(pos);
@@ -401,9 +395,14 @@ class Orbi extends Object3D {
             else if (isFusing) {
                 isFusing = false;
                 fusingClock.stop();
-                // cursor.scale.set(1, 1, 1);
-                cursor.children[0].children[1].material.color.g = 0.5;
-                cursor.children[0].children[1].material.needsUpdate = true;
+
+                if (cursor.isModel) {
+                    cursor.children[0].children[1].material.color.g = 0.5;
+                    cursor.children[0].children[1].material.needsUpdate = true;
+                }
+                else {
+                    cursor.scale.set(1, 1, 1);
+                }
             }
         }
 
@@ -411,21 +410,53 @@ class Orbi extends Object3D {
             this.fusingTime = fusingClock.elapsedTime;
 
             if (this.fusingTime < config.cursor.fusingTime) {
-                // cursor.scale.addScalar(-fusingClock.getDelta());
-                cursor.children[0].children[1].material.color.g += fusingClock.getDelta();
-                cursor.children[0].children[1].material.needsUpdate = true;
+                if (cursor.isModel) {
+                    cursor.children[0].children[1].material.color.g += fusingClock.getDelta();
+                    cursor.children[0].children[1].material.needsUpdate = true;
+                }
+                else {
+                    cursor.scale.addScalar(-fusingClock.getDelta());
+                }
             }
             else {
                 handleClick(intersected);
-                // cursor.scale.set(1, 1, 1);
-                cursor.children[0].children[1].material.color.g = 0.5;
-                cursor.children[0].children[1].material.needsUpdate = true;
+
                 isFusing = false;
                 fusingClock.stop();
+
+                if (cursor.isModel) {
+                    cursor.children[0].children[1].material.color.g = 0.5;
+                    cursor.children[0].children[1].material.needsUpdate = true;
+                }
+                else {
+                    cursor.scale.set(1, 1, 1);
+                }
             }
         }
 
-        canvasTexture.needsUpdate = true;
+        if (canvasTexture) {
+            canvasTexture.needsUpdate = true;
+
+            if (hCenter) {
+                cursor.position.x = hCenter.x;
+                console.log(1)
+                cursor.position.y = hCenter.y;
+            }
+
+            if (classification != oldClassification) {
+                if (classification === 1) {
+                    config.hand.action.reset();
+                    config.hand.action.play()
+                }
+                else {
+                    config.hand.action.reset();
+                    config.hand.action.time = -1;
+                    // config.hand.loop = true;
+                }
+            }
+
+            oldClassification = classification;
+        }
     }
 
     click() {
@@ -459,7 +490,9 @@ class Orbi extends Object3D {
         else if (isFusing) {
             isFusing = false;
             fusingClock.stop();
-            // cursor.scale.set(1, 1, 1);
+
+            if (!cursor.isModel)
+                cursor.scale.set(1, 1, 1);
         }
     }
 }

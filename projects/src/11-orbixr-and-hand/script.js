@@ -77,7 +77,10 @@ const config = {
     model: null,
     mixer: null,
     action: null,
-  }
+  },
+  debug: {
+    enabled: true
+}
 }
 
 let orbi;
