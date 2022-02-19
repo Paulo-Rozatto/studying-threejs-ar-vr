@@ -1,46 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hand-Track Study</title>
-
-    <style>
-        #videoInput, #canvasFrame, #roi {
-            border: 1px solid red;
-        }
-
-        #videoInput::after {
-            content: 'Input';
-            color: black;
-            font-size: 1rem;
-        }
-
-        #canvasFrame::after {
-            content: 'Input';
-            color: black;
-            font-size: 1rem;
-        }
-    </style>
+    <title>Handtrack</title>
 </head>
-
 <body>
-    <video id="videoInput" style="display: none;"></video>
-    <p id="info">Carregando...</p>
-    <canvas id="canvasFrame"></canvas>
-    <canvas id="roi"></canvas>
-    <canvas id="bin"></canvas>
-    
-    
-    <br/>
-    <button id="btn1">Calibrate</button>
-    <button id="btn2">Start</button>
-    <button id="btn3">HuMoments</button>
-    <pre id="hu"></pre>
-    <script src="handtrack2.js"></script>
-    <script async src="libs/opencv1.js" onload="cv['onRuntimeInitialized']=()=>{start({cv: true});}; " type="text/javascript"></script>
+    <div id="container">
+
+    </div>
+    <p id="test"></p>
 </body>
 
+<script id="oi" async src="libs/opencv1.js" type="text/javascript"></script>
+<script type="module">
+    import HandTrack from './handtrack.module.js'
+
+    document.getElementById('oi').addEventListener('load', () => {
+        console.log(cv);
+        const handTrack = new HandTrack(cv,'container');
+        handTrack.start(true);
+    })
+
+</script>
 </html>
