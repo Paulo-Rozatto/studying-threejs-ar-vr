@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Handtrack</title>
 </head>
+
 <body>
     <div id="container">
 
@@ -22,15 +24,25 @@
     document.getElementById('opencv').addEventListener('load', () => {
         main();
     })
-    
-    function main ()  {
-        const handTrack = new HandTrack(cv,'container');
+
+    function main() {
+        const handTrack = new HandTrack(cv, 'container');
 
         document.getElementById('cl').addEventListener('click', handTrack.calibrate);
 
-        document.getElementById('start').addEventListener('click', handTrack.start);
+        document.getElementById('start').addEventListener('click', start);
 
+        function start() {
+            handTrack.start();
+
+            document.getElementById('cl').removeEventListener('click', handTrack.calibrate);
+            document.getElementById('start').removeEventListener('click', start);
+
+            document.getElementById('cl').remove();
+            document.getElementById('start').remove();
+        }
     }
 
 </script>
+
 </html>

@@ -1,7 +1,8 @@
 let cv;
 let video, canvas, context;
 let width, height;
-let calibration
+let calibration, main;
+
 
 export default class HandTrack {
     constructor(cvObj, elId, opt) {
@@ -39,6 +40,11 @@ export default class HandTrack {
         let high = calibration.caliHigh;
 
         calibration = null;
+
+       main = new Main({
+           low,
+           high
+       })
     }
 }
 
@@ -199,133 +205,156 @@ class Calibration {
     }
 }
 
-function main(low, high) {
-    // -- Constants -- //
-    const FPS = 24;
-    const BLACK = new cv.Scalar(0, 0, 0, 255); // helper scalar for black color
-    const WHITE = new cv.Scalar(255, 255, 255, 255); // helper scalar for red color
-    const RED = new cv.Scalar(255, 0, 0, 255);
-    const GREEN = new cv.Scalar(0, 255, 0, 255);
+var classification = 0;
+var hCenter = { x: 0, y: 0 };
 
-    // Thesholds for pixel color classification
-    const LOW = new cv.Mat(height, width, cv.CV_8UC3, [0, low.cr, low.cb, 0]);
-    const HIGH = new cv.Mat(height, width, cv.CV_8UC3, [255, high.cr, high.cb, 255]);
+let classificationHelper;
 
-    // Minimum occupied area threshold
-    const MIN_AREA = height * width * 0.05;
+let isReturn = false;
 
-    // Minimum number of feature points
-    const MIN_FEATURES = 20;
+let ratio = 0, orient = 0, circularity = 0;
 
-    // --------------- //
+class Main {
+    constructor(config) {
+        this.FPS = config.fps || 24;
 
-    // Video manipulation variables
-    const src = new cv.Mat(height, width, cv.CV_8UC4); // storages image source
-    const dst = new cv.Mat(height, width, cv.CV_8UC4); // storages final result
-    const binaryMask = new cv.Mat(height, width, 0);
-    const rectMask = new cv.Mat(height, width, 0);
-    const transform = new cv.Mat(height, width, cv.CV_32F);
-    const aux = new cv.Mat(height, width, cv.CV_8UC4); // helper mat - rename it
-    const grayFrame = new cv.Mat(height, width, cv.CV_8UC4);
-    const oldFrame = new cv.Mat(height, width, cv.CV_8UC4); // helper mat - rename it
-    const mask = new cv.Mat(height, width, cv.CV_8UC4, BLACK); // helper mat
+        this.BLACK = new cv.Scalar(0, 0, 0, 255); // helper scalar for black color
+        this.WHITE = new cv.Scalar(255, 255, 255, 255); // helper scalar for red color
+        this.RED = new cv.Scalar(255, 0, 0, 255);
+        this.GREEN = new cv.Scalar(0, 255, 0, 255);
 
-    // Contourns variables - https://docs.opencv.org/3.4.15/d5/daa/tutorial_js_contours_begin.html
-    const contours = new cv.MatVector(); //storages contours
-    const hierarchy = new cv.Mat(); // stores hierarchy
-    const contourArea = { id: -1, value: 0 } // stores the larger contourn and its id
+        // Thesholds for pixel color classification
+        this.LOW = new cv.Mat(height, width, cv.CV_8UC3, [0, config.low.cr, config.low.cb, 0]);
+        this.HIGH = new cv.Mat(height, width, cv.CV_8UC3, [255, config.high.cr, config.high.cb, 255]);
 
-    // features variables - https://docs.opencv.org/3.4/dd/d1a/group__imgproc__feature.html#ga1d6bb77486c8f92d79c8793ad995d541
-    let [maxCorners, qualityLevel, minDistance, blockSize] = [50, 0.2, 15, 10];
-    let features = new cv.Mat();
-    let hasFeatures = false;
+        // Minimum occupied area threshold
+        this.MIN_AREA = height * width * 0.05;
 
-    // optical flow variables - https://docs.opencv.org/3.4/dc/d6b/group__video__track.html#ga473e4b886d0bcc6b65831eb88ed93323
-    let features2 = new cv.Mat(); // -rename it
-    let winSize = new cv.Size(15, 15);
-    let maxLevel = 2;
-    let criteria = new cv.TermCriteria(cv.TERM_CRITERIA_EPS | cv.TERM_CRITERIA_COUNT, 10, 0.03);
-    let stats = new cv.Mat();
-    let err = new cv.Mat()
-    let goodNew = [];
-    let goodOld = [];
+        // Minimum number of feature points
+        this.MIN_FEATURES = 20;
 
-    // foreground extracting variables
-    // let center;
-    let p1 = new cv.Point(0, 0);
-    let p2 = new cv.Point(0, 0);
-    const info = document.querySelector('#info');
-    const mt = new cv.matFromArray(1, 4, 12, [0, 0, 0, 0, 0, 0, 0, 0]);
+        // --------------- //
 
-    const open1 = [3.0912769784486693, 7.7366600271469705, 11.305973553808753, 10.968399128352408, 13.164938156199067, 14.907906585875475, 15.353374087584879, 0.9681062034395111, 0.2637487229, 0.8326351262]
-    const open2 = [3.12765614387537, 7.890141913277302, 11.166666775476504, 11.270622197906857, 20.36886535309352, 9.19620982349387, 20.450965321154378, 1.1455177693993803, 0.2637487229, 0.8326351262]
+        // Video manipulation variables
+        this.src = new cv.Mat(height, width, cv.CV_8UC4); // storages image source
+        this.dst = new cv.Mat(height, width, cv.CV_8UC4); // storages final result
+        this.binaryMask = new cv.Mat(height, width, 0);
+        this.rectMask = new cv.Mat(height, width, 0);
+        this.transform = new cv.Mat(height, width, cv.CV_32F);
+        this.aux = new cv.Mat(height, width, cv.CV_8UC4); // helper mat - rename it
+        this.grayFrame = new cv.Mat(height, width, cv.CV_8UC4);
+        this.oldFrame = new cv.Mat(height, width, cv.CV_8UC4); // helper mat - rename it
+        this.mask = new cv.Mat(height, width, cv.CV_8UC4, this.BLACK); // helper mat
 
-    const closed1 = [3.1844407881299097, 7.9225593297972186, 11.132406073467994, 12.942107787759145, 25.27895813880837, 15.434180121732487, 22.59077766487394, 0.7816794694575135, 0.7125208160, 0.6453160090]
-    const closed2 = [3.1958532622091687, 8.498186203425494, 11.882128816659606, 13.87883275690292, 10.589385970285894, 0.0972378372045581, 2.469608358003279, 1.1300554542255923, 0.7125208160, 0.6453160090]
+        // Contourns variables - https://docs.opencv.org/3.4.15/d5/daa/tutorial_js_contours_begin.html
+        this.contours = new cv.MatVector(); //storages contours
+        this.hierarchy = new cv.Mat(); // stores hierarchy
+        this.contourArea = { id: -1, value: 0 } // stores the larger contourn and its id
 
-    // colors for drawing points
-    const colors = [];
-    for (let i = 0; i < maxCorners; i++) {
-        colors.push(new cv.Scalar(parseInt(Math.random() * 255), parseInt(Math.random() * 255), parseInt(Math.random() * 255), 255));
+        // features variables - https://docs.opencv.org/3.4/dd/d1a/group__imgproc__feature.html#ga1d6bb77486c8f92d79c8793ad995d541
+        this.maxCorners = 50;
+        this.qualityLevel = 0.2;
+        this.minDistance = 15;
+        this.blockSize = 10;
+        this.features = new cv.Mat();
+        this.hasFeatures = false;
+
+        // optical flow variables - https://docs.opencv.org/3.4/dc/d6b/group__video__track.html#ga473e4b886d0bcc6b65831eb88ed93323
+        this.features2 = new cv.Mat(); // -rename it
+        this.winSize = new cv.Size(15, 15);
+        this.maxLevel = 2;
+        this.criteria = new cv.TermCriteria(cv.TERM_CRITERIA_EPS | cv.TERM_CRITERIA_COUNT, 10, 0.03);
+        this.stats = new cv.Mat();
+        this.err = new cv.Mat()
+        this.goodNew = [];
+        this.goodOld = [];
+
+        // foreground extracting variables
+        // this.center;
+        this.p1 = new cv.Point(0, 0);
+        this.p2 = new cv.Point(0, 0);
+        this.info = document.querySelector('#info');
+        this.mt = new cv.matFromArray(1, 4, 12, [0, 0, 0, 0, 0, 0, 0, 0]);
+
+        this.open1 = [3.0912769784486693, 7.7366600271469705, 11.305973553808753, 10.968399128352408, 13.164938156199067, 14.907906585875475, 15.353374087584879, 0.9681062034395111, 0.2637487229, 0.8326351262]
+        this.open2 = [3.12765614387537, 7.890141913277302, 11.166666775476504, 11.270622197906857, 20.36886535309352, 9.19620982349387, 20.450965321154378, 1.1455177693993803, 0.2637487229, 0.8326351262]
+
+        this.closed1 = [3.1844407881299097, 7.9225593297972186, 11.132406073467994, 12.942107787759145, 25.27895813880837, 15.434180121732487, 22.59077766487394, 0.7816794694575135, 0.7125208160, 0.6453160090]
+        this.closed2 = [3.1958532622091687, 8.498186203425494, 11.882128816659606, 13.87883275690292, 10.589385970285894, 0.0972378372045581, 2.469608358003279, 1.1300554542255923, 0.7125208160, 0.6453160090]
+
+        // colors for drawing points
+        this.colors = [];
+        for (let i = 0; i < this.maxCorners; i++) {
+            this.colors.push(new cv.Scalar(parseInt(Math.random() * 255), parseInt(Math.random() * 255), parseInt(Math.random() * 255), 255));
+        }
+
+        // Variables for morphologics
+        this.M = cv.Mat.ones(5, 5, cv.CV_8U);
+        this.anchor = new cv.Point(-1, -1);
+
+        // center 
+        this.center = { x: 0, y: 0 }
+
+        this.begin;
+        this.delay; // fps helpers
+
+        this.processVideo = this.processVideo.bind(this);
+        this.bounding = this.bounding.bind(this);
+        this.detachForeground = this.detachForeground.bind(this);
+        this.moments = this.moments.bind(this);
+
+        setTimeout(this.processVideo, 0);
     }
 
-    // Variables for morphologics
-    let M = cv.Mat.ones(5, 5, cv.CV_8U);
-    let anchor = new cv.Point(-1, -1);
-
-    // center 
-    let center = { x: 0, y: 0 }
-
-    let begin, delay; // fps helpers
-    function processVideo() {
-        begin = Date.now();
+    processVideo() {
+        this.begin = Date.now();
 
         context.drawImage(video, 0, 0, width, height);
-        src.data.set(context.getImageData(0, 0, width, height).data);
+        this.src.data.set(context.getImageData(0, 0, width, height).data);
 
-        classifyPixesl(src, aux, LOW, HIGH);
+        classifyPixesl(this.src, this.aux, this.LOW, this.HIGH);
 
-        findBiggestArea(aux, contours, contourArea)
+        this.findBiggestArea(this.aux, this.contours, this.contourArea)
 
-        if (contourArea.value < MIN_AREA) {
-            hasFeatures = false;
-            center.x = 0;
-            center.y = 0;
-            dst.setTo(BLACK);
+        if (this.contourArea.value < this.MIN_AREA) {
+            this.hasFeatures = false;
+            this.center.x = 0;
+            this.center.y = 0;
+            this.dst.setTo(this.BLACK);
         }
         else {
-            dst.setTo(BLACK)
-            detachForeground(src, dst, contours, contourArea.id);
+            this.dst.setTo(this.BLACK)
+            this.detachForeground(this.src, this.dst, this.contours, this.contourArea.id);
 
-            cv.cvtColor(dst, grayFrame, cv.COLOR_RGB2GRAY);
+            cv.cvtColor(this.dst, this.grayFrame, cv.COLOR_RGB2GRAY);
 
-            if (!hasFeatures) {
-                cv.goodFeaturesToTrack(grayFrame, features, maxCorners, qualityLevel, minDistance, binaryMask);
+            if (!this.hasFeatures) {
+                cv.goodFeaturesToTrack(this.grayFrame, this.features, this.maxCorners, this.qualityLevel, this.minDistance, this.binaryMask);
 
-                center.x = 0;
-                center.y = 0;
+                this.center.x = 0;
+                this.center.y = 0;
 
-                if (features.rows >= MIN_FEATURES) {
-                    hasFeatures = true;
-                    mask.setTo(BLACK);
-                    grayFrame.copyTo(oldFrame);
+                if (this.features.rows >= this.MIN_FEATURES) {
+                    this.hasFeatures = true;
+                    this.mask.setTo(this.BLACK);
+                    this.grayFrame.copyTo(this.oldFrame);
                 }
             }
             else {
-                cv.calcOpticalFlowPyrLK(oldFrame, grayFrame, features, features2, stats, err, winSize, maxLevel, criteria);
+                cv.calcOpticalFlowPyrLK(this.oldFrame, this.grayFrame, this.features, this.features2, this.stats, this.err, this.winSize, this.maxLevel, this.criteria);
 
-                goodNew.length = 0;
-                goodOld.length = 0;
+                this.goodNew.length = 0;
+                this.goodOld.length = 0;
                 let avx = 0, avy = 0, size = 0;
 
-                for (let i = 0; i < stats.rows; i++) {
-                    if (stats.data[i] === 1) {
-                        goodNew.push(new cv.Point(features2.data32F[i * 2], features2.data32F[i * 2 + 1]));
-                        goodOld.push(new cv.Point(features.data32F[i * 2], features.data32F[i * 2 + 1]));
+                for (let i = 0; i < this.stats.rows; i++) {
+                    if (this.stats.data[i] === 1) {
+                        this.goodNew.push(new cv.Point(this.features2.data32F[i * 2], this.features2.data32F[i * 2 + 1]));
+                        this.goodOld.push(new cv.Point(this.features.data32F[i * 2], this.features.data32F[i * 2 + 1]));
 
-                        if (goodNew[i] && goodOld[i]) {
-                            avx += goodNew[i].x - goodOld[i].x;
-                            avy += goodNew[i].y - goodOld[i].y
+                        if (this.goodNew[i] && this.goodOld[i]) {
+                            avx += this.goodNew[i].x - this.goodOld[i].x;
+                            avy += this.goodNew[i].y - this.goodOld[i].y
                             size++;
                         }
                     }
@@ -335,55 +364,44 @@ function main(low, high) {
                     avx /= size;
                     avy /= size;
 
-                    center.x += avx;
-                    center.y += avy;
+                    this.center.x += avx;
+                    this.center.y += avy;
                 }
 
-                cv.circle(dst, center, 7, colors[0], -1)
+                cv.circle(this.dst, this.center, 7, this.colors[0], -1)
 
-                for (let i = 0; i < goodNew.length; i++) {
-                    cv.circle(dst, goodNew[i], 5, colors[i], 1);
+                for (let i = 0; i < this.goodNew.length; i++) {
+                    cv.circle(this.dst, this.goodNew[i], 5, this.colors[i], 1);
                 }
 
-                // mask.setTo(BLACK);
-                cv.add(dst, mask, dst);
+                // mask.setTo(this.BLACK);
+                cv.add(this.dst, this.ask, this.dst);
 
-                grayFrame.copyTo(oldFrame);
-                for (let i = 0; i < goodNew.length; i++) {
-                    features.data32F[i * 2] = goodNew[i].x;
-                    features.data32F[i * 2 + 1] = goodNew[i].y;
+                this.grayFrame.copyTo(this.oldFrame);
+                for (let i = 0; i < this.goodNew.length; i++) {
+                    this.features.data32F[i * 2] = this.goodNew[i].x;
+                    this.features.data32F[i * 2 + 1] = this.goodNew[i].y;
                 }
             }
         }
 
-        hCenter.x = center.x / width;
-        hCenter.y = -center.y / height;
+        hCenter.x = this.center.x / width;
+        hCenter.y = -this.center.y / height;
 
-        cv.imshow("canvasFrame", dst);
+        cv.imshow("canvasFrame", this.dst);
 
 
         if (isReturn) {
             return;
         }
-        delay = 1000 / FPS - (Date.now() - begin);
-        setTimeout(processVideo, delay);
+        this.delay = 1000 / this.FPS - (Date.now() - this.begin);
+        setTimeout(this.processVideo, this.delay);
     }
 
-    setTimeout(processVideo, 0);
+    findBiggestArea(source, contours, contourArea) {
+        cv.findContours(source, contours, this.hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
 
-    let event = new CustomEvent("handtrack-started");
-    window.dispatchEvent(event);
-
-    setInterval(() => {
-        classification = classificationHelper;
-
-    }, 500);
-
-
-    function findBiggestArea(source, contours, contourArea) {
-        cv.findContours(source, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
-
-        let areaIdx = -1, area, biggerArea = 0;
+        let areaIdx = -1, contour, area, biggerArea = 0;
         let i;
         for (i = 0; i < contours.size(); i++) {
             contour = contours.get(i);
@@ -399,15 +417,11 @@ function main(low, high) {
         contourArea.value = biggerArea;
     }
 
-    function dist(p1, p2) {
-        return Math.sqrt(Math.pow(p1.y - p2.y, 2) + Math.pow(p1.x - p2.x, 2));
-    }
-
-    function bounding(source, cnt) {
+    bounding(source, cnt) {
         let rotatedRect = cv.minAreaRect(cnt);
         let vertices = cv.RotatedRect.points(rotatedRect);
 
-        cv.circle(dst, rotatedRect.center, 1, colors[3], 5);
+        cv.circle(this.dst, rotatedRect.center, 1, this.colors[3], 5);
 
         let highest = 0;
         for (let i = 0; i < 4; i++) {
@@ -428,14 +442,14 @@ function main(low, high) {
             }
         }
 
-        closest2nd = (closest + 2) % 4;
+        let closest2nd = (closest + 2) % 4;
 
-        cv.circle(dst, vertices[highest], 15, RED, 4);
-        cv.circle(dst, vertices[closest], 15, GREEN, 4);
-        cv.circle(dst, vertices[closest2nd], 15, WHITE, 4);
+        cv.circle(this.dst, vertices[highest], 15, this.RED, 4);
+        cv.circle(this.dst, vertices[closest], 15, this.GREEN, 4);
+        cv.circle(this.dst, vertices[closest2nd], 15, this.WHITE, 4);
 
         for (let i = 0; i < 4; i++) {
-            cv.line(dst, vertices[i], vertices[(i + 1) % 4], colors[3], 2, cv.LINE_AA, 0);
+            cv.line(this.dst, vertices[i], vertices[(i + 1) % 4], this.colors[3], 2, cv.LINE_AA, 0);
         }
 
         d *= 1.05;
@@ -449,81 +463,80 @@ function main(low, high) {
 
         let ang = Math.atan(slope);
 
-        p1.x = vertices[highest].x + d * Math.cos(ang) * sign;
-        p1.y = vertices[highest].y + d * Math.sin(ang) * sign;
+        this.p1.x = vertices[highest].x + d * Math.cos(ang) * sign;
+        this.p1.y = vertices[highest].y + d * Math.sin(ang) * sign;
 
-        cv.circle(dst, p1, 5, RED, 4);
+        cv.circle(this.dst, this.p1, 5, this.RED, 4);
 
-        p2.x = vertices[closest].x + d * Math.cos(ang) * sign;
-        p2.y = vertices[closest].y + d * Math.sin(ang) * sign;
+        this.p2.x = vertices[closest].x + d * Math.cos(ang) * sign;
+        this.p2.y = vertices[closest].y + d * Math.sin(ang) * sign;
 
-        cv.circle(dst, p2, 5, colors[0], 4);
-        cv.line(dst, p1, p2, colors[0], 2, cv.LINE_AA, 0);
+        cv.circle(this.dst, this.p2, 5, this.colors[0], 4);
+        cv.line(this.dst, this.p1, this.p2, this.colors[0], 2, cv.LINE_AA, 0);
 
-        mt.data32S[0] = vertices[highest].x;
-        mt.data32S[1] = vertices[highest].y;
-        mt.data32S[2] = vertices[closest].x;
-        mt.data32S[3] = vertices[closest].y;
-        mt.data32S[4] = p2.x;
-        mt.data32S[5] = p2.y;
-        mt.data32S[6] = p1.x;
-        mt.data32S[7] = p1.y;
+        this.mt.data32S[0] = vertices[highest].x;
+        this.mt.data32S[1] = vertices[highest].y;
+        this.mt.data32S[2] = vertices[closest].x;
+        this.mt.data32S[3] = vertices[closest].y;
+        this.mt.data32S[4] = this.p2.x;
+        this.mt.data32S[5] = this.p2.y;
+        this.mt.data32S[6] = this.p1.x;
+        this.mt.data32S[7] = this.p1.y;
 
         // ainda preciso descobrir como fazer para nao ficar alocando e desalocando isso aqui
         let v = new cv.MatVector();
-        v.push_back(mt);
+        v.push_back(this.mt);
 
-        source.setTo(BLACK);
-        cv.drawContours(source, v, 0, WHITE, -1, cv.LINE_8);
+        source.setTo(this.BLACK);
+        cv.drawContours(source, v, 0, this.WHITE, -1, cv.LINE_8);
 
         v.delete();
     }
 
-    let ratio = 0, orientation = 0, circularity = 0;
-    function detachForeground(source, destination, contours, areaIdx) {
-        binaryMask.setTo(BLACK);
+    detachForeground(source, destination, contours, areaIdx) {
+        this.binaryMask.setTo(this.BLACK);
 
-        cv.drawContours(binaryMask, contours, areaIdx, WHITE, -1, cv.LINE_8, hierarchy, 1);
+        cv.drawContours(this.binaryMask, contours, areaIdx, this.WHITE, -1, cv.LINE_8, this.hierarchy, 1);
 
-        cv.morphologyEx(binaryMask, binaryMask, cv.MORPH_OPEN, M, anchor, 1,
+        cv.morphologyEx(this.binaryMask, this.binaryMask, cv.MORPH_OPEN, this.M, this.anchor, 1,
             cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());
 
 
-        cv.morphologyEx(binaryMask, binaryMask, cv.MORPH_CLOSE, M, anchor, 1,
+        cv.morphologyEx(this.binaryMask, this.binaryMask, cv.MORPH_CLOSE, this.M, this.anchor, 1,
             cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());
 
-        cv.bitwise_and(source, source, destination, binaryMask);
+        cv.bitwise_and(source, source, destination, this.binaryMask);
 
-        rectMask.setTo(BLACK)
-        bounding(rectMask, contours.get(areaIdx));
-        cv.bitwise_and(rectMask, rectMask, binaryMask, binaryMask);
+        this.rectMask.setTo(this.BLACK)
+        this.bounding(this.rectMask, contours.get(areaIdx));
+        cv.bitwise_and(this.rectMask, this.rectMask, this.binaryMask, this.binaryMask);
 
-        cv.distanceTransform(binaryMask, transform, cv.DIST_L2, cv.DIST_MASK_3);
+        cv.distanceTransform(this.binaryMask, this.transform, cv.DIST_L2, cv.DIST_MASK_3);
 
-        rectMask.setTo(BLACK);
-        let max = cv.minMaxLoc(transform);
+        this.rectMask.setTo(this.BLACK);
+        let max = cv.minMaxLoc(this.transform);
 
-        p1.x = max.maxLoc.x - max.maxVal * 3;
-        p1.y = max.maxLoc.y - max.maxVal * 3;
-        p2.x = max.maxLoc.x + max.maxVal * 3;
-        p2.y = max.maxLoc.y + max.maxVal;
-        cv.rectangle(rectMask, p1, p2, WHITE, -1);
+        this.p1.x = max.maxLoc.x - max.maxVal * 3;
+        this.p1.y = max.maxLoc.y - max.maxVal * 3;
+        this.p2.x = max.maxLoc.x + max.maxVal * 3;
+        this.p2.y = max.maxLoc.y + max.maxVal;
+        cv.rectangle(this.rectMask, this.p1, this.p2, this.WHITE, -1);
 
-        cv.bitwise_and(binaryMask, binaryMask, rectMask, rectMask);
+        cv.bitwise_and(this.binaryMask, this.binaryMask, this.rectMask, this.rectMask);
 
-        cv.bitwise_and(source, source, destination, binaryMask);
+        cv.bitwise_and(source, source, destination, this.binaryMask);
 
         let cnt = new cv.MatVector(); //storages contours
         let hie = new cv.Mat();
 
-        cv.findContours(binaryMask, cnt, hie, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
+        cv.findContours(this.binaryMask, cnt, hie, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
 
-        rectMask.setTo(BLACK);
+        this.rectMask.setTo(this.BLACK);
         if (cnt.get(0)) {
             let area = cv.contourArea(cnt.get(0), false);
 
             if (area > 100) {
-                cv.drawContours(rectMask, cnt, 0, RED, 1, cv.LINE_8, hie, 1);
+                cv.drawContours(this.rectMask, cnt, 0, this.RED, 1, cv.LINE_8, hie, 1);
 
                 // definitions of circularity, roundness , etc:
                 // https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4706773/
@@ -534,26 +547,26 @@ function main(low, high) {
                 // fit elipse and get semi-major axis
                 let rotatedRect = cv.fitEllipse(cnt.get(0));
 
-                orientation = rotatedRect.angle;
+                orient = rotatedRect.angle;
                 ratio = rotatedRect.size.width / rotatedRect.size.height;
 
-                cv.ellipse1(dst, rotatedRect, RED, 1, cv.LINE_8);
+                cv.ellipse1(this.dst, rotatedRect, this.RED, 1, cv.LINE_8);
             }
         }
 
         // atual
-        // cv.imshow("canvasFrame", binaryMask);
-        moments(binaryMask, contours);
+        // cv.imshow("canvasFrame", this.binaryMask);
+        this.moments(this.binaryMask, contours);
 
-        cv.circle(dst, max.maxLoc, 7, colors[0], -1)
+        cv.circle(this.dst, max.maxLoc, 7, this.colors[0], -1)
 
-        cv.circle(dst, max.maxLoc, max.maxVal * 1.1, colors[1], 2)
+        cv.circle(this.dst, max.maxLoc, max.maxVal * 1.1, this.colors[1], 2)
 
         cnt.delete();
         hie.delete();
     }
 
-    function moments(source) {
+    moments(source) {
         // https://learnopencv.com/shape-matching-using-hu-moments-c-python/
 
         let moments = cv.moments(source);
@@ -561,7 +574,7 @@ function main(low, high) {
         // let rect;
 
         // cv.HuMoments(moments, huMoments);
-        hu(moments, features)
+        this.hu(moments, features)
 
         // log transform - h[i] = -sign(h[i]) * log10|h[i]|
         for (let i = 0; i < features.length; i++) {
@@ -583,10 +596,10 @@ function main(low, high) {
         let absOpen1, absOpen2, absClose1, absClose2;
 
         for (let i = 0; i < features.length; i++) {
-            absOpen1 = Math.abs(features[i] - open1[i]);
-            absClose1 = Math.abs(features[i] - closed1[i]);
-            absOpen2 = Math.abs(features[i] - open2[i]);
-            absClose2 = Math.abs(features[i] - closed2[i]);
+            absOpen1 = Math.abs(features[i] - this.open1[i]);
+            absClose1 = Math.abs(features[i] - this.closed1[i]);
+            absOpen2 = Math.abs(features[i] - this.open2[i]);
+            absClose2 = Math.abs(features[i] - this.closed2[i]);
 
             euclideanOpen1 += (absOpen1 * absOpen1);
             euclideanClose1 += (absClose1 * absClose1);
@@ -622,8 +635,7 @@ function main(low, high) {
         classificationHelper = contOpen1 > contClose1 ? 1 : 0
     }
 
-    // hu moments
-    function hu(m, hu) {
+    hu(m, hu) {
         let t0 = m.nu30 + m.nu12;
         let t1 = m.nu21 + m.nu03;
 
@@ -650,12 +662,14 @@ function main(low, high) {
     }
 }
 
-
 function classifyPixesl(source, destination, low, high) {
     cv.cvtColor(source, destination, cv.COLOR_RGB2YCrCb);
     cv.inRange(destination, low, high, destination);
 }
 
+function dist(p1, p2) {
+    return Math.sqrt(Math.pow(p1.y - p2.y, 2) + Math.pow(p1.x - p2.x, 2));
+}
 
 async function landScape() {
     return new Promise((resolve, reject) => {
