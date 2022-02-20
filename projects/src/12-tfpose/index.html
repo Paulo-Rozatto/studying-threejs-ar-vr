@@ -6,8 +6,47 @@
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1.0, user-scalable=no">
     <style>
         body {
+            margin: 0 auto !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
+
+        #start {
+            display: table;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 200;
+        }
+
+        .center-vertically {
             margin: 0;
-            overflow: hidden;
+            position: absolute;
+            top: 50%;
+            -ms-transform: translateY(-50%);
+            transform: translateY(-50%);
+            width: inherit;
+        }
+
+        #btn {
+            display: none;
+            margin: auto;
+
+            background-color: #008CBA;
+            /* Green */
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #btn:hover {
+            background-color: gray;
         }
     </style>
 </head>
@@ -15,9 +54,16 @@
 <body id="body">
     <canvas id="output"></canvas>
 
+    <span id="start">
+        <div class="center-vertically">
+            <button id="btn" class="">Start</button>
+        </div>
+    </span>
+
     <video id="video" playsinline
-        style="-webkit-transform: scaleX(-1); transform: scaleX(-1); visibility: hidden; width: auto; height: auto;">
+        style="-webkit-transform: scaleX(-1); transform: scaleX(-1); display: none; width: auto; height: auto;">
     </video>
+
 </body>
 
 <!-- Load TensorFlow.js -->
@@ -182,16 +228,23 @@
             }, delay);
         }
 
-        setTimeout(() => {
-            isTimer = false;
-            processVideo();
-        }, 5000);
+        let cont = 0;
 
-        let cont = 5;
-        interval = setInterval(() => {
-            cont--;
-        }, 1000);
+        let btn = document.getElementById('btn')
+        btn.style.display = 'block';
+        btn.addEventListener('click', () => {
+            setTimeout(() => {
+                isTimer = false;
+                processVideo();
+            }, 5000);
 
+            cont = 5;
+
+            interval = setInterval(() => {
+                cont--;
+            }, 1000);
+            btn.style.display = 'none';
+        }, { once: true })
 
         ctx.font = "120px Arial";
 
@@ -202,7 +255,8 @@
                 ctx.drawImage(video, (canvas.width - video.width * offsetX) / 2, 0, video.width * offsetX, canvas.height);
             }
 
-            ctx.fillText(cont.toString(), canvas.width / 2, canvas.height / 2);
+            if (cont > 0)
+                ctx.fillText(cont.toString(), canvas.width / 2, canvas.height / 2);
 
             if (isTimer) {
                 delay = 1000 / FPS - (Date.now() - begin);
