@@ -24,7 +24,7 @@ import {
 let currentOrbit, isFusing, config;
 
 // objects
-let camera, cursor, raycaster, rayClock, fusingClock, messageBg, message, textBg, text;
+let camera, cursor, ring, raycaster, rayClock, fusingClock, messageBg, message, textBg, text;
 
 // groups
 let uiGroup, movementBar, messageGroup, textGroup;
@@ -36,6 +36,8 @@ let pos;
 let debugOn;
 
 let fingers, canvasTexture, center, hand;
+
+let handTrack, context;
 
 class Orbi extends Object3D {
     constructor(cam, props) {
@@ -92,6 +94,10 @@ class Orbi extends Object3D {
                 near: 0.0,
                 far: 1.5,
             },
+            tracking: {
+                enabled: false,
+                handTrack: null,
+            },
             hand: {
                 model: null,
                 mixer: null,
@@ -111,7 +117,15 @@ class Orbi extends Object3D {
         this.position.y = 1.6;
         this.rotation.y = config.rotation.theta;
 
+        handTrack = config.tracking.handTrack;
+        context = handTrack?.getContext();
+
+        if (context) {
+            canvasTexture = new CanvasTexture(context.canvas)
+        }
+
         cursor = camera.getObjectByName("orbi-cursor");
+
         if (!cursor) {
             if (config.hand.model) {
                 hand = config.hand.model;
@@ -125,23 +139,26 @@ class Orbi extends Object3D {
 
                 hand.scene.scale.set(0.025, 0.025, 0.025);
                 hand.scene.position.set(0, 0, -0.6);
+            }
+
+            ring = new Mesh(
+                new RingBufferGeometry(config.cursor.innerRadius, config.cursor.outerRadius, 24),
+                new MeshBasicMaterial({ color: config.cursor.color, depthWrite: false, depthTest: false, transparent: true })
+            );
+            ring.name = "orbi-cursor";
+            ring.position.copy(config.cursor.position);
+            ring.position.z = -config.orbits[currentOrbit] + 0.1;
+            ring.renderOrder = 5000;
+            ring.isModel = false;
+
+            if (config.hand.model && config.tracking.enabled) {
                 cursor = hand.scene;
                 cursor.isModel = true;
-
-                if (context)
-                    canvasTexture = new CanvasTexture(context.canvas)
             }
             else {
-                cursor = new Mesh(
-                    new RingBufferGeometry(config.cursor.innerRadius, config.cursor.outerRadius, 24),
-                    new MeshBasicMaterial({ color: config.cursor.color, depthWrite: false, depthTest: false, transparent: true })
-                );
-                cursor.name = "orbi-cursor";
-                cursor.position.copy(config.cursor.position);
-                cursor.position.z = -config.orbits[currentOrbit] + 0.1;
-                cursor.renderOrder = 5000;
-                cursor.isModel = false;
+                cursor = ring;
             }
+
             camera.add(cursor);
         }
 
@@ -344,7 +361,7 @@ class Orbi extends Object3D {
         textGroup.visible = false;
     }
 
-    update(time) {
+    update() {
         if (this.moveHorizontally) {
             euler.setFromQuaternion(camera.quaternion);
             this.rotation.y = euler.y;
@@ -354,7 +371,7 @@ class Orbi extends Object3D {
             uiGroup.rotation.x = euler.x;
         }
 
-        if (rayClock.getElapsedTime() > 0.2) {
+        if (rayClock.getElapsedTime() > 0.2 && (config.tracking.enabled == false || handTrack?.getClassification() == 1)) {
             rayClock.start();
 
             cursor.getWorldPosition(pos);
@@ -434,17 +451,13 @@ class Orbi extends Object3D {
             }
         }
 
-        if (canvasTexture) {
+        if (config.tracking.enabled) {
             canvasTexture.needsUpdate = true;
 
-            if (hCenter) {
-                cursor.position.x = hCenter.x;
-                console.log(1)
-                cursor.position.y = hCenter.y;
-            }
+            handTrack.getCenter(cursor.position);
 
-            if (classification != oldClassification) {
-                if (classification === 1) {
+            if (handTrack.getClassification() != oldClassification) {
+                if (handTrack.getClassification() === 1) {
                     config.hand.action.reset();
                     config.hand.action.play()
                 }
@@ -455,7 +468,7 @@ class Orbi extends Object3D {
                 }
             }
 
-            oldClassification = classification;
+            oldClassification = handTrack.getClassification();
         }
     }
 
@@ -494,6 +507,26 @@ class Orbi extends Object3D {
             if (!cursor.isModel)
                 cursor.scale.set(1, 1, 1);
         }
+    }
+
+    pauseTracking() {
+        config.tracking.enabled = false;
+        cursor = ring;
+        cursor.isModel = false;
+        hand.scene.visible = false;
+        ring.visible = true;
+        camera.add(cursor);
+        handTrack.pause();
+    }
+
+    resumeTracking() {
+        config.tracking.enabled = true;
+        cursor = hand.scene;
+        cursor.isModel =  true;
+        hand.scene.visible = true;
+        ring.visible = false;
+        camera.add(cursor);
+        handTrack.resume();
     }
 }
 

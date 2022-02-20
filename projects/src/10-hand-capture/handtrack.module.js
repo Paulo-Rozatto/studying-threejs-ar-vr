@@ -41,10 +41,32 @@ export default class HandTrack {
 
         calibration = null;
 
-       main = new Main({
-           low,
-           high
-       })
+        main = new Main({
+            low,
+            high
+        })
+    }
+
+    getCenter(point) {
+        point.x = hCenter.x;
+        point.y = hCenter.y
+    }
+
+    getContext() {
+        return context;
+    }
+
+    getClassification() {
+        return classification;
+    }
+
+    pause() {
+        isReturn = true;
+    }
+
+    resume() {
+        isReturn = false;
+        setTimeout(main.processVideo, 0);
     }
 }
 
@@ -205,10 +227,10 @@ class Calibration {
     }
 }
 
-var classification = 0;
-var hCenter = { x: 0, y: 0 };
+let classification = 0;
+let hCenter = { x: 0, y: 0 };
 
-let classificationHelper;
+let classificationHelper = 0;
 
 let isReturn = false;
 
@@ -304,6 +326,10 @@ class Main {
         this.moments = this.moments.bind(this);
 
         setTimeout(this.processVideo, 0);
+
+        setInterval(() => {
+            classification = classificationHelper;
+        }, 500)
     }
 
     processVideo() {
@@ -321,6 +347,8 @@ class Main {
             this.center.x = 0;
             this.center.y = 0;
             this.dst.setTo(this.BLACK);
+            classification = 0;
+            classificationHelper = 0;
         }
         else {
             this.dst.setTo(this.BLACK)
@@ -375,7 +403,7 @@ class Main {
                 }
 
                 // mask.setTo(this.BLACK);
-                cv.add(this.dst, this.ask, this.dst);
+                cv.add(this.dst, this.mask, this.dst);
 
                 this.grayFrame.copyTo(this.oldFrame);
                 for (let i = 0; i < this.goodNew.length; i++) {

@@ -17,25 +17,12 @@
 </head>
 
 <body>
-  <div id="webgl-output">
-  </div>
+  <div id="webgl-output"></div>
+  <div id="container"></div>
+  <button id="calibrate">Calibrate</button>
+  <button id="start">Start</button>
 
-  <video id="videoInput" style="display: none;"></video>
-  <p id="info">Carregando...</p>
-  <button id="btn4">All</button>
-  <canvas id="canvasFrame"></canvas>
-  <canvas id="roi" style="display: none;"></canvas>
-  <canvas id="bin" style="display: none;"></canvas>
-  
-  
-  <br/>
-  <button id="btn1">Calibrate</button>
-  <button id="btn2">Start</button>
-  <button id="btn3">HuMoments</button>
-  <pre id="hu"></pre>
-
-  <script async src="../10-hand-capture/libs/opencv0.js" onload="start({cv: true});" type="text/javascript"></script>
-  <script src="../10-hand-capture/handtrack2.js"></script>
+  <script async id="opencv" src="../10-hand-capture/libs/opencv1.js" type="text/javascript"></script>
   <script type="module" src="script.js"></script>
 </body>
 
