@@ -3,7 +3,6 @@ let video, canvas, context;
 let width, height;
 let calibration, main;
 
-
 export default class HandTrack {
     constructor(cvObj, elId, opt) {
         if (!cvObj) {
@@ -76,7 +75,9 @@ async function init(opt, parent) {
     if (window.outerWidth < window.outerHeight) {
         console.log('oi')
 
-        let warn = document.createTextNode('Turn your cellphone into landscape');
+        let warn = document.createElement('p');
+        warn.innerText = 'Turn your cellphone into landscape';
+        warn.style.cssText = 'font-family: sans; background-color: #f90; color: white; padding: 5px;'
 
         parent.appendChild(warn)
         await landScape();
