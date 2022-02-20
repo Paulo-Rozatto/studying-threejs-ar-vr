@@ -13,14 +13,42 @@
       overflow: hidden;
       background-color: rgb(0, 0, 0);
     }
+
+    #container {
+      width: 100vw;
+      height: 50vh;
+      margin-top: 0.3em;
+    }
+
+    #btn-group {
+      position: absolute;
+      width: 30vw;
+      bottom: 2em;
+      left: 35vw;
+      margin: auto;
+    }
+
+    #calibrate {
+      margin: auto;
+      width: 100%;
+      margin-bottom: 0.3em;
+    }
+
+    #start {
+      margin: auto;
+      min-width: 100%;
+    }
   </style>
 </head>
 
 <body>
   <div id="webgl-output"></div>
   <div id="container"></div>
-  <button id="calibrate">Calibrate</button>
-  <button id="start">Start</button>
+
+  <div id="btn-group">
+    <button id="calibrate">Calibrate</button>
+    <button id="start">Start</button>
+  </div>
 
   <script async id="opencv" src="../10-hand-capture/libs/opencv1.js" type="text/javascript"></script>
   <script type="module" src="script.js"></script>

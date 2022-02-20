@@ -86,7 +86,7 @@ async function init(opt, parent) {
     }
 
     canvas = document.createElement('canvas');
-    canvas.style.cssText = 'width: 100%, height: auto;'
+    canvas.style.cssText = 'margin: auto; width: auto%; height: 100%; display: block'
     canvas.style.cssText += 'border: 1px solid red;'
     canvas.id = "canvasFrame";
     parent.appendChild(canvas);
