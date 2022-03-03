@@ -3,6 +3,13 @@ let video, canvas, context;
 let width, height;
 let calibration, main;
 
+let classification = -1;
+let classificationHelper = -1;
+let hCenter = { x: 0, y: 0 };
+
+const MAX_DIS = 10;
+const MIN_CONTS = 4;
+
 export default class HandTrack {
     constructor(cvObj, elId, opt) {
         if (!cvObj) {
@@ -228,11 +235,6 @@ class Calibration {
     }
 }
 
-let classification = 0;
-let hCenter = { x: 0, y: 0 };
-
-let classificationHelper = 0;
-
 let isReturn = false;
 
 let ratio = 0, orient = 0, circularity = 0;
@@ -348,8 +350,8 @@ class Main {
             this.center.x = 0;
             this.center.y = 0;
             this.dst.setTo(this.BLACK);
-            classification = 0;
-            classificationHelper = 0;
+            classification = -1;
+            classificationHelper = -1;
         }
         else {
             this.dst.setTo(this.BLACK)
@@ -616,10 +618,6 @@ class Main {
             features[i] = Math.abs(features[i]);
         }
 
-        let euclideanOpen1 = 0, euclideanOpen2 = 0;
-        let euclideanClose1 = 0, euclideanClose2 = 0;
-        let manhatanOpen1 = 0, manhatanOpen2 = 0;
-        let manhatanClose1 = 0, manhatanClose2 = 0;
         let contOpen1 = 0, contOpen2 = 0;
         let contClose1 = 0, contClose2 = 0;
         let absOpen1, absOpen2, absClose1, absClose2;
@@ -630,38 +628,31 @@ class Main {
             absOpen2 = Math.abs(features[i] - this.open2[i]);
             absClose2 = Math.abs(features[i] - this.closed2[i]);
 
-            euclideanOpen1 += (absOpen1 * absOpen1);
-            euclideanClose1 += (absClose1 * absClose1);
-            euclideanOpen2 += (absOpen2 * absOpen2);
-            euclideanClose2 += (absClose2 * absClose2);
-
-            manhatanOpen1 += absOpen1;
-            manhatanClose1 += absClose1;
-            manhatanOpen2 += absOpen2;
-            manhatanClose2 += absClose2;
 
             if (absOpen1 < absClose1) {
-                contOpen1++;
+                if (absOpen1 < MAX_DIS)
+                    contOpen1++;
             }
-            else {
+            else if (absClose1 < MAX_DIS) {
                 contClose1++;
             }
 
-            if (absOpen2 < absClose2) {
-                contOpen2++;
+            if (absOpen2 < absClose1) {
+                if (absOpen2 < MAX_DIS)
+                    contOpen2++;
             }
-            else {
+            else if (absClose2 < MAX_DIS) {
                 contClose2++;
             }
         }
-        if (euclideanOpen2 < euclideanOpen1) euclideanOpen1 = euclideanOpen2;
-        if (euclideanClose2 < euclideanClose1) euclideanClose1 = euclideanClose2;
-        if (manhatanOpen2 < manhatanOpen1) manhatanOpen1 = manhatanOpen2;
-        if (manhatanClose2 < manhatanClose1) manhatanClose1 = manhatanClose2;
-        if (contOpen2 > contOpen1) contOpen1 = contOpen2;
-        if (contClose2 > contClose1) contClose1 = contClose2;
 
-        classificationHelper = contOpen1 > contClose1 ? 1 : 0
+        contOpen1 = contOpen1 > contOpen2 ? contOpen1 : contOpen2;
+        contClose1 = contClose1 > contClose2 ? contClose1 : contClose2;
+
+        if (contOpen1 < MIN_CONTS && contClose1 < MIN_CONTS)
+            classificationHelper = - 1;
+        else
+            classificationHelper = contOpen1 > contClose1 ? 1 : 0
     }
 
     hu(m, hu) {

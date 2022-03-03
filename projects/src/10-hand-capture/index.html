@@ -12,7 +12,7 @@
     <div id="container">
 
     </div>
-    <p id="test"></p>
+    <p id="info"></p>
     <button id="cl">Calibrar</button>
     <button id="start">Comecar</button>
 </body>
@@ -27,6 +27,12 @@
 
     function main() {
         const handTrack = new HandTrack(cv, 'container');
+        const info = document.getElementById('info');
+        const classification = Object.freeze({
+            '-1': 'Sem mao',
+            '0': 'fechado',
+            '1': 'aberto'
+        })
 
         document.getElementById('cl').addEventListener('click', handTrack.calibrate);
 
@@ -40,6 +46,13 @@
 
             document.getElementById('cl').remove();
             document.getElementById('start').remove();
+
+            requestAnimationFrame(update);
+        }
+
+        function update() {
+            info.innerText = `${classification[handTrack.getClassification()]}`;
+            setTimeout(() => { requestAnimationFrame(update) }, 50);
         }
     }
 
