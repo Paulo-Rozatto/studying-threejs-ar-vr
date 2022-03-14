@@ -28,7 +28,7 @@
         const detectorConfig = {
             runtime: 'mediapipe', // or 'tfjs'
             modelType: 'lite',
-            maxNumHands: 1,
+            maxHands: 1,
             solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/hands',
         };
         const detector = await handPoseDetection.createDetector(model, detectorConfig);
@@ -64,20 +64,12 @@
 
         initStats();
 
-        async function estimate() {
-            hands = (await detector.estimateHands(video, { flipHorizontal: false }))[0];
-
-            if (!stopVideo) {
-                requestAnimationFrame(estimate)
-            }
-        }
-
         async function render() {
             ctx.drawImage(video, 0, 0)
 
             stats.update();
 
-            // const hands = (await detector.estimateHands(video, { flipHorizontal: false }))[0];
+            const hands = (await detector.estimateHands(video, { flipHorizontal: false }))[0];
 
             if (hands) {
                 for (const conn of connections) {
@@ -105,7 +97,7 @@
                 requestAnimationFrame(render);
         }
         render();
-        estimate();
+        // estimate();
 
         window.addEventListener('keydown', (e) => {
             if (e.key === 'e') {
@@ -116,7 +108,7 @@
                 if (stopVideo) {
                     stopVideo = false;
                     render();
-                    estimate();
+                    // estimate();
                 }
             }
         })
