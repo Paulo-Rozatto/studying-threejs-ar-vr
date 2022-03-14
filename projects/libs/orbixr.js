@@ -118,7 +118,8 @@ class Orbi extends Object3D {
         this.rotation.y = config.rotation.theta;
 
         handTrack = config.tracking.handTrack;
-        context = handTrack?.getContext();
+        // context = handTrack?.getContext();
+        context = config.tracking.context;
 
         if (context) {
             canvasTexture = new CanvasTexture(context.canvas)
@@ -196,8 +197,11 @@ class Orbi extends Object3D {
         textGroup.visible = false;
         uiGroup.add(textGroup)
 
+        // canvasTexture = new CanvasTexture(document.getElementById('output'));
+
         let matConfig;
         if (canvasTexture) {
+            console.log('hi')
             matConfig = { map: canvasTexture }
         }
         else {
@@ -450,9 +454,9 @@ class Orbi extends Object3D {
                 }
             }
         }
-
-        if (config.tracking.enabled) {
+        if (canvasTexture)
             canvasTexture.needsUpdate = true;
+        if (config.tracking.enabled) {
 
             handTrack.getCenter(cursor.position);
 
@@ -522,7 +526,7 @@ class Orbi extends Object3D {
     resumeTracking() {
         config.tracking.enabled = true;
         cursor = hand.scene;
-        cursor.isModel =  true;
+        cursor.isModel = true;
         hand.scene.visible = true;
         ring.visible = false;
         camera.add(cursor);

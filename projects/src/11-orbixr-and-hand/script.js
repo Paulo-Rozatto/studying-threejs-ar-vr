@@ -5,6 +5,7 @@ import { VRButton } from '../../build2/jsm/webxr/VRButton.js';
 import { Orbi } from '../../libs/orbixr.js';
 import HandTrack from '../10-hand-capture/handtrack.module.js'
 
+import { render as ht } from '../12-tfjs-handtracking/ht.js'
 
 
 //-- Renderer settings ---------------------------------------------------------------------------
@@ -64,20 +65,21 @@ let orbi;
 let mixer;
 let handTrack;
 
-document.getElementById('opencv').addEventListener('load', initHandTrack, { once: true });
+// document.getElementById('opencv').addEventListener('load', initHandTrack, { once: true });
+initHandTrack();
 
 function initHandTrack() {
 
-  handTrack = new HandTrack(cv, 'container');
+  // handTrack = new HandTrack(cv, 'container');
 
-  document.getElementById('calibrate').addEventListener('click', handTrack.calibrate);
+  // document.getElementById('calibrate').addEventListener('click', handTrack.calibrate);
 
   document.getElementById('start').addEventListener('click', start);
 
   function start() {
-    handTrack.start();
+    // handTrack.start();
 
-    document.getElementById('calibrate').removeEventListener('click', handTrack.calibrate);
+    // document.getElementById('calibrate').removeEventListener('click', handTrack.calibrate);
     document.getElementById('start').removeEventListener('click', start);
 
     document.getElementById('calibrate').remove();
@@ -109,17 +111,21 @@ function init() {
 
       // act.play();
 
-      config.hand.model = gltf;
-      config.hand.mixer = mixer;
-      config.hand.action = act;
+      // config.hand.model = gltf;
+      // config.hand.mixer = mixer;
+      // config.hand.action = act;
 
       // gltf.scene.position.set(0, 1.6, -1);
       // gltf.scene.scale.set(0.05, 0.05, 0.05);
       // scene.add(gltf.scene);
 
+      const canvas = document.getElementById('output');
+      const ctx = canvas.getContext("2d");
+      console.log('ctx', ctx)
       config.tracking = {
-        enabled: true,
-        handTrack: handTrack,
+        enabled: false,
+        context: ctx
+        // handTrack: handTrack,
       }
 
 
@@ -128,11 +134,12 @@ function init() {
 
       orbi.addButton('1', '../07-testing-room/img/action1.png', () => {
         orbi.showMessage('button 1')
-        orbi.pauseTracking();
+        orbi.hideText();
+        // orbi.pauseTracking();
       });
       orbi.addButton('2', '../07-testing-room/img/action2.png', () => {
         orbi.showMessage('button 2')
-        orbi.resumeTracking();
+        // orbi.resumeTracking();
       });
       orbi.addButton('3', '../07-testing-room/img/action3.png', () => { orbi.showMessage('button 3') });
       orbi.addButton('4', '../07-testing-room/img/action4.png', () => { orbi.showMessage('button 4') })
@@ -181,6 +188,8 @@ function animate() {
 }
 
 let clock = new THREE.Clock();
+const FPS = 15;
+let begin = 0;
 
 function render() {
   let delta = clock.getDelta();
@@ -188,6 +197,12 @@ function render() {
   orbi.update();
   mixer.update(delta);
   renderer.render(scene, camera);
+
+  if (Date.now() - begin >= 1000 / FPS) {
+    // console.log('nope')
+    begin = Date.now();
+    setTimeout(ht, 0);
+  }
 }
 
 
