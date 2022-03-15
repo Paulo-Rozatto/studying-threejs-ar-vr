@@ -34,31 +34,32 @@ const connections = [
 let stopVideo = false;
 let stats;
 
-let hands;
-
 initStats();
 
 const FPS = 10;
 let begin = 0;
+let hands = [];
+let i = 0;
+let kp1, kp2;
+let circle;
 
 export async function render() {
     // if (Date.now() - begin < 1000 / FPS){
     //     console.log('nope')
     //     return;}
 
-    // begin = Date.now();
+    begin = Date.now();
 
-    // let begin = Date.now();
     ctx.drawImage(video, 0, 0)
 
     stats.update();
 
-    const hands = (await detector.estimateHands(video, { flipHorizontal: false }))[0];
+    hands = (await detector.estimateHands(video, { flipHorizontal: false }))[0];
 
     if (hands) {
-        for (const conn of connections) {
-            const kp1 = hands.keypoints[conn[0]]
-            const kp2 = hands.keypoints[conn[1]]
+        for (i = 0; i < 20; i++) {
+            kp1 = hands.keypoints[connections[i][0]]
+            kp2 = hands.keypoints[connections[i][1]]
 
             ctx.beginPath();
             ctx.moveTo(kp1.x, kp1.y);
@@ -66,25 +67,20 @@ export async function render() {
             ctx.stroke();
         }
 
-        for (const kp of hands.keypoints) {
-            const circle = new Path2D();
-            circle.arc(kp.x, kp.y, radius, 0, 2 * Math.PI);
+        for (i = 0; i < 19; i++) {
+            kp1 = hands.keypoints[i];
+
+            circle = new Path2D();
+            circle.arc(kp1.x, kp1.y, radius, 0, 2 * Math.PI);
             ctx.fill(circle);
             // ctx.stroke(circle);
         }
     }
 
-    if (stopVideo) {
-        console.log(hands)
-    }
-    else {
-        // let delay = 1000 / FPS - (Date.now() - begin);
-        // setTimeout(render, delay);
-        // setTimeout(() => { requestAnimationFrame(render) }, delay)
-        // requestAnimationFrame(render);
-    }
+    let delay = 1000 / FPS - (Date.now() - begin);
+    setTimeout(render, delay);
 }
-// render();
+render();
 // estimate();
 
 window.addEventListener('keydown', (e) => {

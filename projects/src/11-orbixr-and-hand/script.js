@@ -189,7 +189,7 @@ function animate() {
 }
 
 let clock = new THREE.Clock();
-const FPS = 15;
+const FPS = 5;
 let begin = 0;
 
 function render() {
@@ -199,11 +199,12 @@ function render() {
   mixer.update(delta);
   renderer.render(scene, camera);
 
-  if (Date.now() - begin >= 1000 / FPS) {
-    // console.log('nope')
-    begin = Date.now();
-    setTimeout(ht, 0);
-  }
+
+  // if (Date.now() - begin >= 1000 / FPS) {
+  //   // console.log('nope')
+  //   begin = Date.now();
+  //   setTimeout(ht, 0);
+  // }
 }
 
 
