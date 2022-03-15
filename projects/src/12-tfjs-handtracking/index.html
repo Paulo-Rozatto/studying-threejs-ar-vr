@@ -17,19 +17,20 @@
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/hand-pose-detection"></script>
 
     <script src="../../libs/stats.min.js"></script>
+
+    <style>
+        body {
+            background-color: black;
+        }
+    </style>
 </head>
 
 <body>
     <div id="webgl-output"></div>
     <div id="container"></div>
 
-    <div id="btn-group">
-        <button id="calibrate">Calibrate</button>
-        <button id="start">Start</button>
-    </div>
-
     <video id="video" playsinline style="display: none; width: auto; height: auto;"></video>
-    <canvas id="output"></canvas>
+    <canvas id="output" style="display: none;"></canvas>
 
     <script type="module" src="./ht.js"></script>
     <script type="module" src="../11-orbixr-and-hand/script.js"></script>

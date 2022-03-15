@@ -74,16 +74,17 @@ function initHandTrack() {
 
   // document.getElementById('calibrate').addEventListener('click', handTrack.calibrate);
 
-  document.getElementById('start').addEventListener('click', start);
+  // document.getElementById('start').addEventListener('click', start);
+  start();
 
   function start() {
     // handTrack.start();
 
     // document.getElementById('calibrate').removeEventListener('click', handTrack.calibrate);
-    document.getElementById('start').removeEventListener('click', start);
+    // document.getElementById('start').removeEventListener('click', start);
 
-    document.getElementById('calibrate').remove();
-    document.getElementById('start').remove();
+    // document.getElementById('calibrate').remove();
+    // document.getElementById('start').remove();
 
     init();
   }
