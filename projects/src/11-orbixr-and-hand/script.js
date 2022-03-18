@@ -3,9 +3,9 @@ import * as THREE from '../../build2/three.module.js';
 import { GLTFLoader } from '../../build2/jsm/loaders/GLTFLoader.js'
 import { VRButton } from '../../build2/jsm/webxr/VRButton.js';
 import { Orbi } from '../../libs/orbixr.js';
-import HandTrack from '../10-hand-capture/handtrack.module.js'
+// import HandTrack from '../10-hand-capture/handtrack.module.js'
 
-import { render as ht } from '../12-tfjs-handtracking/ht.js'
+import { HandTrack } from '../12-tfjs-handtracking/ht.js'
 
 
 //-- Renderer settings ---------------------------------------------------------------------------
@@ -112,21 +112,17 @@ function init() {
 
       // act.play();
 
-      // config.hand.model = gltf;
-      // config.hand.mixer = mixer;
-      // config.hand.action = act;
+      config.hand.model = gltf;
+      config.hand.mixer = mixer;
+      config.hand.action = act;
 
       // gltf.scene.position.set(0, 1.6, -1);
       // gltf.scene.scale.set(0.05, 0.05, 0.05);
       // scene.add(gltf.scene);
 
-      const canvas = document.getElementById('output');
-      const ctx = canvas.getContext("2d");
-      console.log('ctx', ctx)
       config.tracking = {
-        enabled: false,
-        context: ctx
-        // handTrack: handTrack,
+        enabled: true,
+        handTrack: HandTrack,
       }
 
 
@@ -135,7 +131,7 @@ function init() {
 
       orbi.addButton('1', '../07-testing-room/img/action1.png', () => {
         orbi.showMessage('button 1')
-        orbi.hideText();
+        // orbi.hideText();
         // orbi.pauseTracking();
       });
       orbi.addButton('2', '../07-testing-room/img/action2.png', () => {

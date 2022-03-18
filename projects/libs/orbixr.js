@@ -119,10 +119,11 @@ class Orbi extends Object3D {
 
         handTrack = config.tracking.handTrack;
         // context = handTrack?.getContext();
-        context = config.tracking.context;
+        // context = config.tracking.context;
 
-        if (context) {
-            canvasTexture = new CanvasTexture(context.canvas)
+        if (handTrack.getCanvas()) {
+            // canvasTexture = new CanvasTexture(context.canvas)
+            canvasTexture = new CanvasTexture(handTrack.getCanvas());
         }
 
         cursor = camera.getObjectByName("orbi-cursor");
@@ -201,7 +202,6 @@ class Orbi extends Object3D {
 
         let matConfig;
         if (canvasTexture) {
-            console.log('hi')
             matConfig = { map: canvasTexture }
         }
         else {

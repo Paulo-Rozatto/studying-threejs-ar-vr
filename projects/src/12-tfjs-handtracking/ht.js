@@ -31,6 +31,9 @@ const connections = [
     [0, 17], [17, 18], [18, 19], [19, 20]
 ];
 
+const mcps = [5, 9, 13, 17];
+const tips = [8, 12, 16, 20];
+
 let stopVideo = false;
 let stats;
 
@@ -38,12 +41,15 @@ initStats();
 
 const FPS = 10;
 let begin = 0;
-let hands = [];
+export let hands = [];
 let i = 0;
 let kp1, kp2;
 let circle;
 
-export async function render() {
+let tipDist = 0;
+let mcpDist = 0;
+
+async function render() {
     // if (Date.now() - begin < 1000 / FPS){
     //     console.log('nope')
     //     return;}
@@ -67,7 +73,7 @@ export async function render() {
             ctx.stroke();
         }
 
-        for (i = 0; i < 19; i++) {
+        for (i = 0; i <= 20; i++) {
             kp1 = hands.keypoints[i];
 
             circle = new Path2D();
@@ -75,13 +81,66 @@ export async function render() {
             ctx.fill(circle);
             // ctx.stroke(circle);
         }
+
+        tipDist = 0;
+        mcpDist = 0;
+        for (i = 0; i < mcps.length; i++) {
+            kp1 = hands.keypoints3D[mcps[i]];
+            kp2 = hands.keypoints3D[tips[i]];
+
+            mcpDist += squaredDistance(kp1, hands.keypoints3D[0]);
+            tipDist += squaredDistance(kp2, hands.keypoints3D[0]);
+        }
+    }
+    else {
+        tipDist = -1;
     }
 
     let delay = 1000 / FPS - (Date.now() - begin);
     setTimeout(render, delay);
 }
+
+function squaredDistance(p1, p2) {
+    return Math.pow(p1.y - p2.y, 2) + Math.pow(p1.x - p2.x, 2) + Math.pow(p1.z - p2.z, 2);
+}
+
 render();
 // estimate();
+
+window.setInterval(() => {
+    console.log(tipDist / mcpDist, tipDist, mcpDist);
+}, 2000)
+
+export const HandTrack = {
+    getClassification: function () {
+        if (tipDist === -1) return -1;
+
+        return (tipDist > mcpDist ? 1 : 0);
+    },
+    getCenter: function (pos) {
+        if (hands) {
+            pos.x = hands.keypoints[0].x / canvas.width - 0.5;
+            pos.y = -hands.keypoints[0].y / canvas.height + 0.5;
+
+            console.log(pos.x, pos.y, canvas.height);
+            // pos.z = hands.keypoints3D[0].z;
+        }
+        else {
+            pos.x = 0;
+            pos.y = 0;
+            // pos.z = 0;
+        }
+    },
+    getCanvas: function () {
+        return canvas;
+    },
+    pause: function () {
+        // todo
+    },
+    resume: function () {
+        // todo
+    }
+}
 
 window.addEventListener('keydown', (e) => {
     if (e.key === 'e') {
