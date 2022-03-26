@@ -377,7 +377,7 @@ class Orbi extends Object3D {
             uiGroup.rotation.x = euler.x;
         }
 
-        if (rayClock.getElapsedTime() > 0.2 && (config.tracking.enabled == false || handTrack?.getClassification() == 0)) {
+        if (rayClock.getElapsedTime() > 0.2 ) {
             rayClock.start();
 
             cursor.getWorldPosition(pos);
@@ -408,7 +408,7 @@ class Orbi extends Object3D {
                 oldIntersected = null;
             }
 
-            if (intersected) {
+            if (intersected && (config.tracking.enabled == false || handTrack?.getClassification() == 0)) {
                 if (intersected !== oldIntersected) {
                     isFusing = true;
                     fusingClock.start();
