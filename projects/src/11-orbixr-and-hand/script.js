@@ -93,7 +93,7 @@ function initHandTrack() {
 function init() {
   new GLTFLoader().load(
     // '/projects/assets/models/hand1.glb',
-    '../../assets/models/hand1.glb',
+    '../../assets/models/hand2.glb',
     (gltf) => {
       mixer = new THREE.AnimationMixer(gltf.scene);
 
@@ -110,7 +110,7 @@ function init() {
       act.clampWhenFinished = true
       act.enable = true
 
-      // act.play();
+      act.play();
 
       config.hand.model = gltf;
       config.hand.mixer = mixer;

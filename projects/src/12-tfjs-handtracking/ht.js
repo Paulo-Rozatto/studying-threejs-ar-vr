@@ -31,7 +31,8 @@ const connections = [
     [0, 17], [17, 18], [18, 19], [19, 20]
 ];
 
-const mcps = [5, 9, 13, 17];
+// const mcps = [5, 9, 13, 17];
+const mcps = [7, 11, 15, 19];
 const tips = [8, 12, 16, 20];
 
 let stopVideo = false;
@@ -107,9 +108,9 @@ function squaredDistance(p1, p2) {
 render();
 // estimate();
 
-window.setInterval(() => {
-    console.log(tipDist / mcpDist, tipDist, mcpDist);
-}, 2000)
+// window.setInterval(() => {
+//     console.log(tipDist / mcpDist, tipDist, mcpDist);
+// }, 2000)
 
 export const HandTrack = {
     getClassification: function () {
@@ -122,7 +123,6 @@ export const HandTrack = {
             pos.x = hands.keypoints[0].x / canvas.width - 0.5;
             pos.y = -hands.keypoints[0].y / canvas.height + 0.5;
 
-            console.log(pos.x, pos.y, canvas.height);
             // pos.z = hands.keypoints3D[0].z;
         }
         else {

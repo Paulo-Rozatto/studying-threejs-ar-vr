@@ -139,7 +139,8 @@ class Orbi extends Object3D {
                     }
                 });
 
-                hand.scene.scale.set(0.025, 0.025, 0.025);
+                hand.scene.scale.set(0.25, 0.25, 0.25);
+                hand.scene.rotation.y = -Math.PI / 2;
                 hand.scene.position.set(0, 0, -0.6);
             }
 
@@ -156,6 +157,7 @@ class Orbi extends Object3D {
             if (config.hand.model && config.tracking.enabled) {
                 cursor = hand.scene;
                 cursor.isModel = true;
+                console.log(cursor.children[0].children[1].material.color.g);
             }
             else {
                 cursor = ring;
@@ -375,7 +377,7 @@ class Orbi extends Object3D {
             uiGroup.rotation.x = euler.x;
         }
 
-        if (rayClock.getElapsedTime() > 0.2 && (config.tracking.enabled == false || handTrack?.getClassification() == 1)) {
+        if (rayClock.getElapsedTime() > 0.2 && (config.tracking.enabled == false || handTrack?.getClassification() == 0)) {
             rayClock.start();
 
             cursor.getWorldPosition(pos);
@@ -418,7 +420,7 @@ class Orbi extends Object3D {
                 fusingClock.stop();
 
                 if (cursor.isModel) {
-                    cursor.children[0].children[1].material.color.g = 0.5;
+                    cursor.children[0].children[1].material.color.g = 0.27;
                     cursor.children[0].children[1].material.needsUpdate = true;
                 }
                 else {
@@ -446,7 +448,7 @@ class Orbi extends Object3D {
                 fusingClock.stop();
 
                 if (cursor.isModel) {
-                    cursor.children[0].children[1].material.color.g = 0.5;
+                    cursor.children[0].children[1].material.color.g = 0.27;
                     cursor.children[0].children[1].material.needsUpdate = true;
                 }
                 else {
@@ -461,14 +463,13 @@ class Orbi extends Object3D {
             handTrack.getCenter(cursor.position);
 
             if (handTrack.getClassification() != oldClassification) {
-                if (handTrack.getClassification() === 1) {
+                if (handTrack.getClassification() === 0) {
                     config.hand.action.reset();
                     config.hand.action.play()
                 }
-                else {
+                else  {
                     config.hand.action.reset();
                     config.hand.action.time = -1;
-                    // config.hand.loop = true;
                 }
             }
 
