@@ -38,6 +38,7 @@ let debugOn;
 let fingers, canvasTexture, center, hand;
 
 let handTrack, context;
+const CLOSED = 0, OPEN = 1;
 
 class Orbi extends Object3D {
     constructor(cam, props) {
@@ -157,7 +158,11 @@ class Orbi extends Object3D {
             if (config.hand.model && config.tracking.enabled) {
                 cursor = hand.scene;
                 cursor.isModel = true;
-                console.log(cursor.children[0].children[1].material.color.g);
+                ring.visible = false;
+                ring.material.depthTest = true;
+                ring.material.opacity = 0.6;
+                ring.material.needsUpdate = true;
+                camera.add(ring);
             }
             else {
                 cursor = ring;
@@ -377,7 +382,7 @@ class Orbi extends Object3D {
             uiGroup.rotation.x = euler.x;
         }
 
-        if (rayClock.getElapsedTime() > 0.2 ) {
+        if (rayClock.getElapsedTime() > 0.2) {
             rayClock.start();
 
             cursor.getWorldPosition(pos);
@@ -408,7 +413,7 @@ class Orbi extends Object3D {
                 oldIntersected = null;
             }
 
-            if (intersected && (config.tracking.enabled == false || handTrack?.getClassification() == 0)) {
+            if (intersected && (config.tracking.enabled == false || handTrack?.getClassification() == CLOSED)) {
                 if (intersected !== oldIntersected) {
                     isFusing = true;
                     fusingClock.start();
@@ -462,12 +467,21 @@ class Orbi extends Object3D {
 
             handTrack.getCenter(cursor.position);
 
+            if (intersected) {
+                ring.visible = true;
+                ring.position.copy(cursor.position);
+                ring.position.z -= intersection[0].distance;
+            }
+            else {
+                ring.visible = false;
+            }
+
             if (handTrack.getClassification() != oldClassification) {
-                if (handTrack.getClassification() === 0) {
+                if (handTrack.getClassification() === CLOSED) {
                     config.hand.action.reset();
                     config.hand.action.play()
                 }
-                else  {
+                else {
                     config.hand.action.reset();
                     config.hand.action.time = -1;
                 }
