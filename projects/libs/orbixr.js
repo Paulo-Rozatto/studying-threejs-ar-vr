@@ -122,7 +122,7 @@ class Orbi extends Object3D {
         // context = handTrack?.getContext();
         // context = config.tracking.context;
 
-        if (handTrack.getCanvas()) {
+        if (handTrack?.getCanvas()) {
             // canvasTexture = new CanvasTexture(context.canvas)
             canvasTexture = new CanvasTexture(handTrack.getCanvas());
         }
@@ -463,31 +463,39 @@ class Orbi extends Object3D {
         }
         if (canvasTexture)
             canvasTexture.needsUpdate = true;
+
         if (config.tracking.enabled) {
+            if (handTrack.getClassification() > -1) {
+                cursor.visible = true;
 
-            handTrack.getCenter(cursor.position);
+                handTrack.getCenter(cursor.position);
 
-            if (intersected) {
-                ring.visible = true;
-                ring.position.copy(cursor.position);
-                ring.position.z -= intersection[0].distance;
-            }
-            else {
-                ring.visible = false;
-            }
-
-            if (handTrack.getClassification() != oldClassification) {
-                if (handTrack.getClassification() === CLOSED) {
-                    config.hand.action.reset();
-                    config.hand.action.play()
+                if (intersected) {
+                    ring.visible = true;
+                    ring.position.copy(cursor.position);
+                    ring.position.z -= intersection[0].distance;
                 }
                 else {
-                    config.hand.action.reset();
-                    config.hand.action.time = -1;
+                    ring.visible = false;
                 }
-            }
 
-            oldClassification = handTrack.getClassification();
+                if (handTrack.getClassification() != oldClassification) {
+                    if (handTrack.getClassification() === CLOSED) {
+                        config.hand.action.reset();
+                        config.hand.action.play()
+                    }
+                    else {
+                        config.hand.action.reset();
+                        config.hand.action.time = -1;
+                    }
+                }
+
+                oldClassification = handTrack.getClassification();
+            }
+            else {
+                cursor.visible = false;
+                ring.visible = false;
+            }
         }
     }
 
