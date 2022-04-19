@@ -400,6 +400,9 @@ class Orbi extends Object3D {
 
             if (this.moveVertically || this.moveHorizontally) {
                 raycaster.intersectObject(this.stopButton, false, intersection);
+                // ring.visible = true;
+                ring.position.copy(cursor.position);
+                ring.position.z = -config.orbits[currentOrbit]
             }
             else {
                 raycaster.intersectObjects(buttonsArray, false, intersection);
@@ -475,6 +478,9 @@ class Orbi extends Object3D {
                     ring.position.copy(cursor.position);
                     ring.position.z -= intersection[0].distance;
                 }
+                else if(this.moveHorizontally || this.moveVertically) {
+                    ring.visible = true;
+                }
                 else {
                     ring.visible = false;
                 }
@@ -537,23 +543,23 @@ class Orbi extends Object3D {
     }
 
     pauseTracking() {
-        config.tracking.enabled = false;
-        cursor = ring;
-        cursor.isModel = false;
-        hand.scene.visible = false;
-        ring.visible = true;
-        camera.add(cursor);
-        handTrack.pause();
+        // config.tracking.enabled = false;
+        // cursor = ring;
+        // cursor.isModel = false;
+        // hand.scene.visible = false;
+        // ring.visible = true;
+        // camera.add(cursor);
+        // handTrack.pause();
     }
 
     resumeTracking() {
-        config.tracking.enabled = true;
-        cursor = hand.scene;
-        cursor.isModel = true;
-        hand.scene.visible = true;
-        ring.visible = false;
-        camera.add(cursor);
-        handTrack.resume();
+        // config.tracking.enabled = true;
+        // cursor = hand.scene;
+        // cursor.isModel = true;
+        // hand.scene.visible = true;
+        // ring.visible = false;
+        // camera.add(cursor);
+        // handTrack.resume();
     }
 }
 

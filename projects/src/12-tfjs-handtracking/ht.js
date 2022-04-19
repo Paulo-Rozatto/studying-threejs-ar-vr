@@ -112,6 +112,8 @@ render();
 //     console.log(tipDist / mcpDist, tipDist, mcpDist);
 // }, 2000)
 
+const iw = 1 / canvas.width;
+const ih = 1 / canvas.height;
 export const HandTrack = {
     getClassification: function () {
         if (tipDist === -1) return -1;
@@ -120,15 +122,12 @@ export const HandTrack = {
     },
     getCenter: function (pos) {
         if (hands) {
-            pos.x = hands.keypoints[0].x / canvas.width - 0.5;
-            pos.y = -hands.keypoints[0].y / canvas.height + 0.5;
-
-            // pos.z = hands.keypoints3D[0].z;
+            pos.x = (hands.keypoints[0].x * iw - 0.5);
+            pos.y = (hands.keypoints[0].y * ih - 1) * -1;
         }
         else {
             pos.x = 0;
             pos.y = 0;
-            // pos.z = 0;
         }
     },
     getCanvas: function () {
