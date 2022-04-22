@@ -40,7 +40,7 @@ let stats;
 
 initStats();
 
-const FPS = 10;
+const FPS = 20;
 let begin = 0;
 export let hands = [];
 let i = 0;
@@ -114,6 +114,8 @@ render();
 
 const iw = 1 / canvas.width;
 const ih = 1 / canvas.height;
+const half_height = canvas.height * 0.33;
+let cont = 0, sum = 0;
 export const HandTrack = {
     getClassification: function () {
         if (tipDist === -1) return -1;
@@ -121,9 +123,20 @@ export const HandTrack = {
         return (tipDist > mcpDist ? 1 : 0);
     },
     getCenter: function (pos) {
+        // keypoints:
+        // 0 - wrist
+        // 9 - middle finger mcp
+        // 12 - middle finger tip
         if (hands) {
             pos.x = (hands.keypoints[0].x * iw - 0.5);
             pos.y = (hands.keypoints[0].y * ih - 1) * -1;
+            let x = (hands.keypoints[0].y - hands.keypoints[9].y);//- half_height;
+
+            if (x)
+                pos.z = x * 0.003 - 0.9;
+                if(pos.z > -0.3) pos.z = -0.3;
+            else 
+                pos.z = -0.5;
         }
         else {
             pos.x = 0;
