@@ -132,15 +132,18 @@ export const HandTrack = {
             pos.y = (hands.keypoints[0].y * ih - 1) * -1;
             let x = (hands.keypoints[0].y - hands.keypoints[9].y);//- half_height;
 
-            if (x)
-                pos.z = x * 0.003 - 0.9;
-                if(pos.z > -0.3) pos.z = -0.3;
-            else 
+            if (x) {
+                pos.z = x * 0.003125 - 0.9;
+                console.log(pos.z)
+                if (pos.z > -0.3) pos.z = -0.3;
+            }
+            else
                 pos.z = -0.5;
         }
         else {
             pos.x = 0;
             pos.y = 0;
+            pos.z = -0.5;
         }
     },
     getCanvas: function () {
