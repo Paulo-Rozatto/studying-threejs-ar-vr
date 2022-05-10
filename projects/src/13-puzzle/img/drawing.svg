@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg5"
+   inkscape:export-filename="/home/paulo/Desktop/getcomp/studying-threejs-ar-vr/projects/src/13-puzzle/img/up.png"
+   inkscape:export-xdpi="101.6"
+   inkscape:export-ydpi="101.6"
+   inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
+   sodipodi:docname="drawing.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="1.1534573"
+     inkscape:cx="70.657143"
+     inkscape:cy="243.61542"
+     inkscape:window-width="1920"
+     inkscape:window-height="941"
+     inkscape:window-x="0"
+     inkscape:window-y="32"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs2" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:#000000;stroke-width:0.336946;stroke-miterlimit:3.9"
+       id="rect1867"
+       width="64"
+       height="64"
+       x="0"
+       y="0" />
+    <g
+       id="g1952"
+       style="fill:#f9f9f9"
+       transform="translate(6.6077805,-40.766955)">
+      <path
+         id="path31"
+         style="fill:#f9f9f9;stroke-width:0.999999;stroke-miterlimit:3.9"
+         inkscape:transform-center-x="0.093855288"
+         inkscape:transform-center-y="-2.0584532"
+         transform="scale(0.26458333)"
+         d="m 89.748047,222.11133 -24.013672,50.36133 c 0.649494,-0.018 1.294513,-0.005 1.939453,0.11328 0.37983,0.003 0.759917,-0.009 1.138672,-0.004 0.938918,0.0121 0.409779,0.0257 1.238281,-0.0137 0.06384,-0.009 0.128251,-0.0161 0.191407,-0.0293 0.108005,0.0996 0.11677,-0.0466 0.177734,-0.0605 0.110173,-0.0256 0.220422,-0.0479 0.332031,-0.0664 0.276518,-0.0458 1.013004,-0.0706 1.078125,-0.0742 1.197921,-0.087 2.39675,-0.0232 3.595703,-0.0156 0.465037,-0.004 0.931433,-0.007 1.396485,-0.006 0.287361,0.001 0.57397,8e-5 0.861328,0 0.565595,1.3e-4 1.131667,2e-5 1.697265,0 0.445762,-2e-5 0.892126,0 1.337891,0 h 1.669922 3.058594 3.96875 6.199218 3.464844 4.339842 3.0332 2.71876 2.0371 0.9961 c 0.10257,0 0.20418,0.005 0.30664,0 0.31406,0.008 0.62163,-0.0662 0.93359,-0.082 0.28911,-0.0147 0.57974,-0.0159 0.86914,-0.0234 0.21589,-4e-5 0.4306,-0.002 0.64649,0 0.12024,9.3e-4 0.24079,0.002 0.36133,0.004 z m -3.59375,50.51562 c -0.01831,0.003 -0.04483,0.008 -0.07031,0.0117 0.02343,-0.005 0.04657,-0.009 0.07031,-0.0117 z M 114.50977,273 c -0.0172,0.002 -0.0565,0.004 -0.0723,0.006 0.0267,3.3e-4 0.0534,-1.4e-4 0.0801,0 -0.003,-0.002 -0.005,-0.004 -0.008,-0.006 z m 0.008,0.006 c 0.002,0.002 0.006,0.002 0.008,0.004 0.0247,-0.002 0.0495,-0.002 0.0742,-0.004 -0.0273,-1.4e-4 -0.0547,1.4e-4 -0.082,0 z m 0.008,0.004 c -0.0684,0.004 -0.13669,0.009 -0.20508,0.0137 -2e-4,10e-4 -0.002,0.003 -0.002,0.004 0.0695,-0.005 0.13943,-0.009 0.20898,-0.0137 -0.001,-8.4e-4 -5.9e-4,-0.003 -0.002,-0.004 z m -0.20508,0.0137 c 4.6e-4,-0.003 7.2e-4,-0.007 0.002,-0.01 -10e-4,1.2e-4 -0.005,-1.1e-4 -0.006,0 -4e-5,0.003 -1.5e-4,0.007 0,0.01 0.001,-9e-5 0.003,8e-5 0.004,0 z" />
+      <rect
+         style="fill:#f9f9f9;stroke-width:0.596571;stroke-miterlimit:3.9"
+         id="rect1503"
+         width="13.12704"
+         height="0.2685219"
+         x="17.39222"
+         y="71.921013" />
+      <rect
+         style="fill:#f9f9f9;stroke-width:0.424733;stroke-miterlimit:3.9"
+         id="rect1763"
+         width="1.2995502"
+         height="15.722684"
+         x="23.428936"
+         y="71.286209" />
+    </g>
+  </g>
+</svg>
