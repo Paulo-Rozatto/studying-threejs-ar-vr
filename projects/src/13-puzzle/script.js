@@ -1,15 +1,17 @@
 import * as THREE from '../../build2/three.module.js';
 import { VRButton } from '../../build2/jsm/webxr/VRButton.js';
+import { GLTFLoader } from '../../build2/jsm/loaders/GLTFLoader.js';
+
 import { Orbi } from '../../libs/orbixr.js';
 
 let camera, scene, light, renderer, controller, cameraHolder, clock;
-let raycaster, down, right, left, groundList, intersection;
-let orbi;
+let raycaster, up, down, right, left, groundList, intersection, collidable;
+let orbi, orbi2;
 
-let cube, puzzle, cubeSpeed;
+let cube, copter, puzzle, puzzle2, cubeSpeed;
 let rightWall, leftWall;
 
-const SPEED = 1; //-- m/s --//
+const FRICTION = 1; //-- m/s --//
 
 let state = 0;
 const STATES = [
@@ -19,10 +21,10 @@ const STATES = [
     { left: 0, down: 0, right: 0, up: -1 },
 ]
 
-init();
+await init();
 animate();
 
-function init() {
+async function init() {
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -40,11 +42,12 @@ function init() {
     camera.add(controller);
 
     cameraHolder = new THREE.Object3D();
+    // cameraHolder.rotateY(Math.PI)
     cameraHolder.add(camera);
     scene.add(cameraHolder);
 
     light = new THREE.SpotLight(0xeeeeaa);
-    light.position.set(0, 30, 50);
+    light.position.set(30, 30, 0);
     scene.add(light);
 
     const textureLoader = new THREE.TextureLoader();
@@ -64,6 +67,7 @@ function init() {
     const cubeMat = new THREE.MeshPhongMaterial({ map: cubeTex });
     cube = new THREE.Mesh(cubeGeo, cubeMat);
     cube.position.set(-0.2, 2, -1.7);
+    cube.speed = { x: 0, y: 0 };
     scene.add(cube);
 
     puzzle = new THREE.Group();
@@ -86,11 +90,13 @@ function init() {
     const wallMat = new THREE.MeshPhongMaterial({ map: wallTex });
 
     leftWall = new THREE.Mesh(wallGeo, wallMat);
+    leftWall.name = "lwall"
     leftWall.position.x = -0.9;
     leftWall.position.z = 0.25;
     puzzle.add(leftWall);
 
     rightWall = leftWall.clone();
+    rightWall.name = "rwall"
     rightWall.position.x = 0.9;
     puzzle.add(rightWall);
 
@@ -103,7 +109,9 @@ function init() {
     const shelfGeo = new THREE.BoxBufferGeometry(0.8, 0.1, 0.4);
     const shelf1 = new THREE.Mesh(shelfGeo, shelfMat);
     shelf1.position.set(-0.4, 0.4, 0.2);
+    shelf1.name = "shelf2";
     const shelf2 = shelf1.clone();
+    shelf1.name = "shelf2";
     shelf2.position.set(0.4, -0.4, 0.2);
     puzzle.add(shelf1);
     puzzle.add(shelf2);
@@ -112,6 +120,7 @@ function init() {
     scene.add(puzzle);
 
     raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 0.08);
+    up = new THREE.Vector3(0, 1, 0);
     down = new THREE.Vector3(0, -1, 0);
     right = new THREE.Vector3(1, 0, 0);
     left = new THREE.Vector3(-1, 0, 0);
@@ -153,13 +162,49 @@ function init() {
     // });
     orbi.addButton('3', 'img/left.png', () => {
         // move('left')
-        cubeSpeed = -1;
+        cube.speed.x = -1;
     });
     orbi.addButton('4', 'img/right.png', () => {
         // move('right')
-        cubeSpeed = 1;
+        cube.speed.x = 1;
     });
-    // orbi.visible = false
+
+    puzzle2 = puzzle.clone();
+    puzzle2.rotation.y = Math.PI;
+    puzzle2.position.z = 2;
+    scene.add(puzzle2)
+
+    copter = await asyncLoader('../../assets/models/circuits/fan-block.glb')
+    console.log(copter.getObjectByName('fan'))
+    copter.position.set(0.3, 1.6, 1.7);
+    copter.speed = { x: 0, y: 0 }
+    scene.add(copter)
+
+    // console.log(puzzle2)
+
+    collidable = [
+        floor,
+        leftWall,
+        rightWall,
+        ...puzzle2.children
+    ]
+
+    config.rotation.theta = Math.PI + Math.PI / 4;
+    orbi2 = new Orbi(camera, config);
+    cameraHolder.add(orbi2);
+
+    orbi2.addButton('21', 'img/up.png', () => {
+        copter.speed.y = 1;
+    });
+    orbi2.addButton('22', 'img/down.png', () => {
+        copter.speed.y = -1;
+    });
+    orbi2.addButton('23', 'img/left.png', () => {
+        copter.speed.x = 1;
+    });
+    orbi2.addButton('24', 'img/right.png', () => {
+        copter.speed.x = -1;
+    });
 
     clock = new THREE.Clock();
 
@@ -173,52 +218,102 @@ function animate() {
 let delta;
 function render() {
     orbi.update();
+    orbi2.update()
 
     delta = clock.getDelta();
+    // copter.getObjectByName('fan').rotation.y -= 7 * delta;
+    copter.children[3].rotation.y -= 7 * delta;
+
+    // else if (intersection[0].distance < 0.08) {
+    //     cube.position.y += 0.07 - intersection[0].distance;
+    // }
+
+    movementAndCollision(cube, 'y')
+    if (intersection.length == 0) {
+        cube.speed.y -= 2 * delta + FRICTION * delta;
+    }
+    intersection.length = 0;
+
+    movementAndCollision(cube);
+    intersection.length = 0;
+
+    movementAndCollision(copter, 'y')
+    intersection.length = 0;
+
+    movementAndCollision(copter)
+    intersection.length = 0;
+
+
     raycaster.set(cube.position, down);
     raycaster.intersectObjects(groundList, false, intersection);
 
-    if (intersection.length == 0) {
-        cube.position.y -= SPEED * delta;
-    }
-    else if (intersection[0].distance < 0.08) {
-        cube.position.y += 0.07 - intersection[0].distance;
-    }
-
-    intersection.length = 0;
-
-    if (cubeSpeed > 0.1) {
-        raycaster.set(cube.position, right);
-        raycaster.intersectObject(rightWall, false, intersection)
-
-        if (intersection.length == 0) {
-            cube.position.x += cubeSpeed * delta;
-            cubeSpeed -= SPEED * delta
-        }
-        else {
-            cubeSpeed = 0;
-            if (intersection[0].distance < 0.08) {
-                cube.position.x -= 0.07 - intersection[0].distance;
-            }
-            intersection.length = 0;
-        }
-    }
-    else if (cubeSpeed < -0.1) {
-        raycaster.set(cube.position, left);
-        raycaster.intersectObject(leftWall, false, intersection)
-
-        if (intersection.length == 0) {
-            cube.position.x += cubeSpeed * delta;
-            cubeSpeed += SPEED * delta
-        }
-        else {
-            cubeSpeed = 0;
-            if (intersection[0].distance < 0.08) {
-                cube.position.x += 0.07 - intersection[0].distance;
-            }
-            intersection.length = 0;
-        }
-    }
-
     renderer.render(scene, camera);
 }
+
+function movementAndCollision(object, axis = 'x') {
+    let minDist = 0.08;
+
+    if (object.speed[axis] > 0.1) {
+        let dir = right;
+        if (axis === 'y') {
+            dir = up;
+            minDist = 0.15
+        }
+        raycaster.set(object.position, dir);
+        raycaster.intersectObjects(collidable, false, intersection)
+
+        if (intersection.length == 0) {
+            object.position[axis] += object.speed[axis] * delta;
+            object.speed[axis] -= FRICTION * delta
+        }
+        else {
+            object.speed[axis] = 0;
+            if (intersection[0].distance < minDist) {
+                object.position[axis] -= minDist - 0.01 - intersection[0].distance;
+            }
+            intersection.length = 0;
+        }
+    }
+    else if (object.speed[axis] < -0.1) {
+        let dir = axis === 'x' ? left : down;
+        console.log(axis === 'x' ? 'left' :'down')
+        raycaster.set(object.position, dir);
+        raycaster.intersectObjects(collidable, false, intersection)
+
+        if (intersection.length == 0) {
+            object.position[axis] += object.speed[axis] * delta;
+            object.speed[axis] += FRICTION * delta
+        }
+        else {
+            object.speed[axis] = 0;
+            if (intersection[0].distance < minDist) {
+                object.position[axis] += minDist - 0.01 - intersection[0].distance;
+            }
+            intersection.length = 0;
+        }
+    }
+}
+
+function asyncLoader(url, onLoad, onProgress, onError) {
+    const loader = new GLTFLoader();
+
+    return new Promise((resolve, reject) => {
+        loader.load(
+            url,
+            // on load function
+            (gltf) => {
+                // onLoad(gltf);
+                resolve(gltf.scene);
+            },
+            // on progress function
+            onProgress,
+            // on error function
+            (error) => {
+                if (typeof onError === 'function') {
+                    onError(error);
+                }
+                reject;
+            }
+        );
+    });
+};

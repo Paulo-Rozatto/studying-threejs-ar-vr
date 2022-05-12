@@ -111,7 +111,6 @@ class Orbi extends Object3D {
         assingProps(config, props);
 
         camera = cam;
-        buttonsArray = [];
         currentOrbit = 0;
 
         this.position.copy(camera.position);
@@ -130,6 +129,8 @@ class Orbi extends Object3D {
         cursor = camera.getObjectByName("orbi-cursor");
 
         if (!cursor) {
+            buttonsArray = [];
+
             if (config.hand.model) {
                 hand = config.hand.model;
 
@@ -478,7 +479,7 @@ class Orbi extends Object3D {
                     ring.position.copy(cursor.position);
                     ring.position.z -= intersection[0].distance;
                 }
-                else if(this.moveHorizontally || this.moveVertically) {
+                else if (this.moveHorizontally || this.moveVertically) {
                     ring.visible = true;
                 }
                 else {
