@@ -3,10 +3,11 @@ import { VRButton } from '../../build2/jsm/webxr/VRButton.js';
 import { Orbi } from '../../libs/orbixr.js';
 
 let camera, scene, light, renderer, controller, cameraHolder, clock;
-let raycaster, dir, rayList, intersection;
+let raycaster, down, right, left, groundList, intersection;
 let orbi;
 
-let cube, puzzle, leftSpeed = 0, rightSpeed = 0;
+let cube, puzzle, cubeSpeed;
+let rightWall, leftWall;
 
 const SPEED = 1; //-- m/s --//
 
@@ -58,11 +59,6 @@ function init() {
     cube.position.set(-0.2, 2, -1.7);
     scene.add(cube);
 
-    raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 0.08);
-    dir = new THREE.Vector3(0, -1, 0);
-    rayList = [floor];
-    intersection = [];
-
     puzzle = new THREE.Group();
     const puzMat = new THREE.MeshPhongMaterial({ color: 0x440077 });
 
@@ -71,12 +67,14 @@ function init() {
     puzzle.add(rear);
 
     const wallGeo = new THREE.BoxBufferGeometry(0.2, 2, 0.5);
-    const leftWall = new THREE.Mesh(wallGeo, cubeMat);
+
+    leftWall = new THREE.Mesh(wallGeo, cubeMat);
     leftWall.position.x = -0.9;
     leftWall.position.z = 0.25;
-    const rightWall = leftWall.clone();
-    rightWall.position.x = 0.9;
     puzzle.add(leftWall);
+
+    rightWall = leftWall.clone();
+    rightWall.position.x = 0.9;
     puzzle.add(rightWall);
 
     const tempMat = new THREE.MeshPhongMaterial({ color: 0x555511 })
@@ -88,11 +86,16 @@ function init() {
     puzzle.add(shelf1);
     puzzle.add(shelf2);
 
-    rayList.push(shelf1);
-    rayList.push(shelf2);
-
     puzzle.position.set(0, 1, -2)
     scene.add(puzzle);
+
+    raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 0.08);
+    down = new THREE.Vector3(0, -1, 0);
+    right = new THREE.Vector3(1, 0, 0);
+    left = new THREE.Vector3(-1, 0, 0);
+    groundList = [floor, shelf1, shelf2];
+    intersection = [];
+
 
     // Orbi Config
     const config = {
@@ -128,11 +131,11 @@ function init() {
     // });
     orbi.addButton('3', 'img/left.png', () => {
         // move('left')
-        leftSpeed = 1;
+        cubeSpeed = -1;
     });
     orbi.addButton('4', 'img/right.png', () => {
         // move('right')
-        rightSpeed = 1;
+        cubeSpeed = 1;
     });
     // orbi.visible = false
 
@@ -150,8 +153,8 @@ function render() {
     orbi.update();
 
     delta = clock.getDelta();
-    raycaster.set(cube.position, dir);
-    raycaster.intersectObjects(rayList, false, intersection);
+    raycaster.set(cube.position, down);
+    raycaster.intersectObjects(groundList, false, intersection);
 
     if (intersection.length == 0) {
         cube.position.y -= SPEED * delta;
@@ -162,41 +165,38 @@ function render() {
 
     intersection.length = 0;
 
-    if (rightSpeed > 0.1) {
-        cube.position.x += rightSpeed * delta;
-        rightSpeed = rightSpeed - delta;
+    if (cubeSpeed > 0.1) {
+        raycaster.set(cube.position, right);
+        raycaster.intersectObject(rightWall, false, intersection)
+
+        if (intersection.length == 0) {
+            cube.position.x += cubeSpeed * delta;
+            cubeSpeed -= SPEED * delta
+        }
+        else {
+            cubeSpeed = 0;
+            if (intersection[0].distance < 0.08) {
+                cube.position.x -= 0.07 - intersection[0].distance;
+            }
+            intersection.length = 0;
+        }
+    }
+    else if (cubeSpeed < -0.1) {
+        raycaster.set(cube.position, left);
+        raycaster.intersectObject(leftWall, false, intersection)
+
+        if (intersection.length == 0) {
+            cube.position.x += cubeSpeed * delta;
+            cubeSpeed += SPEED * delta
+        }
+        else {
+            cubeSpeed = 0;
+            if (intersection[0].distance < 0.08) {
+                cube.position.x += 0.07 - intersection[0].distance;
+            }
+            intersection.length = 0;
+        }
     }
 
-    if (leftSpeed > 0.1) {
-        cube.position.x -= leftSpeed * delta;
-        leftSpeed -= delta;
-    }
     renderer.render(scene, camera);
-}
-
-function move(dir) {
-    let step = STATES[state][dir] || 0;
-
-    if (step != 0) {
-        state += step;
-
-        switch (dir) {
-            case 'up':
-                cube.position.y += 0.2;
-                break;
-            case 'right':
-                cube.position.x += 0.31;
-                break;
-            case 'down':
-                cube.position.y -= 0.2;
-                break;
-            case 'left':
-                cube.position.x -= 0.31;
-                break;
-        }
-
-        if (state === 3) {
-            orbi.showMessage('Terminou!')
-        }
-    }
 }
