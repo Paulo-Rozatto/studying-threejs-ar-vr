@@ -47,28 +47,45 @@ function init() {
     light.position.set(0, 30, 50);
     scene.add(light);
 
+    const textureLoader = new THREE.TextureLoader();
+
+    const floorTex = textureLoader.load('../../assets/textures/wood.jpg');
+    floorTex.wrapS = THREE.MirroredRepeatWrapping;
+    floorTex.wrapT = THREE.RepeatWrapping;
+    floorTex.repeat.set(4, 4);
     const floorGeo = new THREE.PlaneBufferGeometry(10, 10);
-    const floorMat = new THREE.MeshPhongMaterial({ color: 0x878787 })
+    const floorMat = new THREE.MeshPhongMaterial({ map: floorTex })
     const floor = new THREE.Mesh(floorGeo, floorMat);
     floor.rotateX(Math.PI * -0.5);
     scene.add(floor);
 
+    const cubeTex = textureLoader.load('../../assets/textures/crate.jpg')
     const cubeGeo = new THREE.BoxBufferGeometry(0.15, 0.15, 0.15);
-    const cubeMat = new THREE.MeshPhongMaterial({ color: 0x770000 });
+    const cubeMat = new THREE.MeshPhongMaterial({ map: cubeTex });
     cube = new THREE.Mesh(cubeGeo, cubeMat);
     cube.position.set(-0.2, 2, -1.7);
     scene.add(cube);
 
     puzzle = new THREE.Group();
-    const puzMat = new THREE.MeshPhongMaterial({ color: 0x440077 });
+
+    const rearText = textureLoader.load('../../assets/textures/wood4.jpg');
+    rearText.wrapS = THREE.RepeatWrapping;
+    rearText.wrapT = THREE.RepeatWrapping;
+    rearText.repeat.set(2, 4);
+    const rearMat = new THREE.MeshPhongMaterial({ map: rearText });
 
     const rearGeo = new THREE.PlaneBufferGeometry(2, 2)
-    const rear = new THREE.Mesh(rearGeo, puzMat);
+    const rear = new THREE.Mesh(rearGeo, rearMat);
     puzzle.add(rear);
 
     const wallGeo = new THREE.BoxBufferGeometry(0.2, 2, 0.5);
+    const wallTex = textureLoader.load('../../assets/textures/wood4.jpg');
+    wallTex.wrapS = THREE.RepeatWrapping;
+    wallTex.wrapT = THREE.RepeatWrapping;
+    wallTex.repeat.set(0.25, 1);
+    const wallMat = new THREE.MeshPhongMaterial({ map: wallTex });
 
-    leftWall = new THREE.Mesh(wallGeo, cubeMat);
+    leftWall = new THREE.Mesh(wallGeo, wallMat);
     leftWall.position.x = -0.9;
     leftWall.position.z = 0.25;
     puzzle.add(leftWall);
@@ -77,9 +94,14 @@ function init() {
     rightWall.position.x = 0.9;
     puzzle.add(rightWall);
 
-    const tempMat = new THREE.MeshPhongMaterial({ color: 0x555511 })
+    const shelfTex = textureLoader.load('../../assets/textures/wood3.jpg');
+    shelfTex.wrapS = THREE.RepeatWrapping;
+    shelfTex.wrapT = THREE.RepeatWrapping;
+    shelfTex.repeat.set(1, 0.25);
+    const shelfMat = new THREE.MeshPhongMaterial({ map: shelfTex });
+
     const shelfGeo = new THREE.BoxBufferGeometry(0.8, 0.1, 0.4);
-    const shelf1 = new THREE.Mesh(shelfGeo, tempMat);
+    const shelf1 = new THREE.Mesh(shelfGeo, shelfMat);
     shelf1.position.set(-0.4, 0.4, 0.2);
     const shelf2 = shelf1.clone();
     shelf2.position.set(0.4, -0.4, 0.2);
