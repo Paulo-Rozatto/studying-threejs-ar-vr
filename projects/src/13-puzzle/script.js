@@ -3,13 +3,14 @@ import { VRButton } from '../../build2/jsm/webxr/VRButton.js';
 import { GLTFLoader } from '../../build2/jsm/loaders/GLTFLoader.js';
 
 import { Orbi } from '../../libs/orbixr.js';
+import { collidable, groundList, makePuzzle } from './puzzles.js'
 
 let camera, scene, light, renderer, controller, cameraHolder, clock;
-let raycaster, up, down, right, left, groundList, intersection, collidable;
+let raycaster, up, down, right, left, intersection;
 let orbi, orbi2;
 
-let cube, copter, puzzle, puzzle2, cubeSpeed;
-let rightWall, leftWall;
+let cube, copter, puzzle1, puzzle2;
+// let rightWall, leftWall;
 
 const FRICTION = 1; //-- m/s --//
 
@@ -70,61 +71,15 @@ async function init() {
     cube.speed = { x: 0, y: 0 };
     scene.add(cube);
 
-    puzzle = new THREE.Group();
-
-    const rearText = textureLoader.load('../../assets/textures/wood4.jpg');
-    rearText.wrapS = THREE.RepeatWrapping;
-    rearText.wrapT = THREE.RepeatWrapping;
-    rearText.repeat.set(2, 4);
-    const rearMat = new THREE.MeshPhongMaterial({ map: rearText });
-
-    const rearGeo = new THREE.PlaneBufferGeometry(2, 2)
-    const rear = new THREE.Mesh(rearGeo, rearMat);
-    puzzle.add(rear);
-
-    const wallGeo = new THREE.BoxBufferGeometry(0.2, 2, 0.5);
-    const wallTex = textureLoader.load('../../assets/textures/wood4.jpg');
-    wallTex.wrapS = THREE.RepeatWrapping;
-    wallTex.wrapT = THREE.RepeatWrapping;
-    wallTex.repeat.set(0.25, 1);
-    const wallMat = new THREE.MeshPhongMaterial({ map: wallTex });
-
-    leftWall = new THREE.Mesh(wallGeo, wallMat);
-    leftWall.name = "lwall"
-    leftWall.position.x = -0.9;
-    leftWall.position.z = 0.25;
-    puzzle.add(leftWall);
-
-    rightWall = leftWall.clone();
-    rightWall.name = "rwall"
-    rightWall.position.x = 0.9;
-    puzzle.add(rightWall);
-
-    const shelfTex = textureLoader.load('../../assets/textures/wood3.jpg');
-    shelfTex.wrapS = THREE.RepeatWrapping;
-    shelfTex.wrapT = THREE.RepeatWrapping;
-    shelfTex.repeat.set(1, 0.25);
-    const shelfMat = new THREE.MeshPhongMaterial({ map: shelfTex });
-
-    const shelfGeo = new THREE.BoxBufferGeometry(0.8, 0.1, 0.4);
-    const shelf1 = new THREE.Mesh(shelfGeo, shelfMat);
-    shelf1.position.set(-0.4, 0.4, 0.2);
-    shelf1.name = "shelf2";
-    const shelf2 = shelf1.clone();
-    shelf1.name = "shelf2";
-    shelf2.position.set(0.4, -0.4, 0.2);
-    puzzle.add(shelf1);
-    puzzle.add(shelf2);
-
-    puzzle.position.set(0, 1, -2)
-    scene.add(puzzle);
+    let puzzle1 = makePuzzle();
+    puzzle1.position.set(0, 1, -2);
+    scene.add(puzzle1)
 
     raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 0.08);
     up = new THREE.Vector3(0, 1, 0);
     down = new THREE.Vector3(0, -1, 0);
     right = new THREE.Vector3(1, 0, 0);
     left = new THREE.Vector3(-1, 0, 0);
-    groundList = [floor, shelf1, shelf2];
     intersection = [];
 
 
@@ -169,8 +124,9 @@ async function init() {
         cube.speed.x = 1;
     });
 
-    puzzle2 = puzzle.clone();
+    puzzle2 = makePuzzle();
     puzzle2.rotation.y = Math.PI;
+    puzzle2.position.y = 1;
     puzzle2.position.z = 2;
     scene.add(puzzle2)
 
@@ -182,12 +138,14 @@ async function init() {
 
     // console.log(puzzle2)
 
-    collidable = [
-        floor,
-        leftWall,
-        rightWall,
-        ...puzzle2.children
-    ]
+    collidable.push(floor);
+    // collidable.push(...puzzle2.children);
+    // collidable = [
+    //     floor,
+    //     leftWall,
+    //     rightWall,
+    //     ...puzzle2.children
+    // ]
 
     config.rotation.theta = Math.PI + Math.PI / 4;
     orbi2 = new Orbi(camera, config);
@@ -276,7 +234,7 @@ function movementAndCollision(object, axis = 'x') {
     }
     else if (object.speed[axis] < -0.1) {
         let dir = axis === 'x' ? left : down;
-        console.log(axis === 'x' ? 'left' :'down')
+        console.log(axis === 'x' ? 'left' : 'down')
         raycaster.set(object.position, dir);
         raycaster.intersectObjects(collidable, false, intersection)
 
