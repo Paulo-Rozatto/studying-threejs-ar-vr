@@ -3,7 +3,7 @@ import { VRButton } from '../../build2/jsm/webxr/VRButton.js';
 import { GLTFLoader } from '../../build2/jsm/loaders/GLTFLoader.js';
 
 import { Orbi } from '../../libs/orbixr.js';
-import { collidable, groundList, makePuzzle } from './puzzles.js'
+import { collidable, groundList, makePuzzle, physicBox } from './puzzles.js'
 
 let camera, scene, light, renderer, controller, cameraHolder, clock;
 let raycaster, up, down, right, left, intersection;
@@ -63,19 +63,21 @@ async function init() {
     floor.rotateX(Math.PI * -0.5);
     scene.add(floor);
 
-    const cubeTex = textureLoader.load('../../assets/textures/crate.jpg')
-    const cubeGeo = new THREE.BoxBufferGeometry(0.15, 0.15, 0.15);
-    const cubeMat = new THREE.MeshPhongMaterial({ map: cubeTex });
-    cube = new THREE.Mesh(cubeGeo, cubeMat);
+    // const cubeTex = textureLoader.load('../../assets/textures/crate.jpg')
+    // const cubeGeo = new THREE.BoxBufferGeometry(0.15, 0.15, 0.15);
+    // const cubeMat = new THREE.MeshPhongMaterial({ map: cubeTex });
+    // cube = new THREE.Mesh(cubeGeo, cubeMat);
+    // cube.position.set(-0.2, 2, -1.7);
+    // cube.speed = { x: 0, y: 0 };
+    cube = physicBox();
     cube.position.set(-0.2, 2, -1.7);
-    cube.speed = { x: 0, y: 0 };
     scene.add(cube);
 
     let puzzle1 = makePuzzle();
     puzzle1.position.set(0, 1, -2);
     scene.add(puzzle1)
 
-    raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 0.08);
+    raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 0.1);
     up = new THREE.Vector3(0, 1, 0);
     down = new THREE.Vector3(0, -1, 0);
     right = new THREE.Vector3(1, 0, 0);
@@ -136,16 +138,8 @@ async function init() {
     copter.speed = { x: 0, y: 0 }
     scene.add(copter)
 
-    // console.log(puzzle2)
-
     collidable.push(floor);
-    // collidable.push(...puzzle2.children);
-    // collidable = [
-    //     floor,
-    //     leftWall,
-    //     rightWall,
-    //     ...puzzle2.children
-    // ]
+    groundList.push(floor)
 
     config.rotation.theta = Math.PI + Math.PI / 4;
     orbi2 = new Orbi(camera, config);
@@ -173,27 +167,17 @@ function animate() {
     renderer.setAnimationLoop(render);
 }
 
-let delta;
+let delta, time = 0;
 function render() {
     orbi.update();
     orbi2.update()
 
     delta = clock.getDelta();
+    time += delta;
     // copter.getObjectByName('fan').rotation.y -= 7 * delta;
     copter.children[3].rotation.y -= 7 * delta;
 
-    // else if (intersection[0].distance < 0.08) {
-    //     cube.position.y += 0.07 - intersection[0].distance;
-    // }
-
-    movementAndCollision(cube, 'y')
-    if (intersection.length == 0) {
-        cube.speed.y -= 2 * delta + FRICTION * delta;
-    }
-    intersection.length = 0;
-
-    movementAndCollision(cube);
-    intersection.length = 0;
+    cube.update(delta);
 
     movementAndCollision(copter, 'y')
     intersection.length = 0;
@@ -201,12 +185,10 @@ function render() {
     movementAndCollision(copter)
     intersection.length = 0;
 
-
-    raycaster.set(cube.position, down);
-    raycaster.intersectObjects(groundList, false, intersection);
-
     renderer.render(scene, camera);
 }
+
+
 
 function movementAndCollision(object, axis = 'x') {
     let minDist = 0.08;
@@ -220,11 +202,11 @@ function movementAndCollision(object, axis = 'x') {
         raycaster.set(object.position, dir);
         raycaster.intersectObjects(collidable, false, intersection)
 
-        if (intersection.length == 0) {
+        if (intersection.length == 0 && axis === 'x') {
             object.position[axis] += object.speed[axis] * delta;
             object.speed[axis] -= FRICTION * delta
         }
-        else {
+        else if (axis == 'x') {
             object.speed[axis] = 0;
             if (intersection[0].distance < minDist) {
                 object.position[axis] -= minDist - 0.01 - intersection[0].distance;
@@ -242,7 +224,7 @@ function movementAndCollision(object, axis = 'x') {
             object.position[axis] += object.speed[axis] * delta;
             object.speed[axis] += FRICTION * delta
         }
-        else {
+        else  {
             object.speed[axis] = 0;
             if (intersection[0].distance < minDist) {
                 object.position[axis] += minDist - 0.01 - intersection[0].distance;

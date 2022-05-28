@@ -6,6 +6,8 @@ import {
     Mesh,
     BoxBufferGeometry,
     TextureLoader,
+    Vector3,
+    Raycaster,
 } from '../../build2/three.module.js';
 
 export const groundList = [];
@@ -83,4 +85,82 @@ export function makePuzzle() {
     puzzle.add(shelf2)
 
     return puzzle;
+}
+
+let down = new Vector3(0, -1, 0),
+    right = new Vector3(1, 0, 0),
+    left = new Vector3(-1, 0, 0);
+
+export function physicBox() {
+    const textureLoader = new TextureLoader();
+    const boxSize = 0.15;
+    const half = 0.15 * 0.5;
+
+    const cubeTex = textureLoader.load('../../assets/textures/crate.jpg')
+    const cubeGeo = new BoxBufferGeometry(boxSize, boxSize, boxSize);
+    const cubeMat = new MeshPhongMaterial({ map: cubeTex });
+    const cube = new Mesh(cubeGeo, cubeMat);
+    cube.speed = { x: 0, y: 0 };
+
+    let ray = new Raycaster(new Vector3(), new Vector3());
+    let intersection = [];
+    let displacement, distance, friction = 0.1;
+
+    cube.update = (delta) => {
+        ray.set(cube.position, down);
+
+        ray.intersectObjects(groundList, false, intersection);
+
+        // console.log(cube.speed.y)
+        cube.speed.y += (2 * delta);
+        displacement = cube.speed.y * delta;
+
+        if (intersection.length != 0) {
+            distance = intersection[0].distance;
+
+            // console.log(intersection[0].distance)
+            if (displacement < distance - half) {
+                cube.position.y -= displacement;
+                friction = 0.5;
+            }
+            else {
+                cube.speed.y = 0;
+                if (distance > half) {
+                    cube.position.y -= distance - half;
+                    cube.speed.y = 0;
+                    friction = 0.5;
+                }
+            }
+
+            intersection.length = 0;
+        }
+
+        if (cube.speed.x != 0) {
+            cube.speed.x -= friction * delta * Math.sign(cube.speed.x);
+            displacement = cube.speed.x * delta;
+
+
+            let dir = cube.speed.x > 0 ? right : left;
+
+            ray.set(cube.position, dir);
+            ray.intersectObjects(collidable, false, intersection);
+
+            if (intersection.length > 0) {
+                distance = intersection[0].distance;
+
+                if (Math.abs(displacement) < distance - half) {
+                    cube.position.x += displacement;
+                }
+                else if (distance > half) {
+                    cube.position.x += (distance - half) * Math.sign(cube.speed.x);
+                    cube.speed.x = 0;
+                }
+
+            }
+
+            if (Math.abs(cube.speed.x) < 0.1) cube.speed.x = 0;
+        }
+    }
+
+    return cube;
 }
