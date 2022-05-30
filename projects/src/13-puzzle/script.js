@@ -99,14 +99,6 @@ function init() {
     wall4.position.set(0, -0.8, 0.25)
     puzzle3.add(wall4);
 
-    raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 0.1);
-    up = new THREE.Vector3(0, 1, 0);
-    down = new THREE.Vector3(0, -1, 0);
-    right = new THREE.Vector3(1, 0, 0);
-    left = new THREE.Vector3(-1, 0, 0);
-    intersection = [];
-
-
     // Orbi Config
     const config = {
         display: new THREE.Vector2(2, 2),
@@ -155,7 +147,7 @@ function animate() {
     renderer.setAnimationLoop(render);
 }
 
-let delta, time = 0;
+let delta;
 function render() {
     orbi.update();
 
