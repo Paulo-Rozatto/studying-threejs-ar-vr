@@ -70,26 +70,30 @@ async function init() {
     cube.position.set(-0.3, 2, -1.7);
     scene.add(cube);
 
-    // let sh1 = { x: -0.4, y: 0.6 }
-    // let sh2 = { x: 0.4, y: 0 }
-    // let sh3 = { x: -0.4, y: -0.6 }
-
     let sh1 = { x: -0.4, y: 0.6 }
-    let sh2 = { x: 0.1, y: 0.1 }
-    let sh3 = { x: 0.45, y: -0.55 }
-
+    let sh2 = { x: 0.4, y: 0 }
+    let sh3 = { x: -0.4, y: -0.6 }
 
     let puzzle1 = makePuzzle(sh1, sh2, sh3);
     puzzle1.position.set(0, 1, -2);
     scene.add(puzzle1)
 
+    sh1 = { x: -0.4, y: 0.6 }
+    sh2 = { x: 0.1, y: 0.1 }
+    sh3 = { x: 0.45, y: -0.55 }
+
+    let puzzle2 = makePuzzle(sh1, sh2, sh3);
+    puzzle2.position.set(0, 1, 2);
+    puzzle2.rotateY(Math.PI);
+    scene.add(puzzle2)
+
     let wall1 = makeVShelf("nome");
     wall1.position.set(-0.15, 0.35, 0.25)
-    puzzle1.add(wall1);
+    puzzle2.add(wall1);
 
     let wall2 = makeVShelf("nome2");
     wall2.position.set(0.2, -0.8, 0.25)
-    puzzle1.add(wall2);
+    puzzle2.add(wall2);
 
     raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 0.1);
     up = new THREE.Vector3(0, 1, 0);
@@ -132,18 +136,11 @@ async function init() {
         cube.speed.x = 1;
     });
 
-
-    puzzle2 = makePuzzle(sh1, sh2, sh3);
-    puzzle2.rotation.y = Math.PI;
-    puzzle2.position.y = 1;
-    puzzle2.position.z = 2;
-    scene.add(puzzle2)
-
     collidable.push(floor);
     groundList.push(floor)
 
     config.rotation.theta = Math.PI + Math.PI / 4;
-  
+
 
     clock = new THREE.Clock();
 
