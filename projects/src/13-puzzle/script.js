@@ -1,31 +1,18 @@
 import * as THREE from '../../build2/three.module.js';
 import { VRButton } from '../../build2/jsm/webxr/VRButton.js';
-import { GLTFLoader } from '../../build2/jsm/loaders/GLTFLoader.js';
 
 import { Orbi } from '../../libs/orbixr.js';
-import { collidable, groundList, makePuzzle, makeVShelf, makeWall, physicBox } from './puzzles.js'
+import { collidable, groundList, makePuzzle, makeVShelf, physicBox } from './puzzles.js'
 
 let camera, scene, light, renderer, controller, cameraHolder, clock;
-let raycaster, up, down, right, left, intersection;
 let orbi;
 
-let cube, copter, puzzle1, puzzle2;
-// let rightWall, leftWall;
+let cube;
 
-const FRICTION = 1; //-- m/s --//
-
-let state = 0;
-const STATES = [
-    { left: 0, down: 0, right: 0, up: 1 },
-    { left: 0, down: -1, right: 1, up: 0 },
-    { left: -1, down: 1, right: 0, up: 0 },
-    { left: 0, down: 0, right: 0, up: -1 },
-]
-
-await init();
+init();
 animate();
 
-async function init() {
+function init() {
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -179,73 +166,3 @@ function render() {
 
     renderer.render(scene, camera);
 }
-
-
-
-function movementAndCollision(object, axis = 'x') {
-    let minDist = 0.08;
-
-    if (object.speed[axis] > 0.1) {
-        let dir = right;
-        if (axis === 'y') {
-            dir = up;
-            minDist = 0.15
-        }
-        raycaster.set(object.position, dir);
-        raycaster.intersectObjects(collidable, false, intersection)
-
-        if (intersection.length == 0 && axis === 'x') {
-            object.position[axis] += object.speed[axis] * delta;
-            object.speed[axis] -= FRICTION * delta
-        }
-        else if (axis == 'x') {
-            object.speed[axis] = 0;
-            if (intersection[0].distance < minDist) {
-                object.position[axis] -= minDist - 0.01 - intersection[0].distance;
-            }
-            intersection.length = 0;
-        }
-    }
-    else if (object.speed[axis] < -0.1) {
-        let dir = axis === 'x' ? left : down;
-        console.log(axis === 'x' ? 'left' : 'down')
-        raycaster.set(object.position, dir);
-        raycaster.intersectObjects(collidable, false, intersection)
-
-        if (intersection.length == 0) {
-            object.position[axis] += object.speed[axis] * delta;
-            object.speed[axis] += FRICTION * delta
-        }
-        else {
-            object.speed[axis] = 0;
-            if (intersection[0].distance < minDist) {
-                object.position[axis] += minDist - 0.01 - intersection[0].distance;
-            }
-            intersection.length = 0;
-        }
-    }
-}
-
-function asyncLoader(url, onLoad, onProgress, onError) {
-    const loader = new GLTFLoader();
-
-    return new Promise((resolve, reject) => {
-        loader.load(
-            url,
-            // on load function
-            (gltf) => {
-                // onLoad(gltf);
-                resolve(gltf.scene);
-            },
-            // on progress function
-            onProgress,
-            // on error function
-            (error) => {
-                if (typeof onError === 'function') {
-                    onError(error);
-                }
-                reject;
-            }
-        );
-    });
-};
