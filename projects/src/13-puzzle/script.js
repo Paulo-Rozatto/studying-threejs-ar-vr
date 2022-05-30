@@ -7,7 +7,7 @@ import { collidable, groundList, makePuzzle, physicBox } from './puzzles.js'
 
 let camera, scene, light, renderer, controller, cameraHolder, clock;
 let raycaster, up, down, right, left, intersection;
-let orbi, orbi2;
+let orbi;
 
 let cube, copter, puzzle1, puzzle2;
 // let rightWall, leftWall;
@@ -50,6 +50,9 @@ async function init() {
     light = new THREE.SpotLight(0xeeeeaa);
     light.position.set(30, 30, 0);
     scene.add(light);
+
+    let ambient = new THREE.AmbientLight(0x323232, 0.5)
+    scene.add(ambient);
 
     const textureLoader = new THREE.TextureLoader();
 
@@ -116,18 +119,10 @@ async function init() {
     orbi = new Orbi(camera, config);
     cameraHolder.add(orbi);
 
-    // orbi.addButton('1', 'img/up.png', () => {
-    //     // move('up')
-    // });
-    // orbi.addButton('2', 'img/down.png', () => {
-    //     // move('down')
-    // });
     orbi.addButton('3', 'img/left.png', () => {
-        // move('left')
         cube.speed.x = -1;
     });
     orbi.addButton('4', 'img/right.png', () => {
-        // move('right')
         cube.speed.x = 1;
     });
 
@@ -137,31 +132,11 @@ async function init() {
     puzzle2.position.z = 2;
     scene.add(puzzle2)
 
-    copter = await asyncLoader('../../assets/models/circuits/fan-block.glb')
-    console.log(copter.getObjectByName('fan'))
-    copter.position.set(0.3, 1.6, 1.7);
-    copter.speed = { x: 0, y: 0 }
-    scene.add(copter)
-
     collidable.push(floor);
     groundList.push(floor)
 
     config.rotation.theta = Math.PI + Math.PI / 4;
-    orbi2 = new Orbi(camera, config);
-    cameraHolder.add(orbi2);
-
-    orbi2.addButton('21', 'img/up.png', () => {
-        copter.speed.y = 1;
-    });
-    orbi2.addButton('22', 'img/down.png', () => {
-        copter.speed.y = -1;
-    });
-    orbi2.addButton('23', 'img/left.png', () => {
-        copter.speed.x = 1;
-    });
-    orbi2.addButton('24', 'img/right.png', () => {
-        copter.speed.x = -1;
-    });
+  
 
     clock = new THREE.Clock();
 
@@ -175,20 +150,11 @@ function animate() {
 let delta, time = 0;
 function render() {
     orbi.update();
-    orbi2.update()
 
     delta = clock.getDelta();
     time += delta;
-    // copter.getObjectByName('fan').rotation.y -= 7 * delta;
-    copter.children[3].rotation.y -= 7 * delta;
 
     cube.update(delta);
-
-    movementAndCollision(copter, 'y')
-    intersection.length = 0;
-
-    movementAndCollision(copter)
-    intersection.length = 0;
 
     renderer.render(scene, camera);
 }
