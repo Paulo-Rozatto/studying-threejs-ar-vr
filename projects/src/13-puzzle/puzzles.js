@@ -32,6 +32,25 @@ export function makeWall(name) {
     return wall;
 }
 
+export function makeVShelf(name) {
+    const textureLoader = new TextureLoader();
+    const wallGeo = new BoxBufferGeometry(0.2, 0.4, 0.3);
+    const wallTex = textureLoader.load('../../assets/textures/wood.jpg');
+
+    wallTex.wrapS = RepeatWrapping;
+    wallTex.wrapT = RepeatWrapping;
+    wallTex.repeat.set(0.25, 1);
+
+    const wallMat = new MeshPhongMaterial({ map: wallTex });
+
+    let wall = new Mesh(wallGeo, wallMat);
+    wall.name = name;
+
+    collidable.push(wall);
+
+    return wall;
+}
+
 export function makeShelf() {
     const textureLoader = new TextureLoader();
 
@@ -109,7 +128,7 @@ export function physicBox() {
 
     let ray = new Raycaster(new Vector3(), new Vector3());
     let intersection = [];
-    let displacement, distance, friction = 0.1;
+    let displacement, distance, friction = 0.65;
 
     cube.update = (delta) => {
         ray.set(cube.position, down);
@@ -126,14 +145,12 @@ export function physicBox() {
             // console.log(intersection[0].distance)
             if (displacement < distance - half) {
                 cube.position.y -= displacement;
-                friction = 0.5;
             }
             else {
                 cube.speed.y = 0;
                 if (distance > half) {
                     cube.position.y -= distance - half;
                     cube.speed.y = 0;
-                    friction = 0.5;
                 }
             }
 
