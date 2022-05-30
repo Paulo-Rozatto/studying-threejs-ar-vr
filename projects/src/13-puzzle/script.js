@@ -73,7 +73,12 @@ async function init() {
     cube.position.set(-0.2, 2, -1.7);
     scene.add(cube);
 
-    let puzzle1 = makePuzzle();
+    let sh1 = { x: -0.4, y: 0.6 }
+    let sh2 = { x: 0.4, y: 0 }
+    let sh3 = { x: -0.4, y: -0.6 }
+
+
+    let puzzle1 = makePuzzle(sh1, sh2, sh3);
     puzzle1.position.set(0, 1, -2);
     scene.add(puzzle1)
 
@@ -126,7 +131,7 @@ async function init() {
         cube.speed.x = 1;
     });
 
-    puzzle2 = makePuzzle();
+    puzzle2 = makePuzzle(sh1, sh2, sh3);
     puzzle2.rotation.y = Math.PI;
     puzzle2.position.y = 1;
     puzzle2.position.z = 2;
@@ -224,7 +229,7 @@ function movementAndCollision(object, axis = 'x') {
             object.position[axis] += object.speed[axis] * delta;
             object.speed[axis] += FRICTION * delta
         }
-        else  {
+        else {
             object.speed[axis] = 0;
             if (intersection[0].distance < minDist) {
                 object.position[axis] += minDist - 0.01 - intersection[0].distance;
