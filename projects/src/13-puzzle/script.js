@@ -3,7 +3,7 @@ import { VRButton } from '../../build2/jsm/webxr/VRButton.js';
 import { GLTFLoader } from '../../build2/jsm/loaders/GLTFLoader.js';
 
 import { Orbi } from '../../libs/orbixr.js';
-import { collidable, groundList, makePuzzle, physicBox } from './puzzles.js'
+import { collidable, groundList, makePuzzle, makeVShelf, makeWall, physicBox } from './puzzles.js'
 
 let camera, scene, light, renderer, controller, cameraHolder, clock;
 let raycaster, up, down, right, left, intersection;
@@ -66,24 +66,30 @@ async function init() {
     floor.rotateX(Math.PI * -0.5);
     scene.add(floor);
 
-    // const cubeTex = textureLoader.load('../../assets/textures/crate.jpg')
-    // const cubeGeo = new THREE.BoxBufferGeometry(0.15, 0.15, 0.15);
-    // const cubeMat = new THREE.MeshPhongMaterial({ map: cubeTex });
-    // cube = new THREE.Mesh(cubeGeo, cubeMat);
-    // cube.position.set(-0.2, 2, -1.7);
-    // cube.speed = { x: 0, y: 0 };
     cube = physicBox();
-    cube.position.set(-0.2, 2, -1.7);
+    cube.position.set(-0.3, 2, -1.7);
     scene.add(cube);
 
+    // let sh1 = { x: -0.4, y: 0.6 }
+    // let sh2 = { x: 0.4, y: 0 }
+    // let sh3 = { x: -0.4, y: -0.6 }
+
     let sh1 = { x: -0.4, y: 0.6 }
-    let sh2 = { x: 0.4, y: 0 }
-    let sh3 = { x: -0.4, y: -0.6 }
+    let sh2 = { x: 0.1, y: 0.1 }
+    let sh3 = { x: 0.45, y: -0.55 }
 
 
     let puzzle1 = makePuzzle(sh1, sh2, sh3);
     puzzle1.position.set(0, 1, -2);
     scene.add(puzzle1)
+
+    let wall1 = makeVShelf("nome");
+    wall1.position.set(-0.15, 0.35, 0.25)
+    puzzle1.add(wall1);
+
+    let wall2 = makeVShelf("nome2");
+    wall2.position.set(0.2, -0.8, 0.25)
+    puzzle1.add(wall2);
 
     raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 0.1);
     up = new THREE.Vector3(0, 1, 0);
@@ -125,6 +131,7 @@ async function init() {
     orbi.addButton('4', 'img/right.png', () => {
         cube.speed.x = 1;
     });
+
 
     puzzle2 = makePuzzle(sh1, sh2, sh3);
     puzzle2.rotation.y = Math.PI;
