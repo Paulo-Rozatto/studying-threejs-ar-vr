@@ -95,6 +95,23 @@ async function init() {
     wall2.position.set(0.2, -0.8, 0.25)
     puzzle2.add(wall2);
 
+    sh1 = { x: -0.4, y: 0.6 }
+    sh2 = { x: 0.4, y: 0.05 }
+    sh3 = { x: 0, y: -0.55 }
+
+    let puzzle3 = makePuzzle(sh1, sh2, sh3);
+    puzzle3.position.set(2, 1, 0);
+    puzzle3.rotateY(Math.PI * -0.5);
+    scene.add(puzzle3)
+
+    let wall3 = makeVShelf("nome2");
+    wall3.position.set(0.2, -0.2, 0.25)
+    puzzle3.add(wall3);
+
+    let wall4 = makeVShelf("nome2");
+    wall4.position.set(0, -0.8, 0.25)
+    puzzle3.add(wall4);
+
     raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(), 0, 0.1);
     up = new THREE.Vector3(0, 1, 0);
     down = new THREE.Vector3(0, -1, 0);
