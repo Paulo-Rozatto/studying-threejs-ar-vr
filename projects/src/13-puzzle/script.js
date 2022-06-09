@@ -2,7 +2,7 @@ import * as THREE from '../../build2/three.module.js';
 import { VRButton } from '../../build2/jsm/webxr/VRButton.js';
 
 import { Orbi } from '../../libs/orbixr.js';
-import { collidable, groundList, makePuzzle, makeVShelf, physicBox } from './puzzles.js'
+import { collidable, groundList, makePuzzle, physicBox } from './puzzles.js'
 
 let camera, scene, light, renderer, controller, cameraHolder, clock;
 let orbi;
@@ -30,7 +30,6 @@ function init() {
     camera.add(controller);
 
     cameraHolder = new THREE.Object3D();
-    // cameraHolder.rotateY(Math.PI)
     cameraHolder.add(camera);
     scene.add(cameraHolder);
 
@@ -57,47 +56,47 @@ function init() {
     cube.position.set(-0.3, 2, -1.7);
     scene.add(cube);
 
-    let sh1 = { x: -0.4, y: 0.6 }
-    let sh2 = { x: 0.4, y: 0 }
-    let sh3 = { x: -0.4, y: -0.6 }
-
-    let puzzle1 = makePuzzle(sh1, sh2, sh3);
+    let puzzle1 = makePuzzle(
+        [
+            { x: -0.4, y: 0.6 },
+            { x: 0.4, y: 0 },
+            { x: -0.4, y: -0.6 }
+        ]
+    );
     puzzle1.position.set(0, 1, -2);
     scene.add(puzzle1)
 
-    sh1 = { x: -0.4, y: 0.6 }
-    sh2 = { x: 0.1, y: 0.1 }
-    sh3 = { x: 0.45, y: -0.55 }
 
-    let puzzle2 = makePuzzle(sh1, sh2, sh3);
+    let puzzle2 = makePuzzle(
+        [
+            { x: -0.4, y: 0.6 },
+            { x: 0.1, y: 0.1 },
+            { x: 0.45, y: -0.55 }
+        ],
+        [
+            { x: -0.15, y: 0.35, z: 0.25 },
+            { x: 0.2, y: -0.8, z: 0.25 }
+        ]
+    );
     puzzle2.position.set(0, 1, 2);
     puzzle2.rotateY(Math.PI);
     scene.add(puzzle2)
 
-    let wall1 = makeVShelf("nome");
-    wall1.position.set(-0.15, 0.35, 0.25)
-    puzzle2.add(wall1);
+    let puzzle3 = makePuzzle(
+        [
+            { x: -0.4, y: 0.6 },
+            { x: 0.4, y: 0.05 },
+            { x: 0, y: -0.55 }
+        ],
+        [
+            {x: 0.2, y: -0.2, z: 0.25},
+            {x: 0, y: -0.8, z: 0.25}
 
-    let wall2 = makeVShelf("nome2");
-    wall2.position.set(0.2, -0.8, 0.25)
-    puzzle2.add(wall2);
-
-    sh1 = { x: -0.4, y: 0.6 }
-    sh2 = { x: 0.4, y: 0.05 }
-    sh3 = { x: 0, y: -0.55 }
-
-    let puzzle3 = makePuzzle(sh1, sh2, sh3);
+        ]
+    );
     puzzle3.position.set(2, 1, 0);
     puzzle3.rotateY(Math.PI * -0.5);
     scene.add(puzzle3)
-
-    let wall3 = makeVShelf("nome2");
-    wall3.position.set(0.2, -0.2, 0.25)
-    puzzle3.add(wall3);
-
-    let wall4 = makeVShelf("nome2");
-    wall4.position.set(0, -0.8, 0.25)
-    puzzle3.add(wall4);
 
     // Orbi Config
     const config = {
@@ -152,7 +151,6 @@ function render() {
     orbi.update();
 
     delta = clock.getDelta();
-    time += delta;
 
     cube.update(delta);
 

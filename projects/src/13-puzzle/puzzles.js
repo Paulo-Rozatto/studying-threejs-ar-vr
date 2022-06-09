@@ -69,7 +69,7 @@ export function makeShelf() {
     return shelf;
 }
 
-export function makePuzzle(sh1, sh2, sh3) {
+export function makePuzzle(shelfs, vshelfs = []) {
     const textureLoader = new TextureLoader();
     let puzzle = new Group();
 
@@ -93,20 +93,25 @@ export function makePuzzle(sh1, sh2, sh3) {
     rightWall.position.z = 0.25;
     puzzle.add(rightWall);
 
-    const shelf1 = makeShelf();
-    shelf1.name = "shelf1";
-    shelf1.position.set(sh1.x, sh1.y, 0.2);
-    puzzle.add(shelf1)
+    let cont = 1;
+    let shelf
+    for (const sh of shelfs) {
+        shelf = makeShelf();
+        shelf.name = "shelf" + cont;
+        shelf.position.set(sh.x, sh.y, 0.2);
+        puzzle.add(shelf)
+        cont += 1;
+    }
 
-    const shelf2 = makeShelf();
-    shelf2.name = "shelf2";
-    shelf2.position.set(sh2.x, sh2.y, 0.2);
-    puzzle.add(shelf2)
-
-    const shelf3 = makeShelf();
-    shelf3.name = "shelf3";
-    shelf3.position.set(sh3.x, sh3.y, 0.2);
-    puzzle.add(shelf3)
+    cont = 1;
+    for (const sh of vshelfs) {
+        console.log(sh)
+        shelf = makeVShelf();
+        shelf.name = "vshelf" + cont;
+        shelf.position.set(sh.x, sh.y, sh.z);
+        puzzle.add(shelf)
+        cont += 1;
+    }
 
     return puzzle;
 }
