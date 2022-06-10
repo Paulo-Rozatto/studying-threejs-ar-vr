@@ -10,8 +10,22 @@ import {
     Raycaster,
 } from '../../build2/three.module.js';
 
-export const groundList = [];
-export const collidable = [];
+const groundList = [];
+const collidable = [];
+let floor;
+
+let onHitFloor;
+
+export function setFloor(flr, callback) {
+    floor = flr;
+
+    groundList.push(floor);
+
+    if (typeof callback === 'function')
+        onHitFloor = callback;
+    else
+        onHitFloor = () => { console.log('hit floor') };
+}
 
 export function makeWall(name) {
     const textureLoader = new TextureLoader();
@@ -105,7 +119,6 @@ export function makePuzzle(shelfs, vshelfs = []) {
 
     cont = 1;
     for (const sh of vshelfs) {
-        console.log(sh)
         shelf = makeVShelf();
         shelf.name = "vshelf" + cont;
         shelf.position.set(sh.x, sh.y, sh.z);
@@ -131,6 +144,8 @@ export function physicBox() {
     const cube = new Mesh(cubeGeo, cubeMat);
     cube.speed = { x: 0, y: 0 };
 
+    cube.isOnFloor = false;
+
     let ray = new Raycaster(new Vector3(), new Vector3());
     let intersection = [];
     let displacement, distance, friction = 0.65;
@@ -140,14 +155,12 @@ export function physicBox() {
 
         ray.intersectObjects(groundList, false, intersection);
 
-        // console.log(cube.speed.y)
         cube.speed.y += (2 * delta);
         displacement = cube.speed.y * delta;
 
         if (intersection.length != 0) {
             distance = intersection[0].distance;
 
-            // console.log(intersection[0].distance)
             if (displacement < distance - half) {
                 cube.position.y -= displacement;
             }
@@ -157,15 +170,20 @@ export function physicBox() {
                     cube.position.y -= distance - half;
                     cube.speed.y = 0;
                 }
+
+                if (intersection[0].object == floor && !cube.isOnFloor) {
+                    cube.isOnFloor = true;
+                    onHitFloor();
+                }
             }
 
+            // console.log(intersection[0].object == floor);
             intersection.length = 0;
         }
 
         if (cube.speed.x != 0) {
             cube.speed.x -= friction * delta * Math.sign(cube.speed.x);
             displacement = cube.speed.x * delta;
-
 
             let dir = cube.speed.x > 0 ? right : left;
 

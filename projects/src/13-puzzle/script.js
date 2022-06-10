@@ -2,7 +2,7 @@ import * as THREE from '../../build2/three.module.js';
 import { VRButton } from '../../build2/jsm/webxr/VRButton.js';
 
 import { Orbi } from '../../libs/orbixr.js';
-import { collidable, groundList, makePuzzle, physicBox } from './puzzles.js'
+import { makePuzzle, physicBox, setFloor } from './puzzles.js'
 
 let camera, scene, light, renderer, controller, cameraHolder, clock;
 let orbi;
@@ -127,12 +127,17 @@ function init() {
     orbi.addButton('3', 'img/left.png', () => {
         cube.speed.x = -1;
     });
+
     orbi.addButton('4', 'img/right.png', () => {
         cube.speed.x = 1;
     });
 
-    collidable.push(floor);
-    groundList.push(floor)
+    let onHitFloor = () => {
+        console.log('mudei')
+    }
+    setFloor(floor, onHitFloor);
+
+    puzzle1.position.z = -3;
 
     config.rotation.theta = Math.PI + Math.PI / 4;
 
