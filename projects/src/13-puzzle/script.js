@@ -53,8 +53,8 @@ function init() {
     scene.add(floor);
 
     cube = physicBox();
-    cube.position.set(-0.3, 2, -1.7);
-    scene.add(cube);
+    // cube.position.set(-0.3, 2, -1.7);
+    // scene.add(cube);
 
     let puzzle1 = makePuzzle(
         [
@@ -89,8 +89,8 @@ function init() {
             { x: 0, y: -0.55 }
         ],
         [
-            {x: 0.2, y: -0.2, z: 0.25},
-            {x: 0, y: -0.8, z: 0.25}
+            { x: 0.2, y: -0.2, z: 0.25 },
+            { x: 0, y: -0.8, z: 0.25 }
 
         ]
     );
@@ -132,12 +132,29 @@ function init() {
         cube.speed.x = 1;
     });
 
+    puzzle1.add(cube);
+    cube.position.set(-0.3, 1, 0.25);
+
+    let listIndex = 0;
+    const puzzleList = [
+        puzzle3,
+        puzzle2,
+    ]
     let onHitFloor = () => {
-        console.log('mudei')
+        if (listIndex < 2) {
+            let puzzle = puzzleList[listIndex];
+            cube.position.set(-0.3, 1, 0.25);
+
+            puzzle.add(cube);
+
+            listIndex += 1;
+            cube.isOnFloor = false;
+        }
     }
+
     setFloor(floor, onHitFloor);
 
-    puzzle1.position.z = -3;
+    // puzzle1.position.z = -3;
 
     config.rotation.theta = Math.PI + Math.PI / 4;
 

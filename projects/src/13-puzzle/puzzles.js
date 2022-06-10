@@ -149,9 +149,11 @@ export function physicBox() {
     let ray = new Raycaster(new Vector3(), new Vector3());
     let intersection = [];
     let displacement, distance, friction = 0.65;
+    let worldPos = new Vector3();
 
     cube.update = (delta) => {
-        ray.set(cube.position, down);
+        cube.getWorldPosition(worldPos);
+        ray.set(worldPos, down);
 
         ray.intersectObjects(groundList, false, intersection);
 
@@ -185,9 +187,16 @@ export function physicBox() {
             cube.speed.x -= friction * delta * Math.sign(cube.speed.x);
             displacement = cube.speed.x * delta;
 
+            // salvar right e left dentro do cubo e alterar conforme o puzzle (gambiarra)
             let dir = cube.speed.x > 0 ? right : left;
+            if (cube.speed.x > 0)
+                dir.copy(right);
+            else
+                dir.copy(left);
 
-            ray.set(cube.position, dir);
+            dir.applyQuaternion(cube.parent.quaternion);
+
+            ray.set(worldPos, dir);
             ray.intersectObjects(collidable, false, intersection);
 
             if (intersection.length > 0) {
