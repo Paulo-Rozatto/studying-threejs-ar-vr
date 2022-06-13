@@ -52,51 +52,46 @@ function init() {
     floor.rotateX(Math.PI * -0.5);
     scene.add(floor);
 
-    cube = physicBox();
-    // cube.position.set(-0.3, 2, -1.7);
-    // scene.add(cube);
-
     let puzzle1 = makePuzzle(
-        [
-            { x: -0.4, y: 0.6 },
-            { x: 0.4, y: 0 },
-            { x: -0.4, y: -0.6 }
-        ]
+        [{ x: -0.4, y: 0.6 }, { x: 0.4, y: 0 }, { x: -0.4, y: -0.6 }]
     );
     puzzle1.position.set(0, 1, -2);
     scene.add(puzzle1)
 
-
     let puzzle2 = makePuzzle(
-        [
-            { x: -0.4, y: 0.6 },
-            { x: 0.1, y: 0.1 },
-            { x: 0.45, y: -0.55 }
-        ],
-        [
-            { x: -0.15, y: 0.35, z: 0.25 },
-            { x: 0.2, y: -0.8, z: 0.25 }
-        ]
+        [{ x: -0.4, y: 0.6 }, { x: 0.1, y: 0.1 }, { x: 0.45, y: -0.55 }],
+        [{ x: -0.15, y: 0.35, z: 0.25 }, { x: 0.2, y: -0.8, z: 0.25 }]
     );
     puzzle2.position.set(0, 1, 2);
     puzzle2.rotateY(Math.PI);
     scene.add(puzzle2)
 
     let puzzle3 = makePuzzle(
-        [
-            { x: -0.4, y: 0.6 },
-            { x: 0.4, y: 0.05 },
-            { x: 0, y: -0.55 }
-        ],
-        [
-            { x: 0.2, y: -0.2, z: 0.25 },
-            { x: 0, y: -0.8, z: 0.25 }
-
-        ]
+        [{ x: -0.4, y: 0.6 }, { x: 0.4, y: 0.05 }, { x: 0, y: -0.55 }],
+        [{ x: 0.2, y: -0.2, z: 0.25 }, { x: 0, y: -0.8, z: 0.25 }]
     );
     puzzle3.position.set(2, 1, 0);
     puzzle3.rotateY(Math.PI * -0.5);
     scene.add(puzzle3)
+
+    cube = physicBox();
+    puzzle1.add(cube);
+    cube.position.set(-0.3, 1, 0.25);
+
+    let listIndex = 0;
+    const puzzleList = [puzzle3, puzzle2]
+    let onHitFloor = () => {
+        if (listIndex < 2) {
+            let puzzle = puzzleList[listIndex];
+            cube.position.set(-0.3, 1, 0.25);
+
+            puzzle.add(cube);
+
+            listIndex += 1;
+            cube.isOnFloor = false;
+        }
+    }
+    setFloor(floor, onHitFloor);
 
     // Orbi Config
     const config = {
@@ -131,30 +126,6 @@ function init() {
     orbi.addButton('4', 'img/right.png', () => {
         cube.speed.x = 1;
     });
-
-    puzzle1.add(cube);
-    cube.position.set(-0.3, 1, 0.25);
-
-    let listIndex = 0;
-    const puzzleList = [
-        puzzle3,
-        puzzle2,
-    ]
-    let onHitFloor = () => {
-        if (listIndex < 2) {
-            let puzzle = puzzleList[listIndex];
-            cube.position.set(-0.3, 1, 0.25);
-
-            puzzle.add(cube);
-
-            listIndex += 1;
-            cube.isOnFloor = false;
-        }
-    }
-
-    setFloor(floor, onHitFloor);
-
-    // puzzle1.position.z = -3;
 
     config.rotation.theta = Math.PI + Math.PI / 4;
 

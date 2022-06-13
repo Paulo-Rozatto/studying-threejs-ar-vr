@@ -144,14 +144,13 @@ export function physicBox() {
     const cube = new Mesh(cubeGeo, cubeMat);
     cube.speed = { x: 0, y: 0 };
 
-    const dir = new Vector3(1, 0, 0);
-
     cube.isOnFloor = false;
 
-    let ray = new Raycaster(new Vector3(), new Vector3());
     let intersection = [];
     let displacement, distance, friction = 0.65;
-    let worldPos = new Vector3();
+    const ray = new Raycaster(new Vector3(), new Vector3());
+    const worldPos = new Vector3();
+    const dir = new Vector3(1, 0, 0);
 
     cube.update = (delta) => {
         cube.getWorldPosition(worldPos);
@@ -181,7 +180,6 @@ export function physicBox() {
                 }
             }
 
-            // console.log(intersection[0].object == floor);
             intersection.length = 0;
         }
 
