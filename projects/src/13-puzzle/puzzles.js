@@ -144,6 +144,8 @@ export function physicBox() {
     const cube = new Mesh(cubeGeo, cubeMat);
     cube.speed = { x: 0, y: 0 };
 
+    const dir = new Vector3(1, 0, 0);
+
     cube.isOnFloor = false;
 
     let ray = new Raycaster(new Vector3(), new Vector3());
@@ -187,8 +189,6 @@ export function physicBox() {
             cube.speed.x -= friction * delta * Math.sign(cube.speed.x);
             displacement = cube.speed.x * delta;
 
-            // salvar right e left dentro do cubo e alterar conforme o puzzle (gambiarra)
-            let dir = cube.speed.x > 0 ? right : left;
             if (cube.speed.x > 0)
                 dir.copy(right);
             else

@@ -100,7 +100,7 @@ function init() {
 
     // Orbi Config
     const config = {
-        display: new THREE.Vector2(2, 2),
+        display: new THREE.Vector2(1, 2),
         orbits: [1, 2, 3],
         rotation: {
             theta: Math.PI / 4,
