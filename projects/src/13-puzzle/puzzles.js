@@ -97,6 +97,16 @@ export function makePuzzle(shelfs, vshelfs = []) {
     const rear = new Mesh(rearGeo, rearMat);
     puzzle.add(rear);
 
+    const floorText = textureLoader.load('../../assets/textures/checkered.png');
+    floorText.wrapS = RepeatWrapping;
+    floorText.repeat.set(2.5, 1);
+    const floorGeo = new PlaneBufferGeometry(2, 0.5);
+    const floorMat = new MeshLambertMaterial({ map: floorText })
+    const floor = new Mesh(floorGeo, floorMat);
+    floor.position.set(0, -0.99, 0.25)
+    floor.rotateX(Math.PI * -0.5);
+    puzzle.add(floor)
+
     let leftWall = makeWall("lwall");
     leftWall.position.x = -0.9;
     leftWall.position.z = 0.25;
