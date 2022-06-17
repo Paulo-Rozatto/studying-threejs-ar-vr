@@ -11,6 +11,8 @@ let orbi;
 let cube;
 let onGoing = true;
 
+let timerHasStarted = false, start, times = [];
+
 init();
 animate();
 
@@ -99,19 +101,20 @@ function init() {
     puzzle1.add(cube);
     cube.position.set(-0.3, 1, 0.25);
 
-    let listIndex = 0;
     const puzzleList = [puzzle1, puzzle3, puzzle2]
+    let puzzleIndex = 0;
     let onHitFloor = () => {
-        let currentPuzzle = puzzleList[listIndex];
+        let currentPuzzle = puzzleList[puzzleIndex];
         currentPuzzle.add(winSound);
         winSound.play();
         cube.isOnFloor = true;
 
+        if (puzzleIndex < 2) {
+            times[puzzleIndex] = performance.now();
 
-        if (listIndex < 2) {
             setTimeout(() => {
-                listIndex += 1;
-                let nextPuzzle = puzzleList[listIndex];
+                puzzleIndex += 1;
+                let nextPuzzle = puzzleList[puzzleIndex];
                 nextPuzzle.add(cube);
                 cube.position.set(-0.3, 1, 0.25);
 
@@ -119,7 +122,14 @@ function init() {
             }, 500);
         }
         else {
+            times[puzzleIndex] = performance.now();
+
             onGoing = false;
+            console.log('Start: ', start);
+            console.log('Times: ', times);
+            console.log(times[0] - start);
+            console.log(times[1] - times[0]);
+            console.log(times[2] - times[1]);
         }
     }
     setFloor(floor, onHitFloor);
@@ -152,10 +162,19 @@ function init() {
 
     orbi.addButton('3', 'img/left.png', () => {
         cube.speed.x = -1;
+
+        if (!timerHasStarted) {
+            start = performance.now()
+            timerHasStarted = true;
+        }
     });
 
     orbi.addButton('4', 'img/right.png', () => {
         cube.speed.x = 1;
+        if (!timerHasStarted) {
+            start = performance.now()
+            timerHasStarted = true;
+        }
     });
 
     config.rotation.theta = Math.PI + Math.PI / 4;
