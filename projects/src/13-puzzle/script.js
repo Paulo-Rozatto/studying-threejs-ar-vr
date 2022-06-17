@@ -1,5 +1,6 @@
 import * as THREE from '../../build2/three.module.js';
 import { VRButton } from '../../build2/jsm/webxr/VRButton.js';
+import { PositionalAudioHelper } from '../../build2/jsm/helpers/PositionalAudioHelper.js';
 
 import { Orbi } from '../../libs/orbixr.js';
 import { makePuzzle, physicBox, setFloor } from './puzzles.js'
@@ -8,6 +9,7 @@ let camera, scene, light, renderer, controller, cameraHolder, clock;
 let orbi;
 
 let cube;
+let onGoing = true;
 
 init();
 animate();
@@ -67,28 +69,57 @@ function init() {
     scene.add(puzzle2)
 
     let puzzle3 = makePuzzle(
-        [{ x: -0.4, y: 0.6 }, { x: 0.4, y: 0.05 }, { x: 0, y: -0.55 }],
-        [{ x: 0.2, y: -0.2, z: 0.25 }, { x: 0, y: -0.8, z: 0.25 }]
+        [{ x: -0.4, y: 0.6 }, { x: 0.4, y: -0.05 }, { x: 0, y: -0.55 }],
+        [{ x: 0.2, y: -0.3, z: 0.25 }, { x: 0, y: -0.8, z: 0.25 }]
     );
     puzzle3.position.set(2, 1, 0);
     puzzle3.rotateY(Math.PI * -0.5);
     scene.add(puzzle3)
 
-    cube = physicBox();
+    const listener = new THREE.AudioListener();
+    camera.add(listener);
+
+    // create the PositionalAudio object (passing in the listener)
+    const hitSound = new THREE.PositionalAudio(listener);
+    const winSound = new THREE.PositionalAudio(listener);
+
+    const audioLoader = new THREE.AudioLoader();
+    audioLoader.load('../../assets/sounds/copy.wav', function (buffer) {
+        hitSound.setBuffer(buffer);
+        hitSound.setRefDistance(1);
+    });
+
+    audioLoader.load('../../assets/sounds/win.wav', function (buffer) {
+        winSound.setBuffer(buffer);
+        winSound.setRefDistance(1);
+    })
+
+    cube = physicBox(hitSound);
+    cube.add(hitSound);
     puzzle1.add(cube);
     cube.position.set(-0.3, 1, 0.25);
 
     let listIndex = 0;
-    const puzzleList = [puzzle3, puzzle2]
+    const puzzleList = [puzzle1, puzzle3, puzzle2]
     let onHitFloor = () => {
+        let currentPuzzle = puzzleList[listIndex];
+        currentPuzzle.add(winSound);
+        winSound.play();
+        cube.isOnFloor = true;
+
+
         if (listIndex < 2) {
-            let puzzle = puzzleList[listIndex];
-            cube.position.set(-0.3, 1, 0.25);
+            setTimeout(() => {
+                listIndex += 1;
+                let nextPuzzle = puzzleList[listIndex];
+                nextPuzzle.add(cube);
+                cube.position.set(-0.3, 1, 0.25);
 
-            puzzle.add(cube);
-
-            listIndex += 1;
-            cube.isOnFloor = false;
+                cube.isOnFloor = false;
+            }, 500);
+        }
+        else {
+            onGoing = false;
         }
     }
     setFloor(floor, onHitFloor);
@@ -145,7 +176,8 @@ function render() {
 
     delta = clock.getDelta();
 
-    cube.update(delta);
+    if (onGoing)
+        cube.update(delta);
 
     renderer.render(scene, camera);
 }

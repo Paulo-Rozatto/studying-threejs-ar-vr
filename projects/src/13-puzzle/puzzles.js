@@ -8,6 +8,7 @@ import {
     TextureLoader,
     Vector3,
     Raycaster,
+    MeshLambertMaterial,
 } from '../../build2/three.module.js';
 
 const groundList = [];
@@ -143,7 +144,7 @@ let down = new Vector3(0, -1, 0),
     right = new Vector3(1, 0, 0),
     left = new Vector3(-1, 0, 0);
 
-export function physicBox() {
+export function physicBox(sound) {
     const textureLoader = new TextureLoader();
     const boxSize = 0.15;
     const half = 0.15 * 0.5;
@@ -154,6 +155,7 @@ export function physicBox() {
     const cube = new Mesh(cubeGeo, cubeMat);
     cube.speed = { x: 0, y: 0 };
 
+    cube.add(sound)
     cube.isOnFloor = false;
 
     let intersection = [];
@@ -182,6 +184,7 @@ export function physicBox() {
                 if (distance > half) {
                     cube.position.y -= distance - half;
                     cube.speed.y = 0;
+                    sound.play();
                 }
 
                 if (intersection[0].object == floor && !cube.isOnFloor) {
