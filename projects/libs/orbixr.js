@@ -403,7 +403,7 @@ class Orbi extends Object3D {
                 raycaster.intersectObject(this.stopButton, false, intersection);
                 // ring.visible = true;
                 ring.position.copy(cursor.position);
-                ring.position.z = -config.orbits[currentOrbit]
+                ring.position.z = -config.orbits[currentOrbit] + 0.1
             }
             else {
                 raycaster.intersectObjects(buttonsArray, false, intersection);
