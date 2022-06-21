@@ -387,6 +387,13 @@ class Orbi extends Object3D {
             uiGroup.rotation.x = euler.x;
         }
 
+        currentMode();
+
+        if (canvasTexture)
+            canvasTexture.needsUpdate = true;
+    }
+
+    intersect() {
         if (rayClock.getElapsedTime() > 0.2) {
             rayClock.start();
 
@@ -421,11 +428,6 @@ class Orbi extends Object3D {
                 oldIntersected = null;
             }
         }
-
-        currentMode();
-
-        if (canvasTexture)
-            canvasTexture.needsUpdate = true;
     }
 
     click() {
@@ -454,6 +456,8 @@ class Orbi extends Object3D {
     }
 
     dwellingMode() {
+        this.intersect();
+        
         if (intersected) {
             if (intersected !== oldIntersected) {
                 isFusing = true;
@@ -486,6 +490,8 @@ class Orbi extends Object3D {
     }
 
     handMode() {
+        this.intersect();
+
         if (handTrack.getClassification() == -1) {
             cursor.visible = false;
             ring.visible = false;
