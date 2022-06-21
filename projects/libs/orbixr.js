@@ -21,7 +21,7 @@ import {
 } from '../build2/three.module.js';
 
 // propertys
-let currentOrbit, isFusing, config;
+let currentOrbit, isFusing, config, currentMode;
 
 // objects
 let camera, cursor, ring, raycaster, rayClock, fusingClock, messageBg, message, textBg, text;
@@ -112,6 +112,7 @@ class Orbi extends Object3D {
 
         camera = cam;
         currentOrbit = 0;
+        currentMode = this.dwellingMode;
 
         this.position.copy(camera.position);
         this.position.y = 1.6;
@@ -163,6 +164,7 @@ class Orbi extends Object3D {
                 ring.material.depthTest = true;
                 ring.material.opacity = 0.6;
                 ring.material.needsUpdate = true;
+                currentMode = this.handMode;
                 camera.add(ring);
             }
             else {
@@ -275,6 +277,8 @@ class Orbi extends Object3D {
 
         // debug mode
         debugOn = config.debug.enabled;
+
+        currentMode = currentMode.bind(this);
     }
 
     addButton(name, textureSrc, callback) {
@@ -416,109 +420,15 @@ class Orbi extends Object3D {
                 intersected = null;
                 oldIntersected = null;
             }
-
-            if (intersected && (config.tracking.enabled == false || handTrack?.getClassification() == CLOSED)) {
-                if (intersected !== oldIntersected) {
-                    isFusing = true;
-                    fusingClock.start();
-                    oldIntersected = intersected;
-                }
-            }
-            else if (isFusing) {
-                isFusing = false;
-                fusingClock.stop();
-
-                if (cursor.isModel) {
-                    cursor.children[0].children[1].material.color.g = 0.27;
-                    cursor.children[0].children[1].material.needsUpdate = true;
-                }
-                else {
-                    cursor.scale.set(1, 1, 1);
-                }
-            }
         }
 
-        if (isFusing) {
-            this.fusingTime = fusingClock.elapsedTime;
+        currentMode();
 
-            if (this.fusingTime < config.cursor.fusingTime) {
-                if (cursor.isModel) {
-                    cursor.children[0].children[1].material.color.g += fusingClock.getDelta();
-                    cursor.children[0].children[1].material.needsUpdate = true;
-                }
-                else {
-                    cursor.scale.addScalar(-fusingClock.getDelta());
-                }
-            }
-            else {
-                handleClick(intersected);
-
-                isFusing = false;
-                fusingClock.stop();
-
-                if (cursor.isModel) {
-                    cursor.children[0].children[1].material.color.g = 0.27;
-                    cursor.children[0].children[1].material.needsUpdate = true;
-                }
-                else {
-                    cursor.scale.set(1, 1, 1);
-                }
-            }
-        }
         if (canvasTexture)
             canvasTexture.needsUpdate = true;
-
-        if (config.tracking.enabled) {
-            if (handTrack.getClassification() > -1) {
-                cursor.visible = true;
-
-                handTrack.getCenter(cursor.position);
-
-                if (intersected) {
-                    ring.visible = true;
-                    ring.position.copy(cursor.position);
-                    ring.position.z -= intersection[0].distance;
-                }
-                else if (this.moveHorizontally || this.moveVertically) {
-                    ring.visible = true;
-                }
-                else {
-                    ring.visible = false;
-                }
-
-                if (handTrack.getClassification() != oldClassification) {
-                    if (handTrack.getClassification() === CLOSED) {
-                        config.hand.action.reset();
-                        config.hand.action.play()
-                    }
-                    else {
-                        config.hand.action.reset();
-                        config.hand.action.time = -1;
-                    }
-                }
-
-                oldClassification = handTrack.getClassification();
-            }
-            else {
-                cursor.visible = false;
-                ring.visible = false;
-            }
-        }
     }
 
     click() {
-        // dont remember why rayscater were being set here
-        // raycaster.setFromCamera(origin2d, camera);
-
-        // intersection.length = 0;
-
-        // if (this.moveVertically || this.moveHorizontally) {
-        //     raycaster.intersectObject(this.stopButton, false, intersection);
-        // }
-        // else {
-        //     raycaster.intersectObjects(buttonsArray, true, intersection);
-        // }
-
         if (intersection.length > 0) {
             intersected = intersection[0].object;
         }
@@ -541,6 +451,106 @@ class Orbi extends Object3D {
             if (!cursor.isModel)
                 cursor.scale.set(1, 1, 1);
         }
+    }
+
+    dwellingMode() {
+        if (intersected) {
+            if (intersected !== oldIntersected) {
+                isFusing = true;
+                fusingClock.start();
+                oldIntersected = intersected;
+                cursor.scale.set(1, 1, 1);
+            }
+            else {
+                this.fusingTime = fusingClock.elapsedTime;
+
+                if (this.fusingTime < config.cursor.fusingTime) {
+                    cursor.scale.addScalar(-fusingClock.getDelta());
+                }
+                else {
+                    handleClick(intersected);
+
+                    isFusing = false;
+                    fusingClock.stop();
+
+                    cursor.scale.set(1, 1, 1);
+                }
+            }
+        }
+        else if (isFusing) {
+            isFusing = false;
+            fusingClock.stop();
+
+            cursor.scale.set(1, 1, 1);
+        }
+    }
+
+    handMode() {
+        if (handTrack.getClassification() == -1) {
+            cursor.visible = false;
+            ring.visible = false;
+            return;
+        }
+
+        cursor.visible = true;
+        ring.visible = false;
+        handTrack.getCenter(cursor.position);
+
+        if (intersected) {
+            ring.visible = true;
+            ring.position.copy(cursor.position);
+            ring.position.z -= intersection[0].distance;
+
+            if (intersected !== oldIntersected && handTrack.getClassification() == CLOSED) {
+                isFusing = true;
+                fusingClock.start();
+                oldIntersected = intersected;
+            }
+            else {
+                this.fusingTime = fusingClock.elapsedTime;
+
+                if (this.fusingTime < config.cursor.fusingTime) {
+                    cursor.children[0].children[1].material.color.g += fusingClock.getDelta();
+                    cursor.children[0].children[1].material.needsUpdate = true;
+                }
+                else {
+                    handleClick(intersected);
+
+                    isFusing = false;
+                    fusingClock.stop();
+
+                    cursor.children[0].children[1].material.color.g = 0.27;
+                    cursor.children[0].children[1].material.needsUpdate = true;
+                }
+            }
+        }
+        else {
+            if (this.moveHorizontally || this.moveVertically)
+                ring.visible = true;
+
+            if (isFusing) {
+                isFusing = false;
+                fusingClock.stop();
+
+                cursor.children[0].children[1].material.color.g = 0.27;
+                cursor.children[0].children[1].material.needsUpdate = true;
+            }
+        }
+
+        if (handTrack.getClassification() != oldClassification) {
+            if (handTrack.getClassification() === CLOSED) {
+                config.hand.action.reset();
+                config.hand.action.play()
+            }
+            else {
+                config.hand.action.reset();
+                config.hand.action.time = -1;
+                oldIntersected = -1; // null nao funciona aqui por algum motivo, mas intersected com certeza nao sera -1 espero
+            }
+        }
+
+        oldClassification = handTrack.getClassification();
+
     }
 
     pauseTracking() {

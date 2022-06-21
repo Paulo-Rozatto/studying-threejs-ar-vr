@@ -134,7 +134,7 @@ export const HandTrack = {
 
             if (x) {
                 pos.z = x * 0.003125 - 0.9;
-                console.log(pos.z)
+                // console.log(pos.z)
                 if (pos.z > -0.3) pos.z = -0.3;
             }
             else
