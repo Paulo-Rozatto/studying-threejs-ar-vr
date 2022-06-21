@@ -104,6 +104,10 @@ class Orbi extends Object3D {
                 mixer: null,
                 action: null
             },
+            joystick: {
+                enabled: false,
+                controller: null,
+            },
             debug: {
                 enabled: false
             }
@@ -125,6 +129,13 @@ class Orbi extends Object3D {
         if (handTrack?.getCanvas()) {
             // canvasTexture = new CanvasTexture(context.canvas)
             canvasTexture = new CanvasTexture(handTrack.getCanvas());
+        }
+
+        if (config.joystick.enabled && config.joystick.controller) {
+            config.joystick.controller.addEventListener('selectstart',  () => { this.joystickMode() })
+
+            // esse modo nao requer execucao no update, entao vazia
+            currentMode = () => { }
         }
 
         cursor = camera.getObjectByName("orbi-cursor");
@@ -457,7 +468,7 @@ class Orbi extends Object3D {
 
     dwellingMode() {
         this.intersect();
-        
+
         if (intersected) {
             if (intersected !== oldIntersected) {
                 isFusing = true;
@@ -486,6 +497,14 @@ class Orbi extends Object3D {
             fusingClock.stop();
 
             cursor.scale.set(1, 1, 1);
+        }
+    }
+
+    joystickMode() {
+        this.intersect();
+
+        if (intersected) {
+            handleClick(intersected);
         }
     }
 

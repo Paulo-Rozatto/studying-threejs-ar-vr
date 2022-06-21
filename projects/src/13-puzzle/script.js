@@ -31,6 +31,7 @@ function init() {
     camera.position.set(0, 1.6, 0);
 
     controller = renderer.xr.getController(0);
+    // controller.addEventListener('selectstart', (e) => { console.log(e) })
     camera.add(controller);
 
     cameraHolder = new THREE.Object3D();
@@ -154,6 +155,10 @@ function init() {
         },
         tracking: {
             enabled: false
+        },
+        joystick: {
+            enabled: true,
+            controller
         }
     }
 
