@@ -177,6 +177,7 @@ class Orbi extends Object3D {
                 ring.material.needsUpdate = true;
                 currentMode = this.handMode;
                 camera.add(ring);
+                config.tracking.handTrack.start();
             }
             else {
                 cursor = ring;
@@ -521,17 +522,25 @@ class Orbi extends Object3D {
         cursor.visible = true;
         ring.visible = false;
         handTrack.getCenter(cursor.position);
-        camera.add(cursor);
 
         if (intersected) {
             ring.visible = true;
             ring.position.copy(cursor.position);
             ring.position.z -= intersection[0].distance;
 
-            if (intersected !== oldIntersected && handTrack.getClassification() == CLOSED) {
-                isFusing = true;
-                fusingClock.start();
-                oldIntersected = intersected;
+            if (intersected !== oldIntersected) {
+                if (handTrack.getClassification() == CLOSED) {
+                    isFusing = true;
+                    fusingClock.start();
+                    oldIntersected = intersected;
+                }
+                else {
+                    isFusing = false;
+                    fusingClock.stop();
+
+                    cursor.children[0].children[1].material.color.g = 0.27;
+                    cursor.children[0].children[1].material.needsUpdate = true;
+                }
             }
             else {
                 this.fusingTime = fusingClock.elapsedTime;
@@ -566,10 +575,12 @@ class Orbi extends Object3D {
 
         if (handTrack.getClassification() != oldClassification) {
             if (handTrack.getClassification() === CLOSED) {
-                config.hand.action.reset();
-                config.hand.action.play()
+                console.log('close')
+                // config.hand.action.reset();
+                // config.hand.action.play()
             }
             else {
+                console.log('open')
                 config.hand.action.reset();
                 config.hand.action.time = -1;
                 oldIntersected = -1; // null nao funciona aqui por algum motivo, mas intersected com certeza nao sera -1 espero
@@ -599,10 +610,11 @@ class Orbi extends Object3D {
                 cursor.isModel = true;
                 cursor.visible = true;
                 ring.visible = false;
+                ring.scale.set(1, 1, 1)
                 ring.material.opacity = 0.6;
                 ring.material.needsUpdate = true;
                 currentMode = this.handMode;
-                camera.add(ring);
+                camera.add(cursor);
                 config.joystick.controller.removeEventListener('selectstart', this.onSelectStart, false)
                 config.tracking.enabled = true;
                 config.joystick.enabled = false;
@@ -613,6 +625,7 @@ class Orbi extends Object3D {
             case JOYSTICK: {
                 ring.position.z = -config.orbits[currentOrbit] + 0.1;
                 ring.visible = true;
+                ring.scale.set(1, 1, 1)
                 currentMode = () => { };
                 ring.material.opacity = 1;
                 cursor = ring;

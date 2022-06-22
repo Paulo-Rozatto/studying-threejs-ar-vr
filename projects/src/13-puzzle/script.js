@@ -161,7 +161,7 @@ function init() {
             action: null,
         },
         tracking: {
-            enabled: false,
+            enabled: true,
             handTrack: null,
         },
         joystick: {
