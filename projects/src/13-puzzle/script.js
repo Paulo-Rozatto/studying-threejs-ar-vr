@@ -1,9 +1,10 @@
 import * as THREE from '../../build2/three.module.js';
 import { VRButton } from '../../build2/jsm/webxr/VRButton.js';
-import { PositionalAudioHelper } from '../../build2/jsm/helpers/PositionalAudioHelper.js';
+import { GLTFLoader } from '../../build2/jsm/loaders/GLTFLoader.js'
 
 import { Orbi } from '../../libs/orbixr.js';
 import { makePuzzle, physicBox, setFloor } from './puzzles.js'
+import { HandTrack } from '../12-tfjs-handtracking/ht.js'
 
 let camera, scene, light, renderer, controller, cameraHolder, clock;
 let orbi;
@@ -13,8 +14,9 @@ let onGoing = true;
 
 let timerHasStarted = false, start, times = [];
 
+let mixer;
+
 init();
-animate();
 
 function init() {
     renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -153,41 +155,86 @@ function init() {
         font: {
             path: '../../assets/fonts/Roboto_Regular.json'
         },
+        hand: {
+            model: null,
+            mixer: null,
+            action: null,
+        },
         tracking: {
-            enabled: false
+            enabled: false,
+            handTrack: null,
         },
         joystick: {
-            enabled: true,
+            enabled: false,
             controller
         }
     }
 
-    orbi = new Orbi(camera, config);
-    cameraHolder.add(orbi);
+    new GLTFLoader().load(
+        '../../assets/models/hand2.glb',
+        (gltf) => {
+            mixer = new THREE.AnimationMixer(gltf.scene);
 
-    orbi.addButton('3', 'img/left.png', () => {
-        cube.speed.x = -1;
+            let act = mixer.clipAction(gltf.animations[0]);
+            act.setLoop(THREE.LoopOnce)
+            act.clampWhenFinished = true
+            act.enable = true
 
-        if (!timerHasStarted) {
-            start = performance.now()
-            timerHasStarted = true;
-        }
-    });
+            act.play();
 
-    orbi.addButton('4', 'img/right.png', () => {
-        cube.speed.x = 1;
-        if (!timerHasStarted) {
-            start = performance.now()
-            timerHasStarted = true;
-        }
-    });
+            config.hand.model = gltf;
+            config.hand.mixer = mixer;
+            config.hand.action = act;
 
-    config.rotation.theta = Math.PI + Math.PI / 4;
+            config.tracking.handTrack = HandTrack;
 
 
-    clock = new THREE.Clock();
+            orbi = new Orbi(camera, config);
+            cameraHolder.add(orbi);
 
-    document.body.appendChild(VRButton.createButton(renderer));
+            orbi.addButton('3', 'img/left.png', () => {
+                cube.speed.x = -1;
+
+                if (!timerHasStarted) {
+                    start = performance.now()
+                    timerHasStarted = true;
+                }
+            });
+
+            orbi.addButton('4', 'img/right.png', () => {
+                cube.speed.x = 1;
+                if (!timerHasStarted) {
+                    start = performance.now()
+                    timerHasStarted = true;
+                }
+            });
+
+            window.addEventListener('keydown', e => {
+                switch (e.key) {
+                    case "1":
+                        orbi.changeMode(Orbi.DWELLING);
+                        break;
+                    case "2":
+                        orbi.changeMode(Orbi.HAND);
+                        break;
+                    case "3":
+                        orbi.changeMode(Orbi.JOYSTICK);
+                        break;
+                }
+            })
+
+            config.rotation.theta = Math.PI + Math.PI / 4;
+
+
+            clock = new THREE.Clock();
+
+            document.body.appendChild(VRButton.createButton(renderer));
+
+            animate();
+        },
+        (xhr) => { console.log((xhr.loaded / xhr.total * 100) + '% loaded'); },
+        (error) => { console.log('An error happened', error); }
+    );
 }
 
 function animate() {

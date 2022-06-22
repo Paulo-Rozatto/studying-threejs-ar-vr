@@ -40,6 +40,8 @@ let fingers, canvasTexture, center, hand;
 let handTrack, context;
 const CLOSED = 0, OPEN = 1;
 
+const DWELLING = 0, HAND = 1, JOYSTICK = 2;
+
 class Orbi extends Object3D {
     constructor(cam, props) {
         super();
@@ -123,16 +125,14 @@ class Orbi extends Object3D {
         this.rotation.y = config.rotation.theta;
 
         handTrack = config.tracking.handTrack;
-        // context = handTrack?.getContext();
-        // context = config.tracking.context;
 
         if (handTrack?.getCanvas()) {
-            // canvasTexture = new CanvasTexture(context.canvas)
             canvasTexture = new CanvasTexture(handTrack.getCanvas());
         }
 
         if (config.joystick.enabled && config.joystick.controller) {
-            config.joystick.controller.addEventListener('selectstart',  () => { this.joystickMode() })
+            config.joystick.controller.addEventListener('selectstart', this.onSelectStart, false)
+            this.add(config.joystick.controller);
 
             // esse modo nao requer execucao no update, entao vazia
             currentMode = () => { }
@@ -511,6 +511,7 @@ class Orbi extends Object3D {
     handMode() {
         this.intersect();
 
+
         if (handTrack.getClassification() == -1) {
             cursor.visible = false;
             ring.visible = false;
@@ -520,6 +521,7 @@ class Orbi extends Object3D {
         cursor.visible = true;
         ring.visible = false;
         handTrack.getCenter(cursor.position);
+        camera.add(cursor);
 
         if (intersected) {
             ring.visible = true;
@@ -578,6 +580,52 @@ class Orbi extends Object3D {
 
     }
 
+    changeMode(mode) {
+        switch (mode) {
+            case DWELLING: {
+                ring.position.z = -config.orbits[currentOrbit] + 0.1;
+                ring.visible = true;
+                currentMode = this.dwellingMode;
+                ring.material.opacity = 1;
+                cursor = ring;
+                config.joystick.controller.removeEventListener('selectstart', this.onSelectStart, false)
+                config.tracking.enabled = false;
+                config.joystick.enabled = false;
+                break;
+            }
+
+            case HAND: {
+                cursor = hand.scene;
+                cursor.isModel = true;
+                cursor.visible = true;
+                ring.visible = false;
+                ring.material.opacity = 0.6;
+                ring.material.needsUpdate = true;
+                currentMode = this.handMode;
+                camera.add(ring);
+                config.joystick.controller.removeEventListener('selectstart', this.onSelectStart, false)
+                config.tracking.enabled = true;
+                config.joystick.enabled = false;
+                config.tracking.handTrack.start();
+                break;
+            }
+
+            case JOYSTICK: {
+                ring.position.z = -config.orbits[currentOrbit] + 0.1;
+                ring.visible = true;
+                currentMode = () => { };
+                ring.material.opacity = 1;
+                cursor = ring;
+                config.joystick.controller.addEventListener('selectstart', this.onSelectStart, false)
+                this.add(config.joystick.controller);
+                config.tracking.enabled = false;
+                config.joystick.enabled = true;
+            }
+        }
+
+        currentMode = currentMode.bind(this);
+    }
+
     pauseTracking() {
         // config.tracking.enabled = false;
         // cursor = ring;
@@ -596,6 +644,22 @@ class Orbi extends Object3D {
         // ring.visible = false;
         // camera.add(cursor);
         // handTrack.resume();
+    }
+
+    onSelectStart(e) {
+        this.parent.joystickMode();
+    }
+
+    static get DWELLING() {
+        return DWELLING;
+    }
+
+    static get HAND() {
+        return HAND;
+    }
+
+    static get JOYSTICK() {
+        return JOYSTICK;
     }
 }
 

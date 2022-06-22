@@ -55,6 +55,11 @@ async function render() {
     //     console.log('nope')
     //     return;}
 
+    if(isPause) {
+        isPause = false;
+        return;
+    }
+
     begin = Date.now();
 
     ctx.drawImage(video, 0, 0)
@@ -105,7 +110,7 @@ function squaredDistance(p1, p2) {
     return Math.pow(p1.y - p2.y, 2) + Math.pow(p1.x - p2.x, 2) + Math.pow(p1.z - p2.z, 2);
 }
 
-render();
+// render();
 // estimate();
 
 // window.setInterval(() => {
@@ -115,7 +120,7 @@ render();
 const iw = 1 / canvas.width;
 const ih = 1 / canvas.height;
 const half_height = canvas.height * 0.33;
-let cont = 0, sum = 0;
+let isPause = false;
 export const HandTrack = {
     getClassification: function () {
         if (tipDist === -1) return -1;
@@ -150,10 +155,10 @@ export const HandTrack = {
         return canvas;
     },
     pause: function () {
-        // todo
+        isPause = true;
     },
-    resume: function () {
-        // todo
+    start: function () {
+        render()
     }
 }
 

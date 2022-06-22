@@ -28,6 +28,17 @@
             background-color: black;
         }
     </style>
+
+    <!-- Require the peer dependencies of hand-pose-detection. -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+
+    <!-- You must explicitly require a TF.js backend if you're not using the TF.js union bundle. -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/hand-pose-detection"></script>
+
+    <script src="../../libs/stats.min.js"></script>
 </head>
 
 <body>
@@ -35,8 +46,8 @@
     <div id="container"></div>
 
     <audio loop id="sound" preload="auto" style="display: none">
-		<source src="../../assets/sounds/dropped-wood.wav" type="audio/wav">
-	</audio>
+        <source src="../../assets/sounds/dropped-wood.wav" type="audio/wav">
+    </audio>
 
     <video id="video" playsinline style="display: none; width: auto; height: auto;"></video>
     <canvas id="output" style="display: none;"></canvas>
