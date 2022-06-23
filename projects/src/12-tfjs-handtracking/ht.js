@@ -56,7 +56,6 @@ async function render() {
     //     return;}
 
     if(isPause) {
-        isPause = false;
         return;
     }
 
@@ -158,6 +157,7 @@ export const HandTrack = {
         isPause = true;
     },
     start: function () {
+        isPause = false;
         render()
     }
 }

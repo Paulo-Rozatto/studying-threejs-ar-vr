@@ -21,7 +21,7 @@ import {
 } from '../build2/three.module.js';
 
 // propertys
-let currentOrbit, isFusing, config, currentMode;
+let currentOrbit, isFusing, config, modeAction;
 
 // objects
 let camera, cursor, ring, raycaster, rayClock, fusingClock, messageBg, message, textBg, text;
@@ -41,7 +41,7 @@ let handTrack, context;
 const CLOSED = 0, OPEN = 1;
 
 const DWELLING = 0, HAND = 1, JOYSTICK = 2;
-
+let currentMode;
 class Orbi extends Object3D {
     constructor(cam, props) {
         super();
@@ -118,7 +118,6 @@ class Orbi extends Object3D {
 
         camera = cam;
         currentOrbit = 0;
-        currentMode = this.dwellingMode;
 
         this.position.copy(camera.position);
         this.position.y = 1.6;
@@ -130,33 +129,31 @@ class Orbi extends Object3D {
             canvasTexture = new CanvasTexture(handTrack.getCanvas());
         }
 
-        if (config.joystick.enabled && config.joystick.controller) {
-            config.joystick.controller.addEventListener('selectstart', this.onSelectStart, false)
+        if (config.joystick.controller) {
             this.add(config.joystick.controller);
+        }
 
-            // esse modo nao requer execucao no update, entao vazia
-            currentMode = () => { }
+        if (config.hand.model) {
+            hand = config.hand.model;
+
+            hand.scene.traverse(child => {
+                if (child.isMesh) {
+                    let color = child.material.color;
+                    child.material = new MeshBasicMaterial({ color });
+                }
+            });
+
+            hand.scene.scale.set(0.25, 0.25, 0.25);
+            hand.scene.rotation.y = -Math.PI / 2;
+            hand.scene.position.set(0, 0, -0.6);
+
+            camera.add(hand.scene);
         }
 
         cursor = camera.getObjectByName("orbi-cursor");
 
         if (!cursor) {
             buttonsArray = [];
-
-            if (config.hand.model) {
-                hand = config.hand.model;
-
-                hand.scene.traverse(child => {
-                    if (child.isMesh) {
-                        let color = child.material.color;
-                        child.material = new MeshBasicMaterial({ color });
-                    }
-                });
-
-                hand.scene.scale.set(0.25, 0.25, 0.25);
-                hand.scene.rotation.y = -Math.PI / 2;
-                hand.scene.position.set(0, 0, -0.6);
-            }
 
             ring = new Mesh(
                 new RingBufferGeometry(config.cursor.innerRadius, config.cursor.outerRadius, 24),
@@ -166,24 +163,7 @@ class Orbi extends Object3D {
             ring.position.copy(config.cursor.position);
             ring.position.z = -config.orbits[currentOrbit] + 0.1;
             ring.renderOrder = 5000;
-            ring.isModel = false;
-
-            if (config.hand.model && config.tracking.enabled) {
-                cursor = hand.scene;
-                cursor.isModel = true;
-                ring.visible = false;
-                ring.material.depthTest = true;
-                ring.material.opacity = 0.6;
-                ring.material.needsUpdate = true;
-                currentMode = this.handMode;
-                camera.add(ring);
-                config.tracking.handTrack.start();
-            }
-            else {
-                cursor = ring;
-            }
-
-            camera.add(cursor);
+            camera.add(ring);
         }
 
         uiGroup = new Group();
@@ -291,7 +271,12 @@ class Orbi extends Object3D {
         // debug mode
         debugOn = config.debug.enabled;
 
-        currentMode = currentMode.bind(this);
+        if (config.joystick.enabled)
+            this.changeMode(JOYSTICK);
+        else if (config.tracking.enabled)
+            this.changeMode(HAND);
+        else
+            this.changeMode(DWELLING);
     }
 
     addButton(name, textureSrc, callback) {
@@ -400,7 +385,7 @@ class Orbi extends Object3D {
             uiGroup.rotation.x = euler.x;
         }
 
-        currentMode();
+        modeAction();
 
         if (canvasTexture)
             canvasTexture.needsUpdate = true;
@@ -579,12 +564,10 @@ class Orbi extends Object3D {
             config.hand.mixer.update(mixerClock.getDelta());
 
             if (handTrack.getClassification() === CLOSED) {
-                console.log('close')
                 config.hand.action.reset();
                 config.hand.action.play()
             }
             else {
-                console.log('open')
                 config.hand.action.reset();
                 config.hand.action.time = -1;
                 oldIntersected = -1; // null nao funciona aqui por algum motivo, mas intersected com certeza nao sera -1 espero
@@ -596,71 +579,53 @@ class Orbi extends Object3D {
     }
 
     changeMode(mode) {
-        switch (mode) {
-            case DWELLING: {
-                ring.position.z = -config.orbits[currentOrbit] + 0.1;
-                ring.visible = true;
-                currentMode = this.dwellingMode;
-                ring.material.opacity = 1;
-                cursor = ring;
-                config.joystick.controller.removeEventListener('selectstart', this.onSelectStart, false)
-                config.tracking.enabled = false;
-                config.joystick.enabled = false;
-                break;
+        if (mode !== currentMode) {
+            console.log('chage to: ' + mode)
+
+            ring.position.set(0, 0, 0);
+            ring.position.z = -config.orbits[currentOrbit] + 0.1;
+            ring.visible = true;
+            ring.material.opacity = 1;
+            ring.scale.set(1, 1, 1);
+            hand.scene.visible = false;
+            cursor = ring;
+            cursor.isModel = false;
+            config.joystick.controller.removeEventListener('selectstart', this.onSelectStart, false);
+            config.joystick.enabled = false;
+            config.tracking.enabled = false;
+            config.tracking.handTrack.pause();
+
+            switch (mode) {
+                case DWELLING: {
+                    modeAction = this.dwellingMode;
+                    break;
+                }
+
+                case HAND: {
+                    config.tracking.handTrack.start();
+                    hand.scene.visible = true;
+                    hand.scene.position.set(0, 0, -0.6);
+                    cursor = hand.scene;
+                    cursor.isModel = true;
+                    ring.visible = false;
+                    ring.material.opacity = 0.6;
+                    modeAction = this.handMode;
+                    break;
+                }
+
+                case JOYSTICK: {
+                    cursor = ring;
+                    modeAction = () => { };
+                    config.joystick.controller.addEventListener('selectstart', this.onSelectStart, false)
+                    config.joystick.enabled = true;
+                    break;
+                }
             }
 
-            case HAND: {
-                cursor = hand.scene;
-                cursor.isModel = true;
-                cursor.visible = true;
-                ring.visible = false;
-                ring.scale.set(1, 1, 1)
-                ring.material.opacity = 0.6;
-                ring.material.needsUpdate = true;
-                currentMode = this.handMode;
-                camera.add(cursor);
-                config.joystick.controller.removeEventListener('selectstart', this.onSelectStart, false)
-                config.tracking.enabled = true;
-                config.joystick.enabled = false;
-                config.tracking.handTrack.start();
-                break;
-            }
-
-            case JOYSTICK: {
-                ring.position.z = -config.orbits[currentOrbit] + 0.1;
-                ring.visible = true;
-                ring.scale.set(1, 1, 1)
-                currentMode = () => { };
-                ring.material.opacity = 1;
-                cursor = ring;
-                config.joystick.controller.addEventListener('selectstart', this.onSelectStart, false)
-                this.add(config.joystick.controller);
-                config.tracking.enabled = false;
-                config.joystick.enabled = true;
-            }
+            ring.material.needsUpdate = true;
+            modeAction = modeAction.bind(this);
+            currentMode = mode;
         }
-
-        currentMode = currentMode.bind(this);
-    }
-
-    pauseTracking() {
-        // config.tracking.enabled = false;
-        // cursor = ring;
-        // cursor.isModel = false;
-        // hand.scene.visible = false;
-        // ring.visible = true;
-        // camera.add(cursor);
-        // handTrack.pause();
-    }
-
-    resumeTracking() {
-        // config.tracking.enabled = true;
-        // cursor = hand.scene;
-        // cursor.isModel = true;
-        // hand.scene.visible = true;
-        // ring.visible = false;
-        // camera.add(cursor);
-        // handTrack.resume();
     }
 
     onSelectStart(e) {
