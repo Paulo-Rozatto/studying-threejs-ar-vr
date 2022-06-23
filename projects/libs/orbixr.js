@@ -35,7 +35,7 @@ let pos;
 
 let debugOn;
 
-let fingers, canvasTexture, center, hand;
+let fingers, canvasTexture, center, hand, mixerClock;
 
 let handTrack, context;
 const CLOSED = 0, OPEN = 1;
@@ -276,6 +276,7 @@ class Orbi extends Object3D {
 
         rayClock = new Clock(true);
         fusingClock = new Clock(false);
+        mixerClock = new Clock(true);
         isFusing = false;
 
         // helpers
@@ -512,6 +513,7 @@ class Orbi extends Object3D {
     handMode() {
         this.intersect();
 
+        config.hand.mixer.update(mixerClock.getDelta())
 
         if (handTrack.getClassification() == -1) {
             cursor.visible = false;
@@ -574,10 +576,12 @@ class Orbi extends Object3D {
         }
 
         if (handTrack.getClassification() != oldClassification) {
+            config.hand.mixer.update(mixerClock.getDelta());
+
             if (handTrack.getClassification() === CLOSED) {
                 console.log('close')
-                // config.hand.action.reset();
-                // config.hand.action.play()
+                config.hand.action.reset();
+                config.hand.action.play()
             }
             else {
                 console.log('open')
