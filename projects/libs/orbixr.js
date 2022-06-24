@@ -590,7 +590,7 @@ class Orbi extends Object3D {
             hand.scene.visible = false;
             cursor = ring;
             cursor.isModel = false;
-            config.joystick.controller.removeEventListener('selectstart', this.onSelectStart, false);
+            config.joystick.controller?.removeEventListener('selectstart', this.onSelectStart, false);
             config.joystick.enabled = false;
             config.tracking.enabled = false;
             config.tracking.handTrack.pause();
