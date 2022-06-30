@@ -5,55 +5,61 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Puzzle Test</title>
-
-    <!-- Require the peer dependencies of hand-pose-detection. -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script> -->
-
-    <!-- You must explicitly require a TF.js backend if you're not using the TF.js union bundle. -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/hand-pose-detection"></script>
-    <script src="../../libs/stats.min.js"></script> -->
+    <title>Choose Puzzle</title>
+    <link rel="stylesheet" href="../../../css/w3.css">
 
     <style>
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-        }
-
-        body {
-            background-color: black;
+        body,
+        html {
+            height: 100%;
+            color: #777;
+            line-height: 1.8;
         }
     </style>
-
-    <!-- Require the peer dependencies of hand-pose-detection. -->
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
-
-    <!-- You must explicitly require a TF.js backend if you're not using the TF.js union bundle. -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/hand-pose-detection"></script>
-
-    <script src="../../libs/stats.min.js"></script>
 </head>
 
 <body>
-    <div id="webgl-output"></div>
-    <div id="container"></div>
+    <div class="w3-content w3-container w3-padding-64 w3-center">
+        <h3 class="w3-center w3-text-black">PUZZLE TEST SETTINGS</h3>
 
-    <audio loop id="sound" preload="auto" style="display: none">
-        <source src="../../assets/sounds/dropped-wood.wav" type="audio/wav">
-    </audio>
+        <form action="puzzle-room.html">
+            <h4 class="w3-center w3-padding-16 w3-wide"><b>Interaction Mode</b></h4>
 
-    <video id="video" playsinline style="display: none; width: auto; height: auto;"></video>
-    <canvas id="output" style="display: none;"></canvas>
+            <span class="w3-padding-small">
+                <input class="w3-radio" type="radio" name="mode" value="0" checked>
+                <label>Dwelling</label>
+            </span>
 
-    <!-- <script type="module" src="../12-tfjs-handtracking/ht.js"></script> -->
-    <script type="module" src="script.js"></script>
+            <span class="w3-padding-small">
+                <input class="w3-radio" type="radio" name="mode" value="1">
+                <label>Hand</label>
+            </span>
+
+            <span class="w3-padding-small">
+                <input class="w3-radio" type="radio" name="mode" value="2">
+                <label>Joystick</label>
+            </span>
+
+            <hr>
+            <h4 class="w3-center w3-padding-16 w3-wide"><b>Puzzle movements</b></h4>
+            <span class="w3-padding-small">
+                <input class="w3-radio" type="radio" name="moves" value="3" checked>
+                <label>3 moves</label>
+            </span>
+
+            <span class="w3-padding-small">
+                <input class="w3-radio" type="radio" name="moves" value="4">
+                <label>4 moves</label>
+            </span>
+
+            <div class="w3-padding-16">
+                <input class="w3-btn w3-black" type="submit" value="Send">
+            </div>
+        </form>
+    </div>
+
+    <script>
+    </script>
 </body>
 
 </html>
