@@ -1,48 +1,11 @@
-const model = handPoseDetection.SupportedModels.MediaPipeHands;
-const detectorConfig = {
-    runtime: 'mediapipe', // or 'tfjs'
-    modelType: 'lite',
-    maxHands: 1,
-    solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/hands',
-};
-const detector = await handPoseDetection.createDetector(model, detectorConfig);
+let detector, hands, connections, mcps, tips, canvas, ctx, video, iw, ih;
 
-const video = document.getElementById('video');
-await startVideo(video);
-video.width = video.videoWidth;
-video.height = video.videoHeight;
-
-const canvas = document.getElementById('output');
-canvas.width = video.width;
-canvas.height = video.height;
-
-const ctx = canvas.getContext("2d");
-ctx.lineWidth = 3;
-ctx.fillStyle = 'White';
-ctx.strokeStyle = 'Red';
+let stopVideo = false, stats;
 
 const radius = 3;
 
-const connections = [
-    [0, 1], [1, 2], [2, 3], [3, 4],
-    [0, 5], [5, 6], [6, 7], [7, 8],
-    [0, 9], [9, 10], [10, 11], [11, 12],
-    [0, 13], [13, 14], [14, 15], [15, 16],
-    [0, 17], [17, 18], [18, 19], [19, 20]
-];
-
-// const mcps = [5, 9, 13, 17];
-const mcps = [7, 11, 15, 19];
-const tips = [8, 12, 16, 20];
-
-let stopVideo = false;
-let stats;
-
-initStats();
-
 const FPS = 20;
 let begin = 0;
-export let hands = [];
 let i = 0;
 let kp1, kp2;
 let circle;
@@ -50,12 +13,55 @@ let circle;
 let tipDist = 0;
 let mcpDist = 0;
 
+async function init() {
+    const model = handPoseDetection.SupportedModels.MediaPipeHands;
+    const detectorConfig = {
+        runtime: 'mediapipe', // or 'tfjs'
+        modelType: 'lite',
+        maxHands: 1,
+        solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/hands',
+    };
+    detector = await handPoseDetection.createDetector(model, detectorConfig);
+
+    video = document.getElementById('video');
+    await startVideo(video);
+    video.width = video.videoWidth;
+    video.height = video.videoHeight;
+
+    canvas = document.getElementById('output');
+    canvas.width = video.width;
+    canvas.height = video.height;
+
+    ctx = canvas.getContext("2d");
+    ctx.lineWidth = 3;
+    ctx.fillStyle = 'White';
+    ctx.strokeStyle = 'Red';
+
+
+    connections = [
+        [0, 1], [1, 2], [2, 3], [3, 4],
+        [0, 5], [5, 6], [6, 7], [7, 8],
+        [0, 9], [9, 10], [10, 11], [11, 12],
+        [0, 13], [13, 14], [14, 15], [15, 16],
+        [0, 17], [17, 18], [18, 19], [19, 20]
+    ];
+
+    // const mcps = [5, 9, 13, 17];
+    mcps = [7, 11, 15, 19];
+    tips = [8, 12, 16, 20];
+
+    iw = 1 / canvas.width; // inverse of width;
+    ih = 1 / canvas.height; // inverser of height;
+
+    initStats();
+}
+
 async function render() {
     // if (Date.now() - begin < 1000 / FPS){
     //     console.log('nope')
     //     return;}
 
-    if(isPause) {
+    if (isPause) {
         return;
     }
 
@@ -116,11 +122,9 @@ function squaredDistance(p1, p2) {
 //     console.log(tipDist / mcpDist, tipDist, mcpDist);
 // }, 2000)
 
-const iw = 1 / canvas.width;
-const ih = 1 / canvas.height;
-const half_height = canvas.height * 0.33;
 let isPause = false;
 export const HandTrack = {
+    init: init,
     getClassification: function () {
         if (tipDist === -1) return -1;
 

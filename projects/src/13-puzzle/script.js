@@ -155,7 +155,7 @@ function init() {
 
     new GLTFLoader().load(
         '../../assets/models/hand2.glb',
-        (gltf) => {
+        async (gltf) => {
             mixer = new THREE.AnimationMixer(gltf.scene);
 
             let act = mixer.clipAction(gltf.animations[0]);
@@ -169,6 +169,7 @@ function init() {
             config.hand.mixer = mixer;
             config.hand.action = act;
 
+            await HandTrack.init();
             config.tracking.handTrack = HandTrack;
 
 

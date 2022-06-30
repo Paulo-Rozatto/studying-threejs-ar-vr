@@ -65,30 +65,8 @@ let orbi;
 let mixer;
 let handTrack;
 
-// document.getElementById('opencv').addEventListener('load', initHandTrack, { once: true });
-initHandTrack();
-
-function initHandTrack() {
-
-  // handTrack = new HandTrack(cv, 'container');
-
-  // document.getElementById('calibrate').addEventListener('click', handTrack.calibrate);
-
-  // document.getElementById('start').addEventListener('click', start);
-  start();
-
-  function start() {
-    // handTrack.start();
-
-    // document.getElementById('calibrate').removeEventListener('click', handTrack.calibrate);
-    // document.getElementById('start').removeEventListener('click', start);
-
-    // document.getElementById('calibrate').remove();
-    // document.getElementById('start').remove();
-
-    init();
-  }
-}
+await HandTrack.init();
+init();
 
 function init() {
   new GLTFLoader().load(
