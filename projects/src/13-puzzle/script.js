@@ -18,7 +18,7 @@ let mixer;
 
 init();
 
-function init() {
+async function init() {
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -31,10 +31,6 @@ function init() {
 
     camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 10);
     camera.position.set(0, 1.6, 0);
-
-    controller = renderer.xr.getController(0);
-    // controller.addEventListener('selectstart', (e) => { console.log(e) })
-    camera.add(controller);
 
     cameraHolder = new THREE.Object3D();
     cameraHolder.add(camera);
@@ -120,105 +116,49 @@ function init() {
     }
     setFloor(floor, onHitFloor);
 
-    // Orbi Config
-    const config = {
-        display: new THREE.Vector2(1, 2),
-        orbits: [1, 2, 3],
-        rotation: {
-            theta: Math.PI / 4,
-        },
-        button: {
-            transparent: true,
-            opacity: 0.95
-        },
-        gap: new THREE.Vector2(0.003, 0.003),
-        border: {
-            enabled: true
-        },
-        font: {
-            path: '../../assets/fonts/Roboto_Regular.json'
-        },
-        hand: {
-            model: null,
-            mixer: null,
-            action: null,
-        },
-        tracking: {
-            enabled: false,
-            handTrack: null,
-        },
-        joystick: {
-            enabled: false,
-            controller
+    const config = await generateOrbiConfig(Orbi.JOYSTICK)
+    orbi = new Orbi(camera, config);
+    cameraHolder.add(orbi);
+
+    orbi.addButton('3', 'img/left.png', () => {
+        cube.speed.x = -1;
+
+        if (!timerHasStarted) {
+            start = performance.now()
+            timerHasStarted = true;
         }
-    }
+    });
 
-    new GLTFLoader().load(
-        '../../assets/models/hand2.glb',
-        async (gltf) => {
-            mixer = new THREE.AnimationMixer(gltf.scene);
+    orbi.addButton('4', 'img/right.png', () => {
+        cube.speed.x = 1;
+        if (!timerHasStarted) {
+            start = performance.now()
+            timerHasStarted = true;
+        }
+    });
 
-            let act = mixer.clipAction(gltf.animations[0]);
-            act.setLoop(THREE.LoopOnce)
-            act.clampWhenFinished = true
-            act.enable = true
+    window.addEventListener('keydown', e => {
+        switch (e.key) {
+            case "1":
+                orbi.changeMode(Orbi.DWELLING);
+                break;
+            case "2":
+                orbi.changeMode(Orbi.HAND);
+                break;
+            case "3":
+                orbi.changeMode(Orbi.JOYSTICK);
+                break;
+        }
+    })
 
-            act.play();
-
-            config.hand.model = gltf;
-            config.hand.mixer = mixer;
-            config.hand.action = act;
-
-            await HandTrack.init();
-            config.tracking.handTrack = HandTrack;
-
-
-            orbi = new Orbi(camera, config);
-            cameraHolder.add(orbi);
-
-            orbi.addButton('3', 'img/left.png', () => {
-                cube.speed.x = -1;
-
-                if (!timerHasStarted) {
-                    start = performance.now()
-                    timerHasStarted = true;
-                }
-            });
-
-            orbi.addButton('4', 'img/right.png', () => {
-                cube.speed.x = 1;
-                if (!timerHasStarted) {
-                    start = performance.now()
-                    timerHasStarted = true;
-                }
-            });
-
-            window.addEventListener('keydown', e => {
-                switch (e.key) {
-                    case "1":
-                        orbi.changeMode(Orbi.DWELLING);
-                        break;
-                    case "2":
-                        orbi.changeMode(Orbi.HAND);
-                        break;
-                    case "3":
-                        orbi.changeMode(Orbi.JOYSTICK);
-                        break;
-                }
-            })
-
-            config.rotation.theta = Math.PI + Math.PI / 4;
+    config.rotation.theta = Math.PI + Math.PI / 4;
 
 
-            clock = new THREE.Clock();
+    clock = new THREE.Clock();
 
-            document.body.appendChild(VRButton.createButton(renderer));
+    document.body.appendChild(VRButton.createButton(renderer));
 
-            animate();
-        },
-        (xhr) => { console.log((xhr.loaded / xhr.total * 100) + '% loaded'); },
-        (error) => { console.log('An error happened', error); }
-    );
+    animate();
 }
 
 function animate() {
@@ -300,4 +240,82 @@ function choosePuzzlesByMoves(moves) {
     }
 
     throw new Error('Movent should be 3 or 4, passaed value ' + moves)
+}
+
+function generateOrbiConfig(mode) {
+    return new Promise((resolve, reject) => {
+        // Orbi Config
+        const config = {
+            display: new THREE.Vector2(1, 2),
+            orbits: [1, 2, 3],
+            rotation: {
+                theta: Math.PI / 4,
+            },
+            button: {
+                transparent: true,
+                opacity: 0.95
+            },
+            gap: new THREE.Vector2(0.003, 0.003),
+            border: {
+                enabled: true
+            },
+            font: {
+                path: '../../assets/fonts/Roboto_Regular.json'
+            },
+        }
+
+        switch (mode) {
+            case Orbi.DWELLING: {
+                resolve(config);
+                break;
+            }
+            case Orbi.HAND: {
+                config.hand = { model: null, mixer: null, action: null };
+                config.tracking = { enabled: true, handTrack: null };
+
+                new GLTFLoader().load(
+                    '../../assets/models/hand2.glb',
+                    async (gltf) => {
+                        mixer = new THREE.AnimationMixer(gltf.scene);
+
+                        let act = mixer.clipAction(gltf.animations[0]);
+                        act.setLoop(THREE.LoopOnce)
+                        act.clampWhenFinished = true
+                        act.enable = true
+
+                        act.play();
+
+                        config.hand.model = gltf;
+                        config.hand.mixer = mixer;
+                        config.hand.action = act;
+
+                        await HandTrack.init();
+                        config.tracking.handTrack = HandTrack;
+
+                        resolve(config);
+                    },
+                    (xhr) => { console.log((xhr.loaded / xhr.total * 100) + '% loaded'); },
+                    (error) => { console.log('An error happened', error); reject(error) }
+                );
+                break;
+            }
+            case Orbi.JOYSTICK: {
+                controller = renderer.xr.getController(0);
+                camera.add(controller)
+
+                config.joystick = {
+                    enabled: true,
+                    controller
+                }
+
+                resolve(config);
+                break;
+            }
+
+            default:
+                console.log('Invalid mode');
+                reject('Invalid mode')
+        }
+
+    });
 }
