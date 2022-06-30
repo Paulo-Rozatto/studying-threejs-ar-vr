@@ -55,7 +55,12 @@ async function init() {
     floor.rotateX(Math.PI * -0.5);
     scene.add(floor);
 
-    let { puzzle1, puzzle2, puzzle3 } = choosePuzzlesByMoves(3);
+    const params = (new URL(document.location)).searchParams;
+
+    let moves = params.get('moves') || 3;
+    moves = parseInt(moves);
+
+    let { puzzle1, puzzle2, puzzle3 } = choosePuzzlesByMoves(moves);
     scene.add(puzzle1);
     scene.add(puzzle2);
     scene.add(puzzle3);
@@ -116,7 +121,10 @@ async function init() {
     }
     setFloor(floor, onHitFloor);
 
-    const config = await generateOrbiConfig(Orbi.JOYSTICK)
+    let mode = params.get('mode') || 0;
+    mode = parseInt(mode);
+
+    const config = await generateOrbiConfig(mode)
     orbi = new Orbi(camera, config);
     cameraHolder.add(orbi);
 
