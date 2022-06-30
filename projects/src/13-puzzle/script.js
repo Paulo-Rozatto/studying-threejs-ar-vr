@@ -63,7 +63,43 @@ function init() {
         [{ x: -0.4, y: 0.6 }, { x: 0.4, y: 0 }, { x: -0.4, y: -0.6 }]
     );
     puzzle1.position.set(0, 1, -2);
-    scene.add(puzzle1)
+    // scene.add(puzzle1)
+
+    // let puzzle4 = makePuzzle([
+    //     { x: -0.4, y: 0.7 },
+    //     { x: 0.4, y: 0.3 },
+    //     { x: -0.4, y: -0.1 },
+    //     { x: 0.4, y: -0.55 },
+
+    // ],
+    //     [{ x: 0.2, y: -0.8, z: 0.25 }]
+    // )
+    // puzzle4.position.set(0, 1, -2);
+    // scene.add(puzzle4);
+
+    // let puzzle5 = makePuzzle([
+    //     { x: -0.4, y: 0.7 },
+    //     { x: 0.1, y: 0.2 },
+    //     { x: 0.4, y: -0.2 },
+    //     { x: -0.4, y: -0.55 },
+    
+    // ],
+    //     [{ x: -0.2, y: 0.45, z: 0.25 }, { x: -0.2, y: -0.8, z: 0.25 }]
+    // )
+    // puzzle5.position.set(0, 1, -2);
+    // scene.add(puzzle5);
+
+    let puzzle6 = makePuzzle([
+        { x: -0.4, y: 0.7 },
+        { x: 0.4, y: 0.35 },
+        { x: 0, y: -0.15 },
+        { x: -0.4, y: -0.65 },
+    
+    ],
+        [{ x: 0.3, y: 0.1, z: 0.25 }, { x: -0.3, y: -0.9, z: 0.25 }]
+    )
+    puzzle6.position.set(0, 1, -2);
+    scene.add(puzzle6);
 
     let puzzle2 = makePuzzle(
         [{ x: -0.4, y: 0.6 }, { x: 0.1, y: 0.1 }, { x: 0.45, y: -0.55 }],
@@ -101,7 +137,8 @@ function init() {
 
     cube = physicBox(hitSound);
     cube.add(hitSound);
-    puzzle1.add(cube);
+    // puzzle1.add(cube);
+    puzzle6.add(cube);
     cube.position.set(-0.3, 1, 0.25);
 
     const puzzleList = [puzzle1, puzzle3, puzzle2]
