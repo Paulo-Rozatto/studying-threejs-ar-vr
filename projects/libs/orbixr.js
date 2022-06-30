@@ -587,13 +587,14 @@ class Orbi extends Object3D {
             ring.visible = true;
             ring.material.opacity = 1;
             ring.scale.set(1, 1, 1);
-            hand.scene.visible = false;
+            if (hand) hand.scene.visible = false;
             cursor = ring;
             cursor.isModel = false;
             config.joystick.controller?.removeEventListener('selectstart', this.onSelectStart, false);
             config.joystick.enabled = false;
+
             config.tracking.enabled = false;
-            config.tracking.handTrack.pause();
+            config.tracking.handTrack?.pause();
 
             switch (mode) {
                 case DWELLING: {
