@@ -160,11 +160,27 @@ export function physicBox(sound) {
 
     let intersection = [];
     let displacement, distance, friction = 0.65;
+    let needsUpdateY = true, needsUpdateX = false;
     const ray = new Raycaster(new Vector3(), new Vector3());
     const worldPos = new Vector3();
     const dir = new Vector3(1, 0, 0);
 
+    cube.setSpeed = (speed) => {
+        cube.speed.x = speed;
+        needsUpdateX = Math.abs(speed) > 0;
+    }
+
+    cube.setPosition = (x, y, z) => {
+        cube.position.set(x, y, z);
+        needsUpdateY = true;
+    }
+
     cube.update = (delta) => {
+        if (needsUpdateY) updateY(delta);
+        if (needsUpdateX) updateX(delta);
+    }
+
+    function updateY(delta) {
         cube.getWorldPosition(worldPos);
         ray.set(worldPos, down);
 
@@ -181,6 +197,8 @@ export function physicBox(sound) {
             }
             else {
                 cube.speed.y = 0;
+                needsUpdateY = false;
+
                 if (distance > half) {
                     cube.position.y -= distance - half;
                     cube.speed.y = 0;
@@ -195,36 +213,43 @@ export function physicBox(sound) {
 
             intersection.length = 0;
         }
+    }
 
-        if (cube.speed.x != 0) {
-            cube.speed.x -= friction * delta * Math.sign(cube.speed.x);
-            displacement = cube.speed.x * delta;
+    function updateX(delta) {
+        cube.speed.x -= friction * delta * Math.sign(cube.speed.x);
+        displacement = cube.speed.x * delta;
 
-            if (cube.speed.x > 0)
-                dir.copy(right);
-            else
-                dir.copy(left);
+        if (cube.speed.x > 0)
+            dir.copy(right);
+        else
+            dir.copy(left);
 
-            dir.applyQuaternion(cube.parent.quaternion);
+        dir.applyQuaternion(cube.parent.quaternion);
 
-            ray.set(worldPos, dir);
-            ray.intersectObjects(collidable, false, intersection);
+        ray.set(worldPos, dir);
+        ray.intersectObjects(collidable, false, intersection);
 
-            if (intersection.length > 0) {
-                distance = intersection[0].distance;
+        if (intersection.length > 0) {
+            distance = intersection[0].distance;
 
-                if (Math.abs(displacement) < distance - half) {
-                    cube.position.x += displacement;
-                }
-                else if (distance > half) {
-                    cube.position.x += (distance - half) * Math.sign(cube.speed.x);
-                    cube.speed.x = 0;
-                }
-
+            if (Math.abs(displacement) < distance - half) {
+                cube.position.x += displacement;
+                needsUpdateY = true;
+            }
+            else if (distance > half) {
+                cube.position.x += (distance - half) * Math.sign(cube.speed.x);
+                cube.speed.x = 0;
+                needsUpdateY = true;
+                needsUpdateX = false;
             }
 
-            if (Math.abs(cube.speed.x) < 0.1) cube.speed.x = 0;
+            intersection.length = 0;
         }
+
+        if (Math.abs(cube.speed.x) < 0.1) {
+            cube.speed.x = 0;
+            needsUpdateX = 0;
+        };
     }
 
     return cube;

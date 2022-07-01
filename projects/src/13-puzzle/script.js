@@ -85,7 +85,7 @@ async function init() {
     cube = physicBox(hitSound);
     cube.add(hitSound);
     puzzle1.add(cube);
-    cube.position.set(-0.3, 1, 0.25);
+    cube.setPosition(-0.3, 1, 0.25);
 
     const puzzleList = [puzzle1, puzzle3, puzzle2]
     let puzzleIndex = 0;
@@ -102,7 +102,7 @@ async function init() {
                 puzzleIndex += 1;
                 let nextPuzzle = puzzleList[puzzleIndex];
                 nextPuzzle.add(cube);
-                cube.position.set(-0.3, 1, 0.25);
+                cube.setPosition(-0.3, 1, 0.25);
 
                 cube.isOnFloor = false;
             }, 500);
@@ -130,7 +130,8 @@ async function init() {
     cameraHolder.add(orbi);
 
     orbi.addButton('3', 'img/left.png', () => {
-        cube.speed.x = -1;
+        // cube.speed.x = -1;
+        cube.setSpeed(-1);
 
         if (!timerHasStarted) {
             start = performance.now()
@@ -139,7 +140,9 @@ async function init() {
     });
 
     orbi.addButton('4', 'img/right.png', () => {
-        cube.speed.x = 1;
+        // cube.speed.x = 1;
+        console.log('1')
+        cube.setSpeed(1);
         if (!timerHasStarted) {
             start = performance.now()
             timerHasStarted = true;
