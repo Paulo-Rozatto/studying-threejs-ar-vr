@@ -463,7 +463,7 @@ class Orbi extends Object3D {
                 oldIntersected = intersected;
                 cursor.scale.set(1, 1, 1);
             }
-            else {
+            else if(isFusing) {
                 this.fusingTime = fusingClock.elapsedTime;
 
                 if (this.fusingTime < config.cursor.fusingTime) {
