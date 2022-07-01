@@ -6,12 +6,11 @@ import { Orbi } from '../../libs/orbixr.js';
 import { makePuzzle, physicBox, setFloor } from './puzzle-creation-library.js'
 import { HandTrack } from '../12-tfjs-handtracking/ht.js'
 
-let camera, scene, light, renderer, controller, cameraHolder, clock;
-let orbi;
+let camera, scene, light, renderer, controller, cameraHolder, clock, orbi;
 
-let cube;
-let onGoing = true;
+let cube, onGoing = true;
 
+let moves, mode;
 let timerHasStarted = false, start, times = [];
 
 let mixer;
@@ -57,7 +56,7 @@ async function init() {
 
     const params = (new URL(document.location)).searchParams;
 
-    let moves = params.get('moves') || 3;
+    moves = params.get('moves') || 3;
     moves = parseInt(moves);
 
     let { puzzle1, puzzle2, puzzle3 } = choosePuzzlesByMoves(moves);
@@ -117,11 +116,13 @@ async function init() {
             console.log(times[0] - start);
             console.log(times[1] - times[0]);
             console.log(times[2] - times[1]);
+
+            download();
         }
     }
     setFloor(floor, onHitFloor);
 
-    let mode = params.get('mode') || 0;
+    mode = params.get('mode') || 0;
     mode = parseInt(mode);
 
     const config = await generateOrbiConfig(mode)
@@ -326,4 +327,24 @@ function generateOrbiConfig(mode) {
         }
 
     });
+}
+
+function download() {
+    const fileName = (new Date()).toString();
+    const fileContent = `\
+date: ${fileName}
+moves: ${moves}
+mode: ${mode}
+time 1: ${times[0] - start}
+time 2: ${times[1] - times[0]}
+time 3: ${times[2] - times[1]}
+`;
+    const myFile = new Blob([fileContent], { type: 'text/plain' });
+
+    window.URL = window.URL || window.webkitURL;
+    const dlBtn = document.getElementById("download");
+
+    dlBtn.setAttribute("href", window.URL.createObjectURL(myFile));
+    dlBtn.setAttribute("download", fileName);
+    dlBtn.click();
 }
