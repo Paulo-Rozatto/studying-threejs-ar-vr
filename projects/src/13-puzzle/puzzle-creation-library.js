@@ -155,6 +155,8 @@ export function physicBox(sound) {
     const cube = new Mesh(cubeGeo, cubeMat);
     cube.speed = { x: 0, y: 0 };
 
+    const MAX_DELTA = 1 / 30;
+
     cube.add(sound)
     cube.isOnFloor = false;
 
@@ -176,11 +178,15 @@ export function physicBox(sound) {
     }
 
     cube.update = (delta) => {
+        if (delta > MAX_DELTA)
+            delta = MAX_DELTA;
+
         if (needsUpdateY) updateY(delta);
         if (needsUpdateX) updateX(delta);
     }
 
     function updateY(delta) {
+
         cube.getWorldPosition(worldPos);
         ray.set(worldPos, down);
 
