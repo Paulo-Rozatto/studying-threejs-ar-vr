@@ -140,7 +140,6 @@ async function init() {
     });
 
     orbi.addButton('4', 'img/right.png', () => {
-        // cube.speed.x = 1;
         console.log('1')
         cube.setSpeed(1);
         if (!timerHasStarted) {
@@ -148,20 +147,6 @@ async function init() {
             timerHasStarted = true;
         }
     });
-
-    window.addEventListener('keydown', e => {
-        switch (e.key) {
-            case "1":
-                orbi.changeMode(Orbi.DWELLING);
-                break;
-            case "2":
-                orbi.changeMode(Orbi.HAND);
-                break;
-            case "3":
-                orbi.changeMode(Orbi.JOYSTICK);
-                break;
-        }
-    })
 
     config.rotation.theta = Math.PI + Math.PI / 4;
 
