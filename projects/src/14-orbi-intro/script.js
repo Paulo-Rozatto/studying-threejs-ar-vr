@@ -49,13 +49,11 @@ async function init() {
     plane.position.set(0, 1.5, -4.9);
     scene.add(plane)
 
-    const rectLight = new THREE.RectAreaLight(0x00ff00, 0.8, 8, 3);
+    const rectLight = new THREE.RectAreaLight(0x7235B8, 0.8, 8, 3);
     rectLight.position.set(0, 1.5, -5);
     rectLight.rotation.set(0, Math.PI, 0)
     scene.add(rectLight);
     scene.add(new RectAreaLightHelper(rectLight));
-
-    // rectLight2.color.setHex(0xff0000)
 
     const geoFloor = new THREE.BoxGeometry(10, 0.1, 10);
     const matStdFloor = new THREE.MeshStandardMaterial({ color: 0x808080, roughness: 0.3, metalness: 0.1 });
@@ -94,8 +92,18 @@ async function init() {
     orbi = new Orbi(camera, config);
     cameraHolder.add(orbi);
 
-    orbi.addButton('1', '', () => { });
-    orbi.addButton('2', '', () => { });
+    let currColor = 0;
+    const colors = [
+        0x7235B8,
+        0xB86948,
+        0xB8B623
+    ]
+    orbi.addButton('1', 'icon.png', () => {
+        currColor += 1;
+        if (currColor > 2)
+            currColor = 0;
+        rectLight.color.setHex(colors[currColor]);
+    });
 
     // window.addEventListener('keydown', e => {
     //     switch (e.key) {
@@ -136,17 +144,18 @@ function generateOrbiConfig(mode) {
     return new Promise((resolve, reject) => {
         // Orbi Config
         const config = {
-            display: new THREE.Vector2(1, 2),
+            display: new THREE.Vector2(1, 1),
             orbits: [1, 2, 3],
             // cursor: {
             //     color: 0x0ff00
             // },
             rotation: {
-                theta: Math.PI / 4,
+                theta: Math.PI / 6,
             },
             button: {
                 transparent: true,
-                opacity: 0.95
+                opacity: 0.95,
+                size: new THREE.Vector2(0.2, 0.2),
             },
             gap: new THREE.Vector2(0.003, 0.003),
             border: {
