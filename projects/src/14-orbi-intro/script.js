@@ -7,7 +7,7 @@ import { RectAreaLightHelper } from '../../build2/jsm/helpers/RectAreaLightHelpe
 import { Orbi } from '../../libs/orbixr.js';
 import { HandTrack } from '../12-tfjs-handtracking/ht.js'
 
-let camera, scene, light, renderer, controller, cameraHolder, clock, orbi, mixer;
+let camera, scene, light, renderer, controller, cameraHolder, clock, orbi, mixer, frame, frameMaterial, isGreen = false;
 
 let mode;
 
@@ -84,6 +84,33 @@ async function init() {
     roof.position.y = 3.05;
     scene.add(roof);
 
+    frame = new THREE.Group();
+    frame.rotateY(Math.PI / 3);
+    scene.add(frame);
+
+    frameMaterial = new THREE.MeshStandardMaterial({ color: 0xFF3030, metalness: 0.0, roughness: 0.1 })
+
+    const frameLeft = new THREE.Mesh(
+        new THREE.BoxBufferGeometry(0.05, 0.25, 0.025),
+        frameMaterial
+    )
+    frameLeft.position.set(-0.25, 1.6, -1.05)
+    frame.add(frameLeft)
+
+    const frameRight = frameLeft.clone();
+    frameRight.position.x = 0.2;
+    frame.add(frameRight);
+
+    const frameTop = frameLeft.clone();
+    frameTop.rotateZ(Math.PI / 2);
+    frameTop.position.set(-0.025, 1.75, -1.05);
+    frameTop.scale.y = 2;
+    frame.add(frameTop)
+
+    const frameBottom = frameTop.clone();
+    frameBottom.position.y = 1.45
+    frame.add(frameBottom)
+
     const params = (new URL(document.location)).searchParams;
     mode = params.get('mode') || 0;
     mode = parseInt(mode);
@@ -109,6 +136,9 @@ async function init() {
 
     document.body.appendChild(VRButton.createButton(renderer));
 
+    // console.log(orbi.rotation)
+    orbi.rotation.onRotationChange = () => { console.log('oi') }
+
     animate();
 }
 
@@ -117,8 +147,19 @@ function animate() {
 }
 
 // let delta;
+const lower = Math.PI / 3 - Math.PI / 36;
+const upper = Math.PI / 3 + Math.PI / 36;
 function render() {
     orbi.update();
+
+    if (orbi.rotation.y > lower && orbi.rotation.y < upper) {
+        frameMaterial.color.setHex(0x00ff00);
+        isGreen = true;
+    }
+    else if(isGreen) {
+        frameMaterial.color.setHex(0xff0000);
+        isGreen = false;
+    }
 
     // delta = clock.getDelta();
 
@@ -138,7 +179,7 @@ function generateOrbiConfig(mode) {
             rotation: {
                 theta: Math.PI / 6,
             },
-            cursor:{
+            cursor: {
                 color: 0x00dd00
             },
             button: {
