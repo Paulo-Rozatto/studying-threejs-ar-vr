@@ -32,34 +32,32 @@ async function init() {
     cameraHolder.add(camera);
     scene.add(cameraHolder);
 
-    // light = new THREE.SpotLight(0xeeeeaa, 0.2);
-    // light.position.set(30, 30, 0);
-    // scene.add(light);
+    light = new THREE.SpotLight(0xeeeeaa, 0.1);
+    light.position.set(30, 30, 0);
+    scene.add(light);
 
     let ambient = new THREE.AmbientLight(0x090909, 0.15)
-    // scene.add(ambient);
+    scene.add(ambient);
 
     RectAreaLightUniformsLib.init();
 
-    const rectLight1 = new THREE.RectAreaLight(0xff0000, 5, 2, 3);
-    rectLight1.position.set(-5, 1.5, 0);
-    rectLight1.rotation.set(0, -Math.PI / 2, 0)
-    scene.add(rectLight1);
+    const loader = new THREE.TextureLoader();
+    const logo = loader.load('orbi.png');
 
-    const rectLight2 = new THREE.RectAreaLight(0x00ff00, 5, 2, 3);
-    rectLight2.position.set(0, 1.5, 5);
-    // rectLight2.rotation.set(Math.PI / 2, Math.PI, 0)
-    scene.add(rectLight2);
+    const plane = new THREE.Mesh(
+        new THREE.PlaneBufferGeometry(1.5, 1.5),
+        new THREE.MeshBasicMaterial({ transparent: true, map: logo, opacity: 0.8 })
+    );
+    plane.position.set(0, 1.5, -4.9);
+    scene.add(plane)
 
-    const rectLight3 = new THREE.RectAreaLight(0x0000ff, 5, 2, 3);
-    rectLight3.position.set(5, 1.5, 0);
-    rectLight3.rotation.set(0, Math.PI / 2, 0)
-    scene.add(rectLight3);
+    const rectLight = new THREE.RectAreaLight(0x00ff00, 5, 2, 3);
+    rectLight.position.set(0, 1.5, -5);
+    rectLight.rotation.set(0, Math.PI, 0)
+    scene.add(rectLight);
+    scene.add(new RectAreaLightHelper(rectLight));
 
-    scene.add(new RectAreaLightHelper(rectLight1));
-    scene.add(new RectAreaLightHelper(rectLight2));
-    scene.add(new RectAreaLightHelper(rectLight3));
-
+    // rectLight2.color.setHex(0xff0000)
 
     const geoFloor = new THREE.BoxGeometry(10, 0.1, 10);
     const matStdFloor = new THREE.MeshStandardMaterial({ color: 0x808080, roughness: 0.3, metalness: 0.1 });
@@ -75,6 +73,7 @@ async function init() {
     cameraHolder.add(orbi);
 
     orbi.addButton('1', '', () => { });
+    orbi.addButton('2', '', () => { });
 
     // window.addEventListener('keydown', e => {
     //     switch (e.key) {
