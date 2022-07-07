@@ -87,6 +87,7 @@ async function init() {
     frame = new THREE.Group();
     frame.rotateY(Math.PI / 3);
     scene.add(frame);
+    frame.visible = false;
 
     frameMaterial = new THREE.MeshStandardMaterial({ color: 0xFF3030, metalness: 0.0, roughness: 0.1 })
 
@@ -132,14 +133,13 @@ async function init() {
             currColor = 0;
         rectLight.color.setHex(colors[currColor]);
         orbi.changeMode(currColor)
+        if (currColor === 0)
+            frame.visible = true;
     });
 
     document.body.appendChild(VRButton.createButton(renderer));
 
-    // console.log(orbi.rotation)
-    orbi.rotation.onRotationChange = () => { console.log('oi') }
-
-    animate();
+        animate();
 }
 
 function animate() {
@@ -156,7 +156,7 @@ function render() {
         frameMaterial.color.setHex(0x00ff00);
         isGreen = true;
     }
-    else if(isGreen) {
+    else if (isGreen) {
         frameMaterial.color.setHex(0xff0000);
         isGreen = false;
     }
