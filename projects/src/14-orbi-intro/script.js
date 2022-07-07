@@ -25,23 +25,21 @@ async function init() {
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x222222);
 
-    camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 10);
+    camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(0, 1.6, 0);
 
     cameraHolder = new THREE.Object3D();
     cameraHolder.add(camera);
     scene.add(cameraHolder);
 
-    light = new THREE.SpotLight(0xeeeeaa, 0.1);
-    light.position.set(30, 30, 0);
+    light = new THREE.PointLight(0xeeeeaa, 0.1);
+    light.position.set(0, 2, 0);
     scene.add(light);
-
-    let ambient = new THREE.AmbientLight(0x090909, 0.15)
-    scene.add(ambient);
 
     RectAreaLightUniformsLib.init();
 
     const loader = new THREE.TextureLoader();
+
     const logo = loader.load('orbi.png');
 
     const plane = new THREE.Mesh(
@@ -51,7 +49,7 @@ async function init() {
     plane.position.set(0, 1.5, -4.9);
     scene.add(plane)
 
-    const rectLight = new THREE.RectAreaLight(0x00ff00, 5, 2, 3);
+    const rectLight = new THREE.RectAreaLight(0x00ff00, 0.8, 8, 3);
     rectLight.position.set(0, 1.5, -5);
     rectLight.rotation.set(0, Math.PI, 0)
     scene.add(rectLight);
@@ -63,6 +61,30 @@ async function init() {
     const matStdFloor = new THREE.MeshStandardMaterial({ color: 0x808080, roughness: 0.3, metalness: 0.1 });
     const floor = new THREE.Mesh(geoFloor, matStdFloor);
     scene.add(floor);
+
+    const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xf0f0f0, roughness: 0.5, metalness: 0 })
+
+    const wallLeft = new THREE.Mesh(
+        new THREE.BoxBufferGeometry(10, 3, 1),
+        wallMaterial
+    );
+    wallLeft.position.set(-4.5, 1.5, 0);
+    wallLeft.rotation.set(0, Math.PI / 2, 0);
+    scene.add(wallLeft)
+
+    const wallRight = wallLeft.clone();
+    wallRight.position.set(4.5, 1.5, 0);
+    scene.add(wallRight);
+
+    const wallRear = wallLeft.clone();
+    wallRear.position.set(0, 1.5, 4.5)
+    wallRear.rotation.set(0, 0, 0);
+    scene.add(wallRear)
+
+    const matRoof = new THREE.MeshStandardMaterial({ color: 0x808080, roughness: 0.9, metalness: 0, transparent: false, opacity: 0.90 });
+    const roof = new THREE.Mesh(geoFloor, matRoof);
+    roof.position.y = 3.05;
+    scene.add(roof);
 
     const params = (new URL(document.location)).searchParams;
     mode = params.get('mode') || 0;
