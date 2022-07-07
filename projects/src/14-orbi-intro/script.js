@@ -98,28 +98,14 @@ async function init() {
         0xB86948,
         0xB8B623
     ]
+
     orbi.addButton('1', 'icon.png', () => {
         currColor += 1;
         if (currColor > 2)
             currColor = 0;
         rectLight.color.setHex(colors[currColor]);
+        orbi.changeMode(currColor)
     });
-
-    // window.addEventListener('keydown', e => {
-    //     switch (e.key) {
-    //         case "1":
-    //             orbi.changeMode(Orbi.DWELLING);
-    //             break;
-    //         case "2":
-    //             orbi.changeMode(Orbi.HAND);
-    //             break;
-    //         case "3":
-    //             orbi.changeMode(Orbi.JOYSTICK);
-    //             break;
-    //     }
-    // })
-
-    // clock = new THREE.Clock();
 
     document.body.appendChild(VRButton.createButton(renderer));
 
@@ -142,15 +128,18 @@ function render() {
 
 function generateOrbiConfig(mode) {
     return new Promise((resolve, reject) => {
+        controller = renderer.xr.getController(0);
+        camera.add(controller)
+
         // Orbi Config
         const config = {
             display: new THREE.Vector2(1, 1),
             orbits: [1, 2, 3],
-            // cursor: {
-            //     color: 0x0ff00
-            // },
             rotation: {
                 theta: Math.PI / 6,
+            },
+            cursor:{
+                color: 0x00dd00
             },
             button: {
                 transparent: true,
@@ -164,60 +153,45 @@ function generateOrbiConfig(mode) {
             font: {
                 path: '../../assets/fonts/Roboto_Regular.json'
             },
+            joystick: {
+                enabled: mode === Orbi.JOYSTICK,
+                controller
+            },
+            hand: {
+                model: null,
+                mixer: null,
+                action: null
+            },
+            tracking: {
+                enabled: mode === Orbi.HAND,
+                handTrack: null
+            }
         }
 
-        switch (mode) {
-            case Orbi.DWELLING: {
-                resolve(config);
-                break;
-            }
-            case Orbi.HAND: {
-                config.hand = { model: null, mixer: null, action: null };
-                config.tracking = { enabled: true, handTrack: null };
+        new GLTFLoader().load(
+            '../../assets/models/hand2.glb',
+            async (gltf) => {
+                mixer = new THREE.AnimationMixer(gltf.scene);
 
-                new GLTFLoader().load(
-                    '../../assets/models/hand2.glb',
-                    async (gltf) => {
-                        mixer = new THREE.AnimationMixer(gltf.scene);
+                let act = mixer.clipAction(gltf.animations[0]);
+                act.setLoop(THREE.LoopOnce)
+                act.clampWhenFinished = true
+                act.enable = true
 
-                        let act = mixer.clipAction(gltf.animations[0]);
-                        act.setLoop(THREE.LoopOnce)
-                        act.clampWhenFinished = true
-                        act.enable = true
+                act.play();
 
-                        act.play();
+                config.hand.model = gltf;
+                config.hand.mixer = mixer;
+                config.hand.action = act;
 
-                        config.hand.model = gltf;
-                        config.hand.mixer = mixer;
-                        config.hand.action = act;
-
-                        await HandTrack.init();
-                        config.tracking.handTrack = HandTrack;
-
-                        resolve(config);
-                    },
-                    (xhr) => { console.log((xhr.loaded / xhr.total * 100) + '% loaded'); },
-                    (error) => { console.log('An error happened', error); reject(error) }
-                );
-                break;
-            }
-            case Orbi.JOYSTICK: {
-                controller = renderer.xr.getController(0);
-                camera.add(controller)
-
-                config.joystick = {
-                    enabled: true,
-                    controller
-                }
+                await HandTrack.init();
+                config.tracking.handTrack = HandTrack;
 
                 resolve(config);
-                break;
-            }
-
-            default:
-                console.log('Invalid mode');
-                reject('Invalid mode')
-        }
+            },
+            (xhr) => { console.log((xhr.loaded / xhr.total * 100) + '% loaded'); },
+            (error) => { console.log('An error happened', error); reject(error) }
+        );
 
     });
 }

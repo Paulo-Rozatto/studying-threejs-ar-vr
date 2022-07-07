@@ -542,8 +542,8 @@ class Orbi extends Object3D {
                     isFusing = false;
                     fusingClock.stop();
 
-                    cursor.children[0].children[1].material.color.g = 0.27;
-                    cursor.children[0].children[1].material.needsUpdate = true;
+                    hand.scene.children[0].children[1].material.color.g = 0.27;
+                    hand.scene.children[0].children[1].material.needsUpdate = true;
                 }
             }
         }
