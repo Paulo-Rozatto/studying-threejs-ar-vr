@@ -17,6 +17,18 @@ let floor;
 
 let onHitFloor;
 
+function pos(x, y) {
+    x = (x - 2) * 0.6;
+    y = (y - 3) * 0.4;
+
+    if (x < 1 || x > 3)
+        console.warn('Invalid x: ', x);
+    if (y < 1 || y > 5)
+        console.warn('Invalid y: ', y);
+
+    return { x, y };
+}
+
 export function setFloor(flr, callback) {
     floor = flr;
 
@@ -30,7 +42,7 @@ export function setFloor(flr, callback) {
 
 export function makeWall(name) {
     const textureLoader = new TextureLoader();
-    const wallGeo = new BoxBufferGeometry(0.2, 2, 0.5);
+    const wallGeo = new BoxBufferGeometry(0.2, 2.4, 0.5);
     const wallTex = textureLoader.load('../../assets/textures/wood4.jpg');
 
     wallTex.wrapS = RepeatWrapping;
@@ -75,7 +87,7 @@ export function makeShelf() {
     shelfTex.repeat.set(1, 0.25);
     const shelfMat = new MeshPhongMaterial({ map: shelfTex });
 
-    const shelfGeo = new BoxBufferGeometry(0.8, 0.1, 0.4);
+    const shelfGeo = new BoxBufferGeometry(0.6, 0.1, 0.4);
     const shelf = new Mesh(shelfGeo, shelfMat);
 
     groundList.push(shelf)
@@ -94,7 +106,7 @@ export function makePuzzle(shelfs, vshelfs = []) {
     rearText.repeat.set(2, 4);
     const rearMat = new MeshPhongMaterial({ map: rearText });
 
-    const rearGeo = new PlaneBufferGeometry(2, 2)
+    const rearGeo = new PlaneBufferGeometry(2, 2.4)
     const rear = new Mesh(rearGeo, rearMat);
     puzzle.add(rear);
 
@@ -119,11 +131,13 @@ export function makePuzzle(shelfs, vshelfs = []) {
     puzzle.add(rightWall);
 
     let cont = 1;
-    let shelf
+    let shelf;
+    let ps;
     for (const sh of shelfs) {
         shelf = makeShelf();
         shelf.name = "shelf" + cont;
-        shelf.position.set(sh.x, sh.y, 0.2);
+        ps = pos(sh.x, sh.y);
+        shelf.position.set(ps.x, ps.y, 0.2);
         puzzle.add(shelf)
         cont += 1;
     }
@@ -155,36 +169,42 @@ export function physicBox(sound) {
     const cube = new Mesh(cubeGeo, cubeMat);
     cube.speed = { x: 0, y: 0 };
 
-    const MAX_DELTA = 1 / 30;
-
     cube.add(sound)
     cube.isOnFloor = false;
 
     let intersection = [];
-    let displacement, distance, friction = 0.65;
     let needsUpdateY = true, needsUpdateX = false;
     const ray = new Raycaster(new Vector3(), new Vector3());
     const worldPos = new Vector3();
     const dir = new Vector3(1, 0, 0);
 
+    let distance;
+
+    const g = 8;
+    const MAX_TIME = 0.7;
+    const half_friction = 0.4;
+    let time, displacement, v0;
+
     cube.setSpeed = (speed) => {
+        time = 0;
+        v0 = speed;
         cube.speed.x = speed;
+        cube.speed.y = 0;
         needsUpdateX = Math.abs(speed) > 0;
     }
 
     cube.setPosition = (x, y, z) => {
-        cube.position.set(x, y, z);
+        let ps = pos(x, y)
+        cube.position.set(ps.x + boxSize / 2, ps.y + 0.2, 0.25);
         needsUpdateY = true;
     }
 
     cube.update = (delta) => {
-        if (delta > MAX_DELTA)
-            delta = MAX_DELTA;
-
         if (needsUpdateY) updateY(delta);
         if (needsUpdateX) updateX(delta);
     }
 
+    let sum = 0;
     function updateY(delta) {
 
         cube.getWorldPosition(worldPos);
@@ -192,29 +212,35 @@ export function physicBox(sound) {
 
         ray.intersectObjects(groundList, false, intersection);
 
-        cube.speed.y += (2 * delta);
-        displacement = cube.speed.y * delta;
 
         if (intersection.length != 0) {
             distance = intersection[0].distance;
 
-            if (displacement < distance - half) {
-                cube.position.y -= displacement;
-            }
-            else {
-                cube.speed.y = 0;
-                needsUpdateY = false;
+            if (distance > 0.1) {
+                cube.speed.y += (g * delta);
+                displacement = cube.speed.y * delta;
 
-                if (distance > half) {
-                    cube.position.y -= distance - half;
+                if (displacement < distance - half) {
+                    cube.position.y -= displacement;
+                }
+                else {
                     cube.speed.y = 0;
-                    sound.play();
-                }
+                    needsUpdateY = false;
 
-                if (intersection[0].object == floor && !cube.isOnFloor) {
-                    cube.isOnFloor = true;
-                    onHitFloor();
+                    if (distance > half) {
+                        cube.position.y -= distance - half;
+                        cube.speed.y = 0;
+                        sound.play();
+                    }
                 }
+            }
+            // else {
+            //     cube.speed.y = 0;
+            // }
+
+            if (intersection[0].object == floor && !cube.isOnFloor) {
+                cube.isOnFloor = true;
+                onHitFloor();
             }
 
             intersection.length = 0;
@@ -222,8 +248,18 @@ export function physicBox(sound) {
     }
 
     function updateX(delta) {
-        cube.speed.x -= friction * delta * Math.sign(cube.speed.x);
+        time += delta;
+
+        if (time >= MAX_TIME) {
+            needsUpdateX = false;
+            time = MAX_TIME;
+        }
+
+        cube.speed.x = (v0 - half_friction * time * Math.sign(v0))
         displacement = cube.speed.x * delta;
+
+        sum += displacement;
+        console.log(sum)
 
         if (cube.speed.x > 0)
             dir.copy(right);
@@ -251,11 +287,6 @@ export function physicBox(sound) {
 
             intersection.length = 0;
         }
-
-        if (Math.abs(cube.speed.x) < 0.1) {
-            cube.speed.x = 0;
-            needsUpdateX = 0;
-        };
     }
 
     return cube;
