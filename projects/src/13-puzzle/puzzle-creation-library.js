@@ -121,18 +121,18 @@ export function makePuzzle(shelfs, vshelfs = []) {
     puzzle.add(floor)
 
     let leftWall = makeWall("lwall");
-    leftWall.position.x = -0.9;
+    leftWall.position.x = -1;
     leftWall.position.z = 0.25;
     puzzle.add(leftWall);
 
     let rightWall = makeWall("rwall");
-    rightWall.position.x = 0.9;
+    rightWall.position.x = 1;
     rightWall.position.z = 0.25;
     puzzle.add(rightWall);
 
     let cont = 1;
     let shelf;
-    let ps;
+    let ps, offset;
     for (const sh of shelfs) {
         shelf = makeShelf();
         shelf.name = "shelf" + cont;
@@ -146,7 +146,9 @@ export function makePuzzle(shelfs, vshelfs = []) {
     for (const sh of vshelfs) {
         shelf = makeVShelf();
         shelf.name = "vshelf" + cont;
-        shelf.position.set(sh.x, sh.y, sh.z);
+        ps = pos(sh.x, sh.y);
+        offset = sh.side === 'r' ? 0.2 : 0;
+        shelf.position.set(ps.x + 0.2 + offset, ps.y - 0.25, 0.25);
         puzzle.add(shelf)
         cont += 1;
     }
@@ -195,7 +197,7 @@ export function physicBox(sound) {
 
     cube.setPosition = (x, y, z) => {
         let ps = pos(x, y)
-        cube.position.set(ps.x + boxSize / 2, ps.y + 0.2, 0.25);
+        cube.position.set(ps.x, ps.y + 0.2, 0.25);
         needsUpdateY = true;
     }
 
@@ -204,9 +206,7 @@ export function physicBox(sound) {
         if (needsUpdateX) updateX(delta);
     }
 
-    let sum = 0;
     function updateY(delta) {
-
         cube.getWorldPosition(worldPos);
         ray.set(worldPos, down);
 
@@ -216,7 +216,6 @@ export function physicBox(sound) {
         if (intersection.length != 0) {
             distance = intersection[0].distance;
 
-            if (distance > 0.1) {
                 cube.speed.y += (g * delta);
                 displacement = cube.speed.y * delta;
 
@@ -232,16 +231,12 @@ export function physicBox(sound) {
                         cube.speed.y = 0;
                         sound.play();
                     }
-                }
-            }
-            // else {
-            //     cube.speed.y = 0;
-            // }
 
-            if (intersection[0].object == floor && !cube.isOnFloor) {
-                cube.isOnFloor = true;
-                onHitFloor();
-            }
+                    if (intersection[0].object == floor && !cube.isOnFloor) {
+                        cube.isOnFloor = true;
+                        onHitFloor();
+                    }
+                }
 
             intersection.length = 0;
         }
@@ -257,9 +252,6 @@ export function physicBox(sound) {
 
         cube.speed.x = (v0 - half_friction * time * Math.sign(v0))
         displacement = cube.speed.x * delta;
-
-        sum += displacement;
-        console.log(sum)
 
         if (cube.speed.x > 0)
             dir.copy(right);

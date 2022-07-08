@@ -87,9 +87,10 @@ async function init() {
     puzzle1.add(cube);
     cube.setPosition(1, 5);
 
-    const puzzleList = [puzzle1, puzzle3, puzzle2]
+    const puzzleList = [puzzle1, puzzle2, puzzle3]
     let puzzleIndex = 0;
     let onHitFloor = () => {
+        console.log('ei')
         let currentPuzzle = puzzleList[puzzleIndex];
         currentPuzzle.add(winSound);
         winSound.play();
@@ -102,8 +103,13 @@ async function init() {
                 puzzleIndex += 1;
                 let nextPuzzle = puzzleList[puzzleIndex];
                 nextPuzzle.add(cube);
-                // cube.setPosition(-0.3, 1, 0.25);
-                cube.setPosition(1, 5);
+
+                if (nextPuzzle.initialPos) {
+                    cube.setPosition(nextPuzzle.initialPos.x, nextPuzzle.initialPos.y)
+                }
+                else {
+                    cube.setPosition(1, 5);
+                }
 
 
                 cube.isOnFloor = false;
@@ -178,29 +184,25 @@ function render() {
 
 function choosePuzzlesByMoves(moves) {
     if (moves === 3) {
-        // let puzzle1 = makePuzzle(
-        //     [{ x: -0.4, y: 0.6 }, { x: 0.4, y: 0 }, { x: -0.4, y: -0.6 }]
-        // );
         let puzzle1 = makePuzzle(
-            [{ x: 1, y: 4 }, { x: 2, y: 3 }, { x: 3, y: 2 }]
+            [{ x: 1, y: 4 }, { x: 2, y: 3 }, { x: 3, y: 2 }],
+            [{ x: 1, y: 4 }],
         );
         puzzle1.position.set(0, 1, -2);
 
         let puzzle2 = makePuzzle(
-            // [{ x: -0.4, y: 0.6 }, { x: 0.1, y: 0.1 }, { x: 0.45, y: -0.55 }],
-            [{ x: 1, y: 4 }, { x: 2, y: 3 }, { x: 3, y: 2 }],
-            [{ x: -0.15, y: 0.35, z: 0.25 }, { x: 0.2, y: -0.8, z: 0.25 }]
+            [{ x: 1, y: 4 }, { x: 3, y: 4 }, { x: 2, y: 3 }, { x: 1, y: 2 }],
+            [{ x: 2, y: 4, side: 'r' }]
         );
-        puzzle2.position.set(0, 1, 2);
-        puzzle2.rotateY(Math.PI);
+        puzzle2.position.set(2, 1, 0);
+        puzzle2.rotateY(Math.PI * -0.5);
 
         let puzzle3 = makePuzzle(
-            // [{ x: -0.4, y: 0.6 }, { x: 0.4, y: -0.05 }, { x: 0, y: -0.55 }],
-            [{ x: 1, y: 4 }, { x: 2, y: 3 }, { x: 3, y: 2 }],
-            [{ x: 0.2, y: -0.3, z: 0.25 }, { x: 0, y: -0.8, z: 0.25 }]
+            [{ x: 2, y: 4 }, { x: 1, y: 3 }, { x: 3, y: 3 }, { x: 2, y: 2 }],
         );
-        puzzle3.position.set(2, 1, 0);
-        puzzle3.rotateY(Math.PI * -0.5);
+        puzzle3.initialPos = { x: 2, y: 5 }
+        puzzle3.position.set(0, 1, 2);
+        puzzle3.rotateY(Math.PI);
 
         return { puzzle1, puzzle2, puzzle3 }
     }
@@ -240,7 +242,7 @@ function choosePuzzlesByMoves(moves) {
         puzzle3.position.set(2, 1.2, 0);
         puzzle3.rotateY(Math.PI * -0.5);
 
-        return { puzzle1, puzzle2, puzzle3 }
+        return { puzzle1, puzzle3, puzzle3 }
     }
 
     throw new Error('Movent should be 3 or 4. Passaed value ' + moves)
