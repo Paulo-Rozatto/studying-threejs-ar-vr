@@ -90,7 +90,6 @@ async function init() {
     const puzzleList = [puzzle1, puzzle2, puzzle3]
     let puzzleIndex = 0;
     let onHitFloor = () => {
-        console.log('ei')
         let currentPuzzle = puzzleList[puzzleIndex];
         currentPuzzle.add(winSound);
         winSound.play();
@@ -101,6 +100,7 @@ async function init() {
 
             setTimeout(() => {
                 puzzleIndex += 1;
+
                 let nextPuzzle = puzzleList[puzzleIndex];
                 nextPuzzle.add(cube);
 
@@ -148,7 +148,6 @@ async function init() {
     });
 
     orbi.addButton('4', 'img/right.png', () => {
-        console.log('1')
         cube.setSpeed(1);
         if (!timerHasStarted) {
             start = performance.now()
@@ -183,69 +182,63 @@ function render() {
 }
 
 function choosePuzzlesByMoves(moves) {
-    if (moves === 3) {
-        let puzzle1 = makePuzzle(
-            [{ x: 1, y: 4 }, { x: 2, y: 3 }, { x: 3, y: 2 }],
-            [{ x: 1, y: 4 }],
-        );
-        puzzle1.position.set(0, 1, -2);
+    let puzzle1, puzzle2, puzzle3;
 
-        let puzzle2 = makePuzzle(
-            [{ x: 1, y: 4 }, { x: 3, y: 4 }, { x: 2, y: 3 }, { x: 1, y: 2 }],
-            [{ x: 2, y: 4, side: 'r' }]
-        );
-        puzzle2.position.set(2, 1, 0);
-        puzzle2.rotateY(Math.PI * -0.5);
+    switch (moves) {
+        case 3: {
+            puzzle1 = makePuzzle(
+                [{ x: 1, y: 4 }, { x: 2, y: 3 }, { x: 3, y: 2 }],
+                [{ x: 1, y: 4 }],
+            );
 
-        let puzzle3 = makePuzzle(
-            [{ x: 2, y: 4 }, { x: 1, y: 3 }, { x: 3, y: 3 }, { x: 2, y: 2 }],
-        );
-        puzzle3.initialPos = { x: 2, y: 5 }
-        puzzle3.position.set(0, 1, 2);
-        puzzle3.rotateY(Math.PI);
+            puzzle2 = makePuzzle(
+                [{ x: 1, y: 4 }, { x: 3, y: 4 }, { x: 2, y: 3 }, { x: 1, y: 2 }],
+                [{ x: 2, y: 4, side: 'r' }]
+            );
 
-        return { puzzle1, puzzle2, puzzle3 }
-    }
-    else if (moves === 4) {
-        let puzzle1 = makePuzzle([
-            { x: -0.4, y: 0.7 },
-            { x: 0.4, y: 0.3 },
-            { x: -0.4, y: -0.1 },
-            { x: 0.4, y: -0.55 },
+            puzzle3 = makePuzzle(
+                [{ x: 2, y: 4 }, { x: 1, y: 3 }, { x: 3, y: 3 }, { x: 2, y: 2 }],
+            );
+            puzzle3.initialPos = { x: 2, y: 5 }
+            break;
+        }
 
-        ],
-            [{ x: 0.2, y: -0.8, z: 0.25 }]
-        )
-        puzzle1.position.set(0, 1.2, -2);
+        case 4: {
+            puzzle1 = makePuzzle(
+                [{ x: 1, y: 4 }, { x: 2, y: 3 }, { x: 3, y: 2 }, { x: 2, y: 1 }],
+                [{ x: 1, y: 4 }, { x: 2, y: 2, side: 'r' }]
+            );
 
-        let puzzle2 = makePuzzle([
-            { x: -0.4, y: 0.7 },
-            { x: 0.1, y: 0.2 },
-            { x: 0.4, y: -0.2 },
-            { x: -0.4, y: -0.55 },
+            puzzle2 = makePuzzle(
+                [{ x: 2, y: 4 }, { x: 1, y: 3 }, { x: 2, y: 2 }, { x: 3, y: 1 }, { x: 3, y: 3 }],
+                [{ x: 2, y: 5, side: 'r' }, { x: 1, y: 3 }, { x: 2, y: 1, side: 'r' }, { x: 2, y: 4, side: 'r' }]
+            );
+            puzzle2.initialPos = { x: 2, y: 5 };
 
-        ],
-            [{ x: -0.2, y: 0.45, z: 0.25 }, { x: -0.2, y: -0.8, z: 0.25 }]
-        )
-        puzzle2.position.set(0, 1.2, 2);
-        puzzle2.rotateY(Math.PI);
+            puzzle3 = makePuzzle(
+                [{ x: 3, y: 4 }, { x: 2, y: 3 }, { x: 3, y: 2 }, { x: 2, y: 1 }, { x: 1, y: 4 }],
+                [{ x: 1, y: 4 }, { x: 2, y: 2, side: 'r' }]
+            );
+            puzzle3.initialPos = { x: 3, y: 5 };
+            break;
+        }
 
-        let puzzle3 = makePuzzle([
-            { x: -0.4, y: 0.7 },
-            { x: 0.4, y: 0.35 },
-            { x: 0, y: -0.15 },
-            { x: -0.4, y: -0.65 },
-
-        ],
-            [{ x: 0.3, y: 0.1, z: 0.25 }, { x: -0.3, y: -0.9, z: 0.25 }]
-        )
-        puzzle3.position.set(2, 1.2, 0);
-        puzzle3.rotateY(Math.PI * -0.5);
-
-        return { puzzle1, puzzle3, puzzle3 }
+        default:
+            throw new Error('Movent should be 3 or 4. Passaed value ' + moves)
     }
 
-    throw new Error('Movent should be 3 or 4. Passaed value ' + moves)
+    puzzle1.position.set(0, 1, -2);
+    puzzle2.position.set(2, 1, 0);
+    puzzle2.rotateY(Math.PI * -0.5);
+    puzzle3.position.set(0, 1, 2);
+    puzzle3.rotateY(Math.PI);
+
+    puzzle1.name = '1';
+    puzzle2.name = '2';
+    puzzle3.name = '3';
+
+    return { puzzle1, puzzle2, puzzle3 }
+
 }
 
 function generateOrbiConfig(mode) {
