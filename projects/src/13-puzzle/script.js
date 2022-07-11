@@ -223,6 +223,27 @@ function choosePuzzlesByMoves(moves) {
             break;
         }
 
+        case 5: {
+            puzzle1 = makePuzzle(
+                [{ x: 1, y: 5 }, { x: 3, y: 5 }, { x: 2, y: 4 }, { x: 1, y: 3 }, { x: 2, y: 2 }, { x: 3, y: 1 }],
+                [{ x: 2, y: 5, side: 'r' }, { x: 1, y: 3 }, { x: 2, y: 1, side: 'r' }]
+            );
+
+            puzzle2 = makePuzzle(
+                [{ x: 3, y: 5 }, { x: 2, y: 4 }, { x: 1, y: 3 }, { x: 2, y: 2 }, { x: 1, y: 1 }, { x: 3, y: 1 }],
+                [{ x: 2, y: 5, side: 'r' }, { x: 2, y: 4, side: 'r' }, { x: 2, y: 3, side: 'r' }, { x: 2, y: 1, side: 'r' }, { x: 1, y: 1, }]
+            );
+            puzzle2.initialPos = { x: 3, y: 5 }
+
+            puzzle3 = makePuzzle(
+                [{ x: 2, y: 5 }, { x: 3, y: 4 }, { x: 1, y: 4 }, { x: 2, y: 3 }, { x: 3, y: 2 }, { x: 2, y: 1 }],
+                [{ x: 1, y: 4 }, { x: 2, y: 2, side: 'r' }, { x: 1, y: 1, side: 'r' }, { x: 2, y: 1, side: 'r' }]
+            );
+            puzzle3.initialPos = { x: 2, y: 5 }
+
+            break;
+        }
+
         default:
             throw new Error('Movent should be 3 or 4. Passaed value ' + moves)
     }
