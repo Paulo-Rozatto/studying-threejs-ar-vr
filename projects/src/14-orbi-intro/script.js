@@ -112,34 +112,39 @@ async function init() {
     frameBottom.position.y = 1.45
     frame.add(frameBottom)
 
-    const params = (new URL(document.location)).searchParams;
-    mode = params.get('mode') || 0;
-    mode = parseInt(mode);
+    // const params = (new URL(document.location)).searchParams;
+    // mode = params.get('mode') || 0;
+    // mode = parseInt(mode);
 
-    const config = await generateOrbiConfig(mode)
+    const config = await generateOrbiConfig(Orbi.JOYSTICK)
     orbi = new Orbi(camera, config);
     cameraHolder.add(orbi);
 
-    let currColor = 0;
+    let idx = 0;
     const colors = [
         0x7235B8,
         0xB86948,
         0xB8B623
+    ];
+    const modes = [
+        Orbi.JOYSTICK,
+        Orbi.DWELLING,
+        Orbi.HAND
     ]
 
     orbi.addButton('1', 'icon.png', () => {
-        currColor += 1;
-        if (currColor > 2)
-            currColor = 0;
-        rectLight.color.setHex(colors[currColor]);
-        orbi.changeMode(currColor)
-        if (currColor === 0)
+        idx += 1;
+        if (idx > 2)
+            idx = 0;
+        rectLight.color.setHex(colors[idx]);
+        orbi.changeMode(modes[idx])
+        if (idx === 0)
             frame.visible = true;
     });
 
     document.body.appendChild(VRButton.createButton(renderer));
 
-        animate();
+    animate();
 }
 
 function animate() {
