@@ -10,7 +10,7 @@ let camera, scene, light, renderer, controller, cameraHolder, clock, orbi;
 
 let cube, onGoing = true;
 
-let moves, mode;
+let moves, mode, usedMoves = 0;
 let timerHasStarted = false, start, times = [];
 
 let mixer;
@@ -125,7 +125,7 @@ async function init() {
             console.log(times[1] - times[0]);
             console.log(times[2] - times[1]);
 
-            // download();
+            download();
         }
     }
     setFloor(floor, onHitFloor);
@@ -264,6 +264,8 @@ function choosePuzzlesByMoves(moves) {
 
 function generateOrbiConfig(mode) {
     return new Promise((resolve, reject) => {
+        const countUsedMove = () => { usedMoves++; }
+
         // Orbi Config
         const config = {
             display: new THREE.Vector2(1, 2),
@@ -282,8 +284,11 @@ function generateOrbiConfig(mode) {
             font: {
                 path: '../../assets/fonts/Roboto_Regular.json'
             },
+            callbacks: {
+                horizontal: countUsedMove,
+                vertical: countUsedMove
+            }
         }
-
         switch (mode) {
             case Orbi.DWELLING: {
                 resolve(config);
@@ -349,6 +354,7 @@ mode: ${mode}
 time 1: ${times[0] - start}
 time 2: ${times[1] - times[0]}
 time 3: ${times[2] - times[1]}
+moved interface: ${usedMoves}
 `;
     const myFile = new Blob([fileContent], { type: 'text/plain' });
 
