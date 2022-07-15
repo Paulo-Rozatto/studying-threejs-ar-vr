@@ -100,6 +100,17 @@ export function makePuzzle(shelfs, vshelfs = []) {
     const textureLoader = new TextureLoader();
     let puzzle = new Group();
 
+    const floorText = textureLoader.load('../../assets/textures/checkered.png');
+    floorText.wrapS = RepeatWrapping;
+    floorText.repeat.set(2.5, 1);
+    const floorGeo = new PlaneBufferGeometry(2, 0.5);
+    const floorMat = new MeshLambertMaterial({ map: floorText })
+    const floor = new Mesh(floorGeo, floorMat);
+    floor.name = "floor";
+    floor.position.set(0, -0.99, 0.25)
+    floor.rotateX(Math.PI * -0.5);
+    puzzle.add(floor)
+
     const rearText = textureLoader.load('../../assets/textures/wood4.jpg');
     rearText.wrapS = RepeatWrapping;
     rearText.wrapT = RepeatWrapping;
@@ -109,16 +120,6 @@ export function makePuzzle(shelfs, vshelfs = []) {
     const rearGeo = new PlaneBufferGeometry(2, 2.4)
     const rear = new Mesh(rearGeo, rearMat);
     puzzle.add(rear);
-
-    const floorText = textureLoader.load('../../assets/textures/checkered.png');
-    floorText.wrapS = RepeatWrapping;
-    floorText.repeat.set(2.5, 1);
-    const floorGeo = new PlaneBufferGeometry(2, 0.5);
-    const floorMat = new MeshLambertMaterial({ map: floorText })
-    const floor = new Mesh(floorGeo, floorMat);
-    floor.position.set(0, -0.99, 0.25)
-    floor.rotateX(Math.PI * -0.5);
-    puzzle.add(floor)
 
     let leftWall = makeWall("lwall");
     leftWall.position.x = -1;

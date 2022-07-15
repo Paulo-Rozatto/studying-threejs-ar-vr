@@ -95,6 +95,11 @@ async function init() {
         winSound.play();
         cube.isOnFloor = true;
 
+        let puzzleFloor = currentPuzzle.children[0];
+        console.log(puzzleFloor.material.color.g)
+        puzzleFloor.material.color.g = 2;
+        puzzleFloor.material.needsUpdate = true;
+
         if (puzzleIndex < 2) {
             times[puzzleIndex] = performance.now();
 
@@ -125,7 +130,7 @@ async function init() {
             console.log(times[1] - times[0]);
             console.log(times[2] - times[1]);
 
-            download();
+            // download();
         }
     }
     setFloor(floor, onHitFloor);
