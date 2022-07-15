@@ -70,6 +70,7 @@ async function init() {
     // create the PositionalAudio object (passing in the listener)
     const hitSound = new THREE.PositionalAudio(listener);
     const winSound = new THREE.PositionalAudio(listener);
+    const finishSound = new THREE.Audio(listener);
 
     const audioLoader = new THREE.AudioLoader();
     audioLoader.load('../../assets/sounds/copy.wav', function (buffer) {
@@ -80,6 +81,11 @@ async function init() {
     audioLoader.load('../../assets/sounds/win.wav', function (buffer) {
         winSound.setBuffer(buffer);
         winSound.setRefDistance(1);
+    })
+
+    audioLoader.load('../../assets/sounds/finish.wav', function (buffer) {
+        finishSound.setBuffer(buffer)
+        // finishSound.setVolume(0.7);
     })
 
     cube = physicBox(hitSound);
@@ -96,7 +102,6 @@ async function init() {
         cube.isOnFloor = true;
 
         let puzzleFloor = currentPuzzle.children[0];
-        console.log(puzzleFloor.material.color.g)
         puzzleFloor.material.color.g = 2;
         puzzleFloor.material.needsUpdate = true;
 
@@ -130,7 +135,8 @@ async function init() {
             console.log(times[1] - times[0]);
             console.log(times[2] - times[1]);
 
-            // download();
+            finishSound.play();
+            download();
         }
     }
     setFloor(floor, onHitFloor);
