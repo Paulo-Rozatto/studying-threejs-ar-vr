@@ -60,6 +60,12 @@ const config = {
   },
   font: {
     path: '../../assets/fonts/Roboto_Regular.json'
+  },
+  callbacks: {
+    orbits: () => { console.log('orbit') },
+    vertical: () => { console.log('vertical') },
+    horizontal: () => { console.log('horizontal') },
+    stop: () => { console.log('stop') }
   }
 }
 

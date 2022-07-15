@@ -110,6 +110,11 @@ class Orbi extends Object3D {
                 enabled: false,
                 controller: null,
             },
+            callbacks: {
+                orbits: null,
+                horizontal: null,
+                vertical: null
+            },
             debug: {
                 enabled: false
             }
@@ -347,7 +352,6 @@ class Orbi extends Object3D {
     }
 
     showText(txt) {
-        console.log(debugOn)
         if (debugOn) {
             textGroup.visible = true;
             return;
@@ -703,6 +707,9 @@ function createMovementBar(orbi) {
             child.position.z = -config.orbits[currentOrbit];
             // }
         });
+
+        if(typeof config.callbacks.orbits === 'function')
+            config.callbacks.orbits();
     };
 
     const horMoveButton = createMoveButton(
@@ -717,6 +724,9 @@ function createMovementBar(orbi) {
     horMoveButton.onClick = () => {
         orbi.moveHorizontally = true;
         stopButton.show('top');
+
+        if(typeof config.callbacks.horizontal === 'function')
+            config.callbacks.horizontal();
     }
 
     const verMoveButton = createMoveButton(
@@ -731,6 +741,9 @@ function createMovementBar(orbi) {
     verMoveButton.onClick = () => {
         orbi.moveVertically = true;
         stopButton.show('right');
+
+        if(typeof config.callbacks.vertical === 'function')
+            config.callbacks.vertical();
     }
 
     const stopButton = createMoveButton(
@@ -755,6 +768,9 @@ function createMovementBar(orbi) {
             textBg.material.transparent = config.text.transparent;
             textBg.material.opacity = config.text.opacity;
         }
+
+        if(typeof config.callbacks.stop === 'function')
+            config.callbacks.stop();
     }
 
     stopButton.show = (position) => {
